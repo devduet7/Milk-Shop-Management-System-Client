@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Milk Shop</title>
+    <!-- SPLASH SCREEN SCRIPT -->
+    <script>
+      (function () {
+        var theme = localStorage.getItem("milk_shop_theme");
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+    <!-- SPLASH SCREEN STYLES -->
+    <style>
+      #splash-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: hsl(40, 33%, 98%);
+        opacity: 1;
+        transition: opacity 0.4s ease;
+      }
+      #splash-screen.fade-out {
+        opacity: 0;
+      }
+      .dark #splash-screen {
+        background: hsl(222, 30%, 8%);
+      }
+      .splash-badge {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: hsl(210, 70%, 45%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 32px hsla(210, 70%, 45%, 0.3);
+        opacity: 0;
+        transform: scale(0.8);
+        animation: badge-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s forwards;
+      }
+      #splash-screen.fade-out .splash-badge {
+        animation: badge-out 0.35s ease-in forwards;
+      }
+      .dark .splash-badge {
+        background: hsl(210, 65%, 55%);
+        box-shadow: 0 8px 32px hsla(210, 65%, 55%, 0.25);
+      }
+      .splash-badge svg {
+        color: white;
+        width: 34px;
+        height: 34px;
+      }
+      @keyframes badge-in {
+        from {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      @keyframes badge-out {
+        from {
+          opacity: 1;
+          transform: scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: scale(0.85);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- SPLASH SCREEN CONTENT -->
+    <div id="splash-screen">
+      <div class="splash-badge">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="36"
+          height="36"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M8 2h8" />
+          <path
+            d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2"
+          />
+          <path d="M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0" />
+        </svg>
+      </div>
+    </div>
+    <!-- MAIN CONTENT -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
