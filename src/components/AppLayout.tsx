@@ -21,6 +21,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { AnimatePresence, motion } from "framer-motion";
+import SessionExpiredModal from "./SessionExpiredModal";
 import { memo, useRef, useState, useCallback } from "react";
 
 // <== APP LAYOUT COMPONENT ==>
@@ -171,7 +172,11 @@ const AppLayout = memo(() => {
         </header>
         {/* SCROLLABLE PAGE CONTENT */}
         <main ref={mainRef} className="flex-1 overflow-y-auto">
+          {/* SESSION EXPIRED MODAL */}
+          <SessionExpiredModal />
+          {/* SCROLL TO TOP */}
           <ScrollToTop containerRef={mainRef} />
+          {/* PAGE CONTENT */}
           <Outlet />
         </main>
       </div>
