@@ -21,6 +21,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import NetworkStatusWatcher from "@/components/NetworkStatusWatcher";
 
 // <== APP COMPONENT ==>
 const App = () => (
@@ -32,6 +33,8 @@ const App = () => (
       <TooltipProvider>
         {/* SONNER */}
         <Sonner />
+        {/* NETWORK STATUS */}
+        <NetworkStatusWatcher />
         {/* ROUTER */}
         <BrowserRouter>
           {/* ANIMATED ROUTES */}
