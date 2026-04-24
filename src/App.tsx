@@ -36,7 +36,9 @@ const App = () => (
         {/* NETWORK STATUS */}
         <NetworkStatusWatcher />
         {/* ROUTER */}
-        <BrowserRouter>
+        <BrowserRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
           {/* ANIMATED ROUTES */}
           <AnimatePresence mode="wait">
             <Routes>
