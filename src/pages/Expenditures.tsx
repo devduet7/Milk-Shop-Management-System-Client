@@ -45,7 +45,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { memo, useState, useCallback } from "react";
-import { PageTransition } from "@/components/PageTransition";
+import { PageTransition } from "@/components/layout/PageTransition";
 
 // <== EXPENDITURE INTERFACE ==>
 interface Expenditure {
