@@ -1,13 +1,13 @@
 // <== IMPORTS ==>
+import {
+  type LoginFormValues,
+  type RegisterFormValues,
+} from "../validators/authSchemas";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore, type User } from "../stores/useAuthStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  type LoginFormValues,
-  type RegisterFormValues,
-} from "../validators/authSchemas";
 
 // <== AUTH RESPONSE TYPE ==>
 type AuthResponse = {
@@ -60,7 +60,7 @@ export const useRegister = () => {
     },
     // <== ON ERROR ==>
     onError: (error: AxiosError<ApiErrorResponse>): void => {
-      // ERROR MESSAGE IS HANDLED IN THE COMPONENT VIA mutation.error
+      // ERROR MESSAGE IS HANDLED IN THE COMPONENT
       console.error(
         error.response?.data?.message ||
           "Registration failed. Please try again.",
@@ -100,13 +100,14 @@ export const useLogin = () => {
     },
     // <== ON ERROR ==>
     onError: (error: AxiosError<ApiErrorResponse>): void => {
-      // ERROR MESSAGE IS HANDLED IN THE COMPONENT VIA mutation.error
+      // ERROR MESSAGE IS HANDLED IN THE COMPONENT
       console.error(
         error.response?.data?.message || "Login failed. Please try again.",
       );
     },
   });
 };
+
 // <== USE LOGOUT HOOK ==>
 export const useLogout = () => {
   // NAVIGATE HOOK

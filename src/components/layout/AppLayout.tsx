@@ -18,10 +18,10 @@ import { useLogout } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { AppSidebar } from "@/components/AppSidebar";
-import { ScrollToTop } from "@/components/ScrollToTop";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { ScrollToTop } from "@/components/common/ScrollToTop";
 import { AnimatePresence, motion } from "framer-motion";
-import SessionExpiredModal from "./SessionExpiredModal";
+import SessionExpiredModal from "../common/SessionExpiredModal";
 import { memo, useRef, useState, useCallback } from "react";
 
 // <== APP LAYOUT COMPONENT ==>

@@ -31,7 +31,7 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { memo, type CSSProperties } from "react";
 import { Progress } from "@/components/ui/progress";
-import { PageTransition } from "@/components/PageTransition";
+import { PageTransition } from "@/components/layout/PageTransition";
 
 // <== MONTHLY DATA TYPE ==>
 type MonthlyDatum = {
