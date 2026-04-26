@@ -27,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { memo, type CSSProperties } from "react";
 import { Progress } from "@/components/ui/progress";
-import { PageTransition } from "@/components/PageTransition";
+import { PageTransition } from "@/components/layout/PageTransition";
 
 // <== WEEKLY DATA TYPE ==>
 type WeeklyDatum = {
