@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { PageTransition } from "@/components/PageTransition";
+import { PageTransition } from "@/components/layout/PageTransition";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // <== SETTINGS PAGE COMPONENT ==>
