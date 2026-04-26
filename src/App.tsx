@@ -13,15 +13,15 @@ import { queryClient } from "@/lib/queryClient";
 import { AnimatePresence } from "framer-motion";
 import Expenditures from "@/pages/Expenditures";
 import Unauthorized from "@/pages/Unauthorized";
-import { AppLayout } from "@/components/AppLayout";
-import { PublicRoute } from "@/components/PublicRoute";
 import { ThemeProvider } from "./contexts/ThemeProvider";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PublicRoute } from "@/components/common/PublicRoute";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import NetworkStatusWatcher from "@/components/NetworkStatusWatcher";
+import { ProtectedRoute } from "@/components/common/ProtectedRoute";
+import NetworkStatusWatcher from "@/components/common/NetworkStatusWatcher";
 
 // <== APP COMPONENT ==>
 const App = () => (
