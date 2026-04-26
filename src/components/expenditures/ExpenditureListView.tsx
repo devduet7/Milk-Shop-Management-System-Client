@@ -1,17 +1,69 @@
 // <== IMPORTS ==>
+import {
+  Edit,
+  Trash2,
+  Wallet,
+  Receipt,
+  ShoppingBag,
+  type LucideIcon,
+} from "lucide-react";
+import type {
+  Expenditure,
+  ExpenditureCategory,
+} from "@/types/expenditure-types";
 import { memo } from "react";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import PaginationControls from "../common/PaginationControls";
-import type { Customer } from "@/types/customer-types";
-import { Eye, Edit, Trash2, Phone, Milk, MapPin, Users } from "lucide-react";
+import PaginationControls from "@/components/common/PaginationControls";
 
-// <== CUSTOMER LIST VIEW PROPS ==>
-interface CustomerListViewProps {
-  // <== PAGINATED CUSTOMERS ==>
-  customers: Customer[];
+// <== CATEGORY CONFIG TYPE ==>
+type CategoryConfig = {
+  // <== DISPLAY LABEL ==>
+  label: string;
+  // <== LUCIDE ICON ==>
+  icon: LucideIcon;
+  // <== TAILWIND COLOR CLASSES ==>
+  color: string;
+};
+
+// <== CATEGORY CONFIG MAP ==>
+const CATEGORY_CONFIG: Record<ExpenditureCategory, CategoryConfig> = {
+  // SUPPLIES CATEGORY
+  supplies: {
+    label: "Supplies",
+    icon: ShoppingBag,
+    color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
+  },
+  // MEALS CATEGORY
+  meals: {
+    label: "Meals",
+    icon: Receipt,
+    color:
+      "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  },
+  // TRANSPORT CATEGORY
+  transport: {
+    label: "Transport",
+    icon: Wallet,
+    color:
+      "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/20",
+  },
+  // MISCELLANEOUS CATEGORY
+  misc: {
+    label: "Misc",
+    icon: Receipt,
+    color:
+      "bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/20",
+  },
+};
+
+// <== EXPENDITURE LIST VIEW PROPS ==>
+interface ExpenditureListViewProps {
+  // <== PAGINATED EXPENDITURE RECORDS ==>
+  expenditures: Expenditure[];
   // <== TOTAL FILTERED COUNT ==>
   totalFiltered: number;
   // <== LOADING STATE ==>
@@ -28,18 +80,16 @@ interface CustomerListViewProps {
   onPageChange: (page: number) => void;
   // <== ROWS PER PAGE CHANGE HANDLER ==>
   onRowsPerPageChange: (value: string) => void;
-  // <== VIEW CUSTOMER HANDLER ==>
-  onView: (customer: Customer) => void;
-  // <== EDIT CUSTOMER HANDLER ==>
-  onEdit: (customer: Customer) => void;
-  // <== DELETE CUSTOMER HANDLER ==>
+  // <== EDIT EXPENDITURE HANDLER ==>
+  onEdit: (expenditure: Expenditure) => void;
+  // <== DELETE EXPENDITURE HANDLER ==>
   onDelete: (id: string) => void;
 }
 
-// <== CUSTOMER LIST VIEW COMPONENT ==>
-const CustomerListView = memo(
+// <== EXPENDITURE LIST VIEW COMPONENT ==>
+const ExpenditureListView = memo(
   ({
-    customers,
+    expenditures,
     totalFiltered,
     isLoading,
     currentPage,
@@ -48,10 +98,9 @@ const CustomerListView = memo(
     totalPages,
     onPageChange,
     onRowsPerPageChange,
-    onView,
     onEdit,
     onDelete,
-  }: CustomerListViewProps) => {
+  }: ExpenditureListViewProps) => {
     // RETURNING LIST VIEW
     return (
       // LIST CARD WRAPPER
@@ -72,17 +121,13 @@ const CustomerListView = memo(
                 <Skeleton className="w-10 h-10 rounded-full shrink-0" />
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-5 w-14 rounded-full" />
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
                   </div>
-                  <Skeleton className="h-3 w-48" />
+                  <Skeleton className="h-3 w-28" />
                 </div>
-                <div className="shrink-0 hidden sm:block text-right space-y-1">
-                  <Skeleton className="h-5 w-20 ml-auto" />
-                  <Skeleton className="h-3 w-16 ml-auto" />
-                </div>
+                <Skeleton className="h-5 w-20 shrink-0" />
                 <div className="flex gap-0.5 shrink-0">
-                  <Skeleton className="h-8 w-8 rounded-md" />
                   <Skeleton className="h-8 w-8 rounded-md" />
                   <Skeleton className="h-8 w-8 rounded-md" />
                 </div>
@@ -90,89 +135,67 @@ const CustomerListView = memo(
             ))}
           {/* DATA ROWS */}
           {!isLoading &&
-            // LOOPING THROUGH CUSTOMERS
-            customers.map((c, i) => {
-              // MONTHLY TOTAL FROM SERVER-COMPUTED STATS
-              const monthlyTotal = c.monthlyStats.monthlyTotal;
-              // PENDING FROM SERVER-COMPUTED STATS
-              const pending = c.monthlyStats.pending;
+            // LOOPING THROUGH EXPENDITURES
+            expenditures.map((r, i) => {
+              // GET CATEGORY CONFIG FOR THIS RECORD
+              const config =
+                CATEGORY_CONFIG[r.category] ?? CATEGORY_CONFIG.misc;
+              // CATEGORY ICON COMPONENT
+              const CatIcon = config.icon;
               // RETURNING LIST ITEM
               return (
                 <motion.div
-                  key={c._id}
+                  key={r._id}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.04 }}
                   className="p-3 sm:p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors group"
                 >
-                  {/* AVATAR */}
+                  {/* CATEGORY ICON AVATAR */}
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-bold text-primary">
-                      {c.name.charAt(0)}
-                    </span>
+                    <CatIcon className="w-4 h-4 text-primary" />
                   </div>
                   {/* MAIN INFO */}
                   <div className="flex-1 min-w-0">
-                    {/* NAME + BADGE */}
+                    {/* TITLE + BADGE */}
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-semibold text-sm truncate">
-                        {c.name}
+                        {r.title}
                       </span>
                       <Badge
-                        variant={pending > 0 ? "destructive" : "secondary"}
-                        className="text-[10px] shrink-0"
+                        variant="secondary"
+                        className={cn(
+                          "text-[10px] font-bold tracking-wider uppercase shrink-0",
+                          config.color,
+                        )}
                       >
-                        {pending > 0
-                          ? `₨${pending.toLocaleString()} DUE`
-                          : "PAID"}
+                        {config.label}
                       </Badge>
                     </div>
-                    {/* CONTACT + MILK + ADDRESS */}
+                    {/* DATE AND NOTE */}
                     <div className="flex items-center flex-wrap gap-2 mt-0.5 text-xs text-muted-foreground">
-                      {c.phone && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3 h-3 shrink-0" />
-                          {c.phone}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Milk className="w-3 h-3 shrink-0" />
-                        {c.dailyMilk}L/day
-                      </span>
-                      {c.address && (
-                        <span className="items-center gap-1 hidden sm:flex">
-                          <MapPin className="w-3 h-3 shrink-0" />
-                          <span className="truncate max-w-[120px] md:max-w-[200px]">
-                            {c.address}
-                          </span>
+                      <span>{r.date}</span>
+                      {r.note && (
+                        <span className="hidden sm:block truncate max-w-[160px] md:max-w-[240px]">
+                          {r.note}
                         </span>
                       )}
                     </div>
                   </div>
-                  {/* MONTHLY TOTAL — HIDDEN ON VERY SMALL */}
+                  {/* AMOUNT — HIDDEN ON VERY SMALL */}
                   <div className="text-right shrink-0 hidden sm:block">
                     <p className="font-display text-sm sm:text-base font-bold">
-                      ₨{monthlyTotal.toLocaleString()}
+                      ₨{r.amount.toLocaleString()}
                     </p>
-                    <p className="text-xs text-muted-foreground">this month</p>
                   </div>
                   {/* ACTION BUTTONS — ALWAYS VISIBLE ON MOBILE, HOVER ON DESKTOP */}
                   <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                    {/* VIEW DETAILS */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => onView(c)}
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </Button>
                     {/* EDIT */}
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => onEdit(c)}
+                      onClick={() => onEdit(r)}
                     >
                       <Edit className="w-3.5 h-3.5" />
                     </Button>
@@ -181,7 +204,7 @@ const CustomerListView = memo(
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => onDelete(c._id)}
+                      onClick={() => onDelete(r._id)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -191,17 +214,17 @@ const CustomerListView = memo(
             })}
         </div>
         {/* EMPTY STATE WITH ICON */}
-        {!isLoading && customers.length === 0 && (
+        {!isLoading && expenditures.length === 0 && (
           <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
             <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <Users className="w-6 h-6 text-muted-foreground/40" />
+              <Wallet className="w-6 h-6 text-muted-foreground/40" />
             </div>
             <div>
               <p className="font-medium text-muted-foreground text-sm">
-                No customers found
+                No expenditures found
               </p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                Add your first customer to get started
+                Add your first expenditure to get started
               </p>
             </div>
           </div>
@@ -224,7 +247,7 @@ const CustomerListView = memo(
 );
 
 // <== DISPLAY NAME FOR DEVTOOLS ==>
-CustomerListView.displayName = "CustomerListView";
+ExpenditureListView.displayName = "ExpenditureListView";
 
 // <== EXPORT ==>
-export default CustomerListView;
+export default ExpenditureListView;

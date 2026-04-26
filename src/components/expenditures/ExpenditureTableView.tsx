@@ -1,18 +1,70 @@
 // <== IMPORTS ==>
+import type {
+  Expenditure,
+  ExpenditureCategory,
+} from "@/types/expenditure-types";
+import {
+  Edit,
+  Trash2,
+  Wallet,
+  Receipt,
+  ShoppingBag,
+  type LucideIcon,
+} from "lucide-react";
+import PaginationControls from "@/components/common/PaginationControls";
 import { memo } from "react";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import PaginationControls from "../common/PaginationControls";
-import type { Customer } from "@/types/customer-types";
-import { Eye, Edit, Trash2, Users } from "lucide-react";
 
-// <== CUSTOMER TABLE VIEW PROPS ==>
-interface CustomerTableViewProps {
-  // <== PAGINATED CUSTOMERS ==>
-  customers: Customer[];
-  // <== TOTAL FILTERED COUNT (FOR PAGINATION) ==>
+// <== CATEGORY CONFIG TYPE ==>
+type CategoryConfig = {
+  // <== DISPLAY LABEL ==>
+  label: string;
+  // <== LUCIDE ICON ==>
+  icon: LucideIcon;
+  // <== TAILWIND COLOR CLASSES ==>
+  color: string;
+};
+
+// <== CATEGORY CONFIG MAP ==>
+const CATEGORY_CONFIG: Record<ExpenditureCategory, CategoryConfig> = {
+  // SUPPLIES CATEGORY
+  supplies: {
+    label: "Supplies",
+    icon: ShoppingBag,
+    color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
+  },
+  // MEALS CATEGORY
+  meals: {
+    label: "Meals",
+    icon: Receipt,
+    color:
+      "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  },
+  // TRANSPORT CATEGORY
+  transport: {
+    label: "Transport",
+    icon: Wallet,
+    color:
+      "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/20",
+  },
+  // MISCELLANEOUS CATEGORY
+  misc: {
+    label: "Misc",
+    icon: Receipt,
+    color:
+      "bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/20",
+  },
+};
+
+// <== EXPENDITURE TABLE VIEW PROPS ==>
+interface ExpenditureTableViewProps {
+  // <== PAGINATED EXPENDITURE RECORDS ==>
+  expenditures: Expenditure[];
+  // <== TOTAL FILTERED COUNT FOR PAGINATION ==>
   totalFiltered: number;
   // <== LOADING STATE ==>
   isLoading: boolean;
@@ -28,18 +80,16 @@ interface CustomerTableViewProps {
   onPageChange: (page: number) => void;
   // <== ROWS PER PAGE CHANGE HANDLER ==>
   onRowsPerPageChange: (value: string) => void;
-  // <== VIEW CUSTOMER HANDLER ==>
-  onView: (customer: Customer) => void;
-  // <== EDIT CUSTOMER HANDLER ==>
-  onEdit: (customer: Customer) => void;
-  // <== DELETE CUSTOMER HANDLER ==>
+  // <== EDIT EXPENDITURE HANDLER ==>
+  onEdit: (expenditure: Expenditure) => void;
+  // <== DELETE EXPENDITURE HANDLER ==>
   onDelete: (id: string) => void;
 }
 
-// <== CUSTOMER TABLE VIEW COMPONENT ==>
-const CustomerTableView = memo(
+// <== EXPENDITURE TABLE VIEW COMPONENT ==>
+const ExpenditureTableView = memo(
   ({
-    customers,
+    expenditures,
     totalFiltered,
     isLoading,
     currentPage,
@@ -48,10 +98,9 @@ const CustomerTableView = memo(
     totalPages,
     onPageChange,
     onRowsPerPageChange,
-    onView,
     onEdit,
     onDelete,
-  }: CustomerTableViewProps) => {
+  }: ExpenditureTableViewProps) => {
     // RETURNING TABLE VIEW
     return (
       // TABLE CARD WRAPPER
@@ -67,27 +116,19 @@ const CustomerTableView = memo(
             <thead>
               <tr className="border-b border-border text-left bg-muted/30">
                 <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                  Customer
-                </th>
-                {/* HIDDEN ON SMALL SCREENS */}
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden md:table-cell">
-                  Contact
-                </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
-                  Daily Milk
-                </th>
-                {/* HIDDEN ON SMALL SCREENS */}
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden lg:table-cell">
-                  Rate
-                </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
-                  Monthly Due
-                </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden md:table-cell">
-                  Paid
+                  Title
                 </th>
                 <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                  Pending
+                  Category
+                </th>
+                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                  Amount
+                </th>
+                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                  Date
+                </th>
+                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden md:table-cell">
+                  Note
                 </th>
                 <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
                   Actions
@@ -101,30 +142,22 @@ const CustomerTableView = memo(
                 Array.from({ length: 6 }).map((_, i) => (
                   <tr key={`skel-${i}`} className="border-b border-border/50">
                     <td className="px-3 py-3">
-                      <Skeleton className="h-4 w-28 mb-1.5" />
-                      <Skeleton className="h-3 w-20" />
-                    </td>
-                    <td className="px-3 py-3 hidden md:table-cell">
-                      <Skeleton className="h-4 w-24" />
-                    </td>
-                    <td className="px-3 py-3 hidden sm:table-cell">
-                      <Skeleton className="h-4 w-10" />
-                    </td>
-                    <td className="px-3 py-3 hidden lg:table-cell">
-                      <Skeleton className="h-4 w-16" />
-                    </td>
-                    <td className="px-3 py-3 hidden sm:table-cell">
-                      <Skeleton className="h-4 w-16" />
-                    </td>
-                    <td className="px-3 py-3 hidden md:table-cell">
-                      <Skeleton className="h-4 w-14" />
+                      <Skeleton className="h-4 w-32 mb-1.5" />
                     </td>
                     <td className="px-3 py-3">
-                      <Skeleton className="h-5 w-16 rounded-full" />
+                      <Skeleton className="h-5 w-20 rounded-full" />
+                    </td>
+                    <td className="px-3 py-3">
+                      <Skeleton className="h-4 w-16" />
+                    </td>
+                    <td className="px-3 py-3 hidden sm:table-cell">
+                      <Skeleton className="h-4 w-20" />
+                    </td>
+                    <td className="px-3 py-3 hidden md:table-cell">
+                      <Skeleton className="h-4 w-28" />
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex gap-1">
-                        <Skeleton className="h-8 w-8 rounded-md" />
                         <Skeleton className="h-8 w-8 rounded-md" />
                         <Skeleton className="h-8 w-8 rounded-md" />
                       </div>
@@ -133,79 +166,57 @@ const CustomerTableView = memo(
                 ))}
               {/* DATA ROWS */}
               {!isLoading &&
-                // LOOPING THROUGH CUSTOMERS
-                customers.map((c, i) => {
-                  // MONTHLY TOTAL FROM SERVER-COMPUTED STATS
-                  const monthlyTotal = c.monthlyStats.monthlyTotal;
-                  // PENDING AMOUNT FROM SERVER-COMPUTED STATS
-                  const pending = c.monthlyStats.pending;
-                  // PAID AMOUNT FROM SERVER-COMPUTED STATS
-                  const paid = c.monthlyStats.totalPaid;
+                // LOOPING THROUGH EXPENDITURES
+                expenditures.map((r, i) => {
+                  // GET CATEGORY CONFIG FOR THIS RECORD
+                  const config =
+                    CATEGORY_CONFIG[r.category] ?? CATEGORY_CONFIG.misc;
                   // RETURNING TABLE ROW
                   return (
                     <motion.tr
-                      key={c._id}
+                      key={r._id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.03 }}
                       className="border-b border-border/50 hover:bg-muted/40 transition-colors"
                     >
-                      {/* CUSTOMER NAME + ADDRESS */}
-                      <td className="px-3 py-3">
-                        <div className="font-medium text-sm">{c.name}</div>
-                        {c.address && (
-                          <div className="text-xs text-muted-foreground truncate max-w-[130px] hidden md:block mt-0.5">
-                            {c.address}
-                          </div>
-                        )}
+                      {/* TITLE */}
+                      <td className="px-3 py-3 font-medium text-sm">
+                        {r.title}
                       </td>
-                      {/* PHONE — HIDDEN ON SMALL */}
-                      <td className="px-3 py-3 text-sm text-muted-foreground hidden md:table-cell">
-                        {c.phone ?? "—"}
-                      </td>
-                      {/* DAILY MILK — HIDDEN ON SMALL */}
-                      <td className="px-3 py-3 text-sm hidden sm:table-cell">
-                        {c.dailyMilk}L
-                      </td>
-                      {/* RATE — HIDDEN ON LARGE+ ONLY */}
-                      <td className="px-3 py-3 text-sm hidden lg:table-cell">
-                        ₨{c.pricePerLiter}/L
-                      </td>
-                      {/* MONTHLY DUE — HIDDEN ON SMALL */}
-                      <td className="px-3 py-3 text-sm font-semibold hidden sm:table-cell">
-                        ₨{monthlyTotal.toLocaleString()}
-                      </td>
-                      {/* PAID — HIDDEN ON SMALL */}
-                      <td className="px-3 py-3 text-sm text-emerald-600 dark:text-emerald-400 hidden md:table-cell">
-                        ₨{paid.toLocaleString()}
-                      </td>
-                      {/* PENDING BADGE */}
+                      {/* CATEGORY BADGE */}
                       <td className="px-3 py-3">
                         <Badge
-                          variant={pending > 0 ? "destructive" : "secondary"}
-                          className="text-xs whitespace-nowrap"
+                          variant="secondary"
+                          className={cn(
+                            "text-[10px] font-bold tracking-wider uppercase",
+                            config.color,
+                          )}
                         >
-                          ₨{pending.toLocaleString()}
+                          {config.label}
                         </Badge>
+                      </td>
+                      {/* AMOUNT */}
+                      <td className="px-3 py-3 font-semibold text-sm">
+                        ₨{r.amount.toLocaleString()}
+                      </td>
+                      {/* DATE — HIDDEN ON SMALL */}
+                      <td className="px-3 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                        {r.date}
+                      </td>
+                      {/* NOTE — HIDDEN ON MEDIUM */}
+                      <td className="px-3 py-3 text-xs text-muted-foreground hidden md:table-cell max-w-[180px] truncate">
+                        {r.note ?? "—"}
                       </td>
                       {/* ACTION BUTTONS */}
                       <td className="px-3 py-3">
                         <div className="flex gap-0.5">
-                          {/* VIEW DETAILS */}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => onView(c)}
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                          </Button>
                           {/* EDIT */}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => onEdit(c)}
+                            onClick={() => onEdit(r)}
                           >
                             <Edit className="w-3.5 h-3.5" />
                           </Button>
@@ -214,7 +225,7 @@ const CustomerTableView = memo(
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => onDelete(c._id)}
+                            onClick={() => onDelete(r._id)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -226,17 +237,17 @@ const CustomerTableView = memo(
             </tbody>
           </table>
           {/* EMPTY STATE WITH ICON */}
-          {!isLoading && customers.length === 0 && (
+          {!isLoading && expenditures.length === 0 && (
             <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
               <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                <Users className="w-6 h-6 text-muted-foreground/40" />
+                <Wallet className="w-6 h-6 text-muted-foreground/40" />
               </div>
               <div>
                 <p className="font-medium text-muted-foreground text-sm">
-                  No customers found
+                  No expenditures found
                 </p>
                 <p className="text-xs text-muted-foreground/60 mt-1">
-                  Add your first customer to get started
+                  Add your first expenditure to get started
                 </p>
               </div>
             </div>
@@ -260,7 +271,7 @@ const CustomerTableView = memo(
 );
 
 // <== DISPLAY NAME FOR DEVTOOLS ==>
-CustomerTableView.displayName = "CustomerTableView";
+ExpenditureTableView.displayName = "ExpenditureTableView";
 
 // <== EXPORT ==>
-export default CustomerTableView;
+export default ExpenditureTableView;
