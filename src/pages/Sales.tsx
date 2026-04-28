@@ -1,29 +1,21 @@
 // <== IMPORTS ==>
 import {
-  Plus,
-  Edit,
   List,
-  Milk,
+  Plus,
   Users,
-  Trash2,
-  Table2,
   Search,
-  Package,
-  Calendar,
-  DollarSign,
-  TrendingUp,
+  Table2,
   LayoutGrid,
   ChevronLeft,
   ChevronRight,
   ShoppingCart,
+  type LucideIcon,
 } from "lucide-react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogHeader,
-  DialogTrigger,
-  DialogContent,
-} from "@/components/ui/dialog";
+  useShopSales,
+  useDeleteSale,
+  useCustomerSales,
+} from "@/hooks/useSales";
 import {
   Select,
   SelectItem,
@@ -36,825 +28,972 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { memo, useState, useCallback } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounce } from "@/hooks/useDebounce";
+import SaleStatsCards from "@/components/sales/SaleStatsCards";
+import ShopSaleListView from "@/components/sales/ShopSaleListView";
+import ShopSaleGridView from "@/components/sales/ShopSaleGridView";
 import { PageTransition } from "@/components/layout/PageTransition";
+import ShopSaleTableView from "@/components/sales/ShopSaleTableView";
+import type { Sale, ViewMode, SaleFilter } from "@/types/sale-types";
+import ShopSaleFormDialog from "@/components/sales/ShopSaleFormDialog";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import CustomerSaleGridView from "@/components/sales/CustomerSaleGridView";
+import CustomerSaleListView from "@/components/sales/CustomerSaleListView";
+import CustomerSaleTableView from "@/components/sales/CustomerSaleTableView";
+import CustomerSaleFormDialog from "@/components/sales/CustomerSaleFormDialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-// <== SALE RECORD INTERFACE ==>
-interface SaleRecord {
-  // <== ID ==>
-  id: number;
-  // <== CUSTOMER ==>
-  customer: string;
-  // <== MILK ==>
-  milk: number;
-  // <== YOGHURT ==>
-  yoghurt: number;
-  // <== TOTAL ==>
-  total: number;
-  // <== STATUS ==>
-  status: string;
-  // <== DATE ==>
-  date: string;
-}
-// <== VIEW MODE TYPE ==>
-type ViewMode = "table" | "list" | "grid";
+// <== TAB VALUE TYPE ==>
+type SaleTab = "customer" | "shop";
+
+// <== TAB VALUE TYPE GUARD ==>
+const isSaleTab = (value: string | null): value is SaleTab =>
+  value === "customer" || value === "shop";
+
+// <== VIEW MODE TYPE GUARD ==>
+const isViewMode = (value: string | null): value is ViewMode =>
+  value === "table" || value === "list" || value === "grid";
+
+// <== GET INITIAL ACTIVE TAB FROM LOCAL STORAGE ==>
+const getInitialActiveTab = (): SaleTab => {
+  // READ SAVED VALUE
+  const saved = localStorage.getItem("sales_active_tab");
+  // RETURN SAVED TAB OR DEFAULT TO CUSTOMER
+  return isSaleTab(saved) ? saved : "customer";
+};
+
+// <== GET INITIAL CUSTOMER VIEW MODE FROM LOCAL STORAGE ==>
+const getInitialCustomerView = (): ViewMode => {
+  // READ SAVED VALUE
+  const saved = localStorage.getItem("sales_customer_view");
+  // RETURN SAVED MODE OR DEFAULT TO TABLE
+  return isViewMode(saved) ? saved : "table";
+};
+
+// <== GET INITIAL SHOP VIEW MODE FROM LOCAL STORAGE ==>
+const getInitialShopView = (): ViewMode => {
+  // READ SAVED VALUE
+  const saved = localStorage.getItem("sales_shop_view");
+  // RETURN SAVED MODE OR DEFAULT TO TABLE
+  return isViewMode(saved) ? saved : "table";
+};
+
+// <== GET INITIAL CUSTOMER ROWS PER PAGE FROM LOCAL STORAGE ==>
+const getInitialCustomerRows = (): number => {
+  // READ SAVED VALUE
+  const saved = localStorage.getItem("sales_customer_rows");
+  // PARSE VALUE
+  const parsed = Number.parseInt(saved ?? "10", 10);
+  // FALLBACK IF INVALID
+  return Number.isNaN(parsed) || parsed <= 0 ? 10 : parsed;
+};
+
+// <== GET INITIAL SHOP ROWS PER PAGE FROM LOCAL STORAGE ==>
+const getInitialShopRows = (): number => {
+  // READ SAVED VALUE
+  const saved = localStorage.getItem("sales_shop_rows");
+  // PARSE VALUE
+  const parsed = Number.parseInt(saved ?? "10", 10);
+  // FALLBACK IF INVALID
+  return Number.isNaN(parsed) || parsed <= 0 ? 10 : parsed;
+};
+
 // <== VIEW BUTTON TYPE ==>
 type ViewButton = {
-  // <== MODE ==>
+  // <== VIEW MODE ==>
   mode: ViewMode;
-  // <== ICON ==>
-  icon: typeof Table2;
-  // <== LABEL ==>
+  // <== ICON COMPONENT ==>
+  icon: LucideIcon;
+  // <== TOOLTIP LABEL ==>
   label: string;
 };
-// <== STAT TYPE ==>
-type Stat = {
-  // <== LABEL ==>
-  label: string;
-  // <== VALUE ==>
-  value: string;
-  // <== ICON ==>
-  icon: typeof DollarSign;
-  // <== CHANGE ==>
-  change: string;
-  // <== TREND ==>
-  trend: "up" | "down";
-};
-// <== VIEW BUTTONS LIST ==>
+
+// <== VIEW BUTTONS CONFIG ==>
 const VIEW_BUTTONS: ViewButton[] = [
+  // TABLE VIEW
   { mode: "table", icon: Table2, label: "Table" },
+  // LIST VIEW
   { mode: "list", icon: List, label: "List" },
+  // GRID VIEW
   { mode: "grid", icon: LayoutGrid, label: "Grid" },
 ];
-// <== MILK PRICE PER LITRE ==>
-const MILK_PRICE = 120;
-// <== YOGHURT PRICE PER KG ==>
-const YOGHURT_PRICE = 180;
-// <== INITIAL RECORDS ==>
-const INITIAL_RECORDS: SaleRecord[] = [
-  {
-    id: 1,
-    customer: "Ali Khan",
-    milk: 5,
-    yoghurt: 2,
-    total: 850,
-    status: "paid",
-    date: "2026-03-05",
-  },
-  {
-    id: 2,
-    customer: "Ahmed",
-    milk: 3,
-    yoghurt: 0,
-    total: 360,
-    status: "pending",
-    date: "2026-03-04",
-  },
-  {
-    id: 3,
-    customer: "Fatima",
-    milk: 10,
-    yoghurt: 5,
-    total: 2100,
-    status: "paid",
-    date: "2026-03-04",
-  },
-  {
-    id: 4,
-    customer: "Bilal",
-    milk: 4,
-    yoghurt: 1,
-    total: 660,
-    status: "paid",
-    date: "2026-03-03",
-  },
-  {
-    id: 5,
-    customer: "Hassan",
-    milk: 6,
-    yoghurt: 3,
-    total: 1260,
-    status: "pending",
-    date: "2026-03-03",
-  },
-  {
-    id: 6,
-    customer: "Sara",
-    milk: 2,
-    yoghurt: 0,
-    total: 240,
-    status: "paid",
-    date: "2026-03-02",
-  },
+
+// <== FILTER BUTTON TYPE ==>
+type FilterButton = {
+  // <== FILTER VALUE ==>
+  value: SaleFilter;
+  // <== DISPLAY LABEL ==>
+  label: string;
+};
+
+// <== FILTER BUTTONS CONFIG ==>
+const FILTER_BUTTONS: FilterButton[] = [
+  // TODAY FILTER
+  { value: "today", label: "Today" },
+  // WEEK FILTER
+  { value: "week", label: "This Week" },
+  // MONTH FILTER
+  { value: "month", label: "This Month" },
 ];
 
-// <== SALES PAGE COMPONENT ==>
-const Sales = () => {
-  // SEARCH STATE
-  const [search, setSearch] = useState<string>("");
-  // DIALOG STATE
-  const [open, setOpen] = useState<boolean>(false);
-  // EDIT ITEM STATE
-  const [editItem, setEditItem] = useState<SaleRecord | null>(null);
-  // VIEW MODE STATE
-  const [view, setView] = useState<ViewMode>(() => {
-    // VIEW MODE FROM LOCAL STORAGE
-    return (localStorage.getItem("sales_view") as ViewMode) || "table";
-  });
-  // SALES RECORD STATE
-  const [records, setRecords] = useState<SaleRecord[]>(INITIAL_RECORDS);
-  // CURRENT PAGE STATE
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  // ROWS PER PAGE STATE
-  const [rowsPerPage, setRowsPerPage] = useState<number>(() => {
-    // RETRIEVE ROWS PER PAGE FROM LOCAL STORAGE
-    return parseInt(localStorage.getItem("sales_rows_per_page") || "5");
-  });
-  // SET VIEW MODE HANDLER
-  const setViewMode = useCallback((mode: ViewMode): void => {
-    // SET VIEW MODE
-    setView(mode);
-    // SET VIEW MODE IN LOCAL STORAGE
-    localStorage.setItem("sales_view", mode);
-  }, []);
-  // HANDLE ROWS PER PAGE CHANGE
-  const handleRowsPerPageChange = useCallback((value: string): void => {
-    // SET ROWS PER PAGE
-    setRowsPerPage(parseInt(value));
-    // RESET CURRENT PAGE
-    setCurrentPage(1);
-    // SET ROWS PER PAGE IN LOCAL STORAGE
-    localStorage.setItem("sales_rows_per_page", value);
-  }, []);
-  // HANDLE DIALOG OPEN CHANGE
-  const handleDialogOpenChange = useCallback((v: boolean): void => {
-    // SET DIALOG OPEN STATE
-    setOpen(v);
-    // RESET EDIT ITEM ON CLOSE
-    if (!v) setEditItem(null);
-  }, []);
-  // HANDLE EDIT ITEM
-  const handleEdit = useCallback((record: SaleRecord): void => {
-    // SET EDIT ITEM
-    setEditItem(record);
-    // OPEN DIALOG
-    setOpen(true);
-  }, []);
-  // FILTERED RECORDS
-  const filtered = records.filter((r) =>
-    r.customer.toLowerCase().includes(search.toLowerCase()),
-  );
-  // CALCULATE TOTAL PAGES
-  const totalPages = Math.ceil(filtered.length / rowsPerPage);
-  // CALCULATE START INDEX
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  // CALCULATE PAGINATED RECORDS
-  const paginatedRecords = filtered.slice(startIndex, startIndex + rowsPerPage);
-  // TOTAL REVENUE
-  const totalRevenue = records.reduce((a, r) => a + r.total, 0);
-  // TOTAL MILK
-  const totalMilk = records.reduce((a, r) => a + r.milk, 0);
-  // TOTAL YOGHURT
-  const totalYoghurt = records.reduce((a, r) => a + r.yoghurt, 0);
-  // PAID COUNT
-  const paidCount = records.filter((r) => r.status === "paid").length;
-  // STATS
-  const stats: Stat[] = [
-    // TOTAL REVENUE
-    {
-      label: "Total Revenue",
-      value: `₨${totalRevenue.toLocaleString()}`,
-      icon: DollarSign,
-      change: "+12%",
-      trend: "up",
-    },
-    // MILK SOLD
-    {
-      label: "Milk Sold",
-      value: `${totalMilk}L`,
-      icon: Milk,
-      change: "+8%",
-      trend: "up",
-    },
-    // YOGHURT SOLD
-    {
-      label: "Yoghurt Sold",
-      value: `${totalYoghurt}kg`,
-      icon: Package,
-      change: "+15%",
-      trend: "up",
-    },
-    // PAID ORDERS
-    {
-      label: "Paid Orders",
-      value: `${paidCount}/${records.length}`,
-      icon: Users,
-      change: `${records.length > 0 ? ((paidCount / records.length) * 100).toFixed(0) : 0}%`,
-      trend: "up",
-    },
-  ];
-  // SUBMIT HANDLER
-  const handleSubmit = useCallback(
-    (e: React.FormEvent<HTMLFormElement>): void => {
-      // PREVENT DEFAULT
-      e.preventDefault();
-      // GET FORM DATA
-      const fd = new FormData(e.currentTarget);
-      // PARSE MILK FROM FORM DATA
-      const milk = parseFloat(fd.get("milk") as string) || 0;
-      // PARSE YOGHURT FROM FORM DATA
-      const yoghurt = parseFloat(fd.get("yoghurt") as string) || 0;
-      // CALCULATE TOTAL
-      const total = milk * MILK_PRICE + yoghurt * YOGHURT_PRICE;
-      // IF EDIT ITEM
-      if (editItem) {
-        // UPDATE RECORD
-        setRecords((prev) =>
-          prev.map((r) =>
-            r.id === editItem.id
-              ? {
-                  ...r,
-                  customer: fd.get("customer") as string,
-                  milk,
-                  yoghurt,
-                  total,
-                  status: fd.get("status") as string,
-                }
-              : r,
-          ),
-        );
-        // SUCCESS TOAST
-        toast.success("Sale updated!");
-      } else {
-        // ADD RECORD
-        setRecords((prev) => [
-          {
-            id: Date.now(),
-            customer: fd.get("customer") as string,
-            milk,
-            yoghurt,
-            total,
-            status: fd.get("status") as string,
-            date: new Date().toISOString().split("T")[0],
-          },
-          ...prev,
-        ]);
-        // SUCCESS TOAST
-        toast.success("Sale added!");
-      }
-      // CLOSE MODAL
-      setOpen(false);
-      // RESET EDIT ITEM
-      setEditItem(null);
-    },
-    [editItem],
-  );
-  // DELETE HANDLER
-  const handleDelete = useCallback((id: number): void => {
-    // FILTER RECORDS
-    setRecords((prev) => prev.filter((r) => r.id !== id));
-    // SUCCESS TOAST
-    toast.success("Sale deleted!");
-  }, []);
-  // STATUS BADGE
-  const statusBadge = (status: string) => (
-    // RETURNING STATUS BADGE
-    <Badge
-      variant={status === "paid" ? "default" : "secondary"}
-      className={cn(
-        "text-[10px] font-bold tracking-wider uppercase",
-        status === "paid"
-          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
-          : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/20",
-      )}
-    >
-      {status.toUpperCase()}
-    </Badge>
-  );
-  // PAGINATION CONTROLS
-  const PaginationControls = () => (
-    // PAGINATION CONTROLS MAIN CONTAINER
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-      {/* CONTENT CONTAINER */}
+// <== CUSTOMER TABLE SKELETON — MIRRORS CUSTOMER TABLE VIEW LAYOUT ==>
+const CustomerTableSkeleton = () => (
+  <div className="glass-card overflow-hidden">
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[560px]">
+        <thead>
+          <tr className="border-b border-border bg-muted/30">
+            {[120, 70, 60, 80, 80, 70, 90, 80, 60].map((w, i) => (
+              <th key={i} className="px-3 py-2.5">
+                <Skeleton style={{ width: w, height: 12 }} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <tr key={i} className="border-b border-border/50">
+              <td className="px-3 py-3">
+                <Skeleton className="h-4 w-24" />
+              </td>
+              <td className="px-3 py-3">
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </td>
+              <td className="px-3 py-3 hidden sm:table-cell">
+                <Skeleton className="h-4 w-12" />
+              </td>
+              <td className="px-3 py-3 hidden sm:table-cell">
+                <Skeleton className="h-4 w-16" />
+              </td>
+              <td className="px-3 py-3">
+                <Skeleton className="h-4 w-16" />
+              </td>
+              <td className="px-3 py-3 hidden md:table-cell">
+                <Skeleton className="h-4 w-16" />
+              </td>
+              <td className="px-3 py-3">
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </td>
+              <td className="px-3 py-3 hidden sm:table-cell">
+                <Skeleton className="h-4 w-20" />
+              </td>
+              <td className="px-3 py-3">
+                <div className="flex gap-1">
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    {/* SKELETON PAGINATION */}
+    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-border">
       <div className="flex items-center gap-2">
-        {/* ROWS PER PAGE */}
-        <span className="text-sm text-muted-foreground">Rows per page:</span>
-        {/* ROWS PER PAGE SELECT */}
-        <Select
-          value={rowsPerPage.toString()}
-          onValueChange={handleRowsPerPageChange}
-        >
-          <SelectTrigger className="w-16 h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="5">5</SelectItem>
-            <SelectItem value="10">10</SelectItem>
-            <SelectItem value="20">20</SelectItem>
-            <SelectItem value="50">50</SelectItem>
-          </SelectContent>
-        </Select>
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-8 w-16 rounded-md" />
       </div>
-      {/* PAGINATION */}
       <div className="flex items-center gap-2">
-        {/* PAGINATION TEXT */}
-        <span className="text-sm text-muted-foreground">
-          {startIndex + 1}-{Math.min(startIndex + rowsPerPage, filtered.length)}{" "}
-          of {filtered.length}
-        </span>
-        {/* PAGINATION BUTTONS */}
-        <div className="flex gap-1">
-          {/* PREV BUTTON */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((p) => p - 1)}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          {/* NEXT BUTTON */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            disabled={currentPage >= totalPages}
-            onClick={() => setCurrentPage((p) => p + 1)}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+    </div>
+  </div>
+);
+
+// <== SHOP TABLE SKELETON — MIRRORS SHOP TABLE VIEW LAYOUT ==>
+const ShopTableSkeleton = () => (
+  <div className="glass-card overflow-hidden">
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[400px]">
+        <thead>
+          <tr className="border-b border-border bg-muted/30">
+            {[80, 70, 90, 90, 90, 140, 60].map((w, i) => (
+              <th key={i} className="px-3 py-2.5">
+                <Skeleton style={{ width: w, height: 12 }} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <tr key={i} className="border-b border-border/50">
+              <td className="px-3 py-3">
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </td>
+              <td className="px-3 py-3">
+                <Skeleton className="h-4 w-12" />
+              </td>
+              <td className="px-3 py-3 hidden sm:table-cell">
+                <Skeleton className="h-4 w-16" />
+              </td>
+              <td className="px-3 py-3">
+                <Skeleton className="h-4 w-16" />
+              </td>
+              <td className="px-3 py-3 hidden sm:table-cell">
+                <Skeleton className="h-4 w-20" />
+              </td>
+              <td className="px-3 py-3 hidden md:table-cell">
+                <Skeleton className="h-4 w-28" />
+              </td>
+              <td className="px-3 py-3">
+                <div className="flex gap-1">
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    {/* SKELETON PAGINATION */}
+    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-border">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-8 w-16 rounded-md" />
+      </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+    </div>
+  </div>
+);
+
+// <== LIST SKELETON — MIRRORS LIST VIEW LAYOUT ==>
+const ListSkeleton = () => (
+  <div className="glass-card overflow-hidden">
+    <div className="divide-y divide-border/50">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="p-3 sm:p-4 flex items-center gap-3">
+          <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+            <Skeleton className="h-3 w-36" />
+          </div>
+          <div className="shrink-0 hidden sm:block text-right space-y-1">
+            <Skeleton className="h-5 w-20 ml-auto" />
+            <Skeleton className="h-5 w-16 ml-auto rounded-full" />
+          </div>
+          <div className="flex gap-0.5 shrink-0">
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
+        </div>
+      ))}
+    </div>
+    {/* SKELETON PAGINATION */}
+    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-border">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-8 w-16 rounded-md" />
+      </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+    </div>
+  </div>
+);
+
+// <== GRID SKELETON — MIRRORS GRID VIEW LAYOUT ==>
+const GridSkeleton = () => (
+  <div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="glass-card p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-11 h-11 rounded-full" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+            <Skeleton className="h-5 w-14 rounded-full" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Skeleton className="h-16 rounded-lg" />
+            <Skeleton className="h-16 rounded-lg" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3.5 w-full" />
+            <Skeleton className="h-3.5 w-full" />
+          </div>
+          <div className="flex items-center justify-between pt-1 border-t border-border/50">
+            <Skeleton className="h-6 w-20" />
+            <div className="flex gap-0.5">
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    {/* SKELETON PAGINATION */}
+    <div className="glass-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-border">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-8 w-8 rounded-md" />
+          <Skeleton className="h-8 w-8 rounded-md" />
         </div>
       </div>
     </div>
+  </div>
+);
+
+// <== VIEW-SPECIFIC SKELETON SELECTOR ==>
+const ViewSkeleton = ({ view }: { view: ViewMode }) => {
+  // IF VIEW IS LIST RETURN LIST SKELETON
+  if (view === "list") return <ListSkeleton />;
+  // IF VIEW IS GRID RETURN GRID SKELETON
+  if (view === "grid") return <GridSkeleton />;
+  // ELSE RETURN NULL
+  return null;
+};
+
+// <== FULL PAGE SKELETON — MIRRORS ENTIRE SALES PAGE LAYOUT ==>
+const SalesPageSkeleton = ({
+  activeTab,
+  customerView,
+  shopView,
+}: {
+  activeTab: SaleTab;
+  customerView: ViewMode;
+  shopView: ViewMode;
+}) => (
+  // SAME WRAPPER CLASS AS THE REAL PAGE SO LAYOUT IS IDENTICAL
+  <div className="page-container">
+    {/* HEADER SKELETON — MIRRORS REAL HEADER */}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+      {/* LEFT: ICON + TITLE */}
+      <div className="flex items-center gap-3">
+        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-16 sm:w-20" />
+          <Skeleton className="h-3 w-48 sm:w-60 hidden sm:block" />
+        </div>
+      </div>
+      {/* RIGHT: FILTER PILLS SKELETON */}
+      <div className="flex items-center gap-1.5">
+        <Skeleton className="h-8 w-16 rounded-full" />
+        <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="h-8 w-28 rounded-full" />
+        <Skeleton className="h-8 w-8 rounded-md ml-2" />
+        <Skeleton className="h-5 w-20" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+    </div>
+    {/* STATS CARDS SKELETON — 1 COL MOBILE, 2 COLS SM, 4 COLS DESKTOP */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 mb-5 sm:mb-6">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="glass-card p-3 sm:p-4 md:p-5">
+          <div className="flex items-start justify-between mb-2 sm:mb-3">
+            <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg" />
+            <Skeleton className="h-5 w-7 rounded-full" />
+          </div>
+          <Skeleton className="h-3 w-20 mb-1.5" />
+          <Skeleton className="h-5 sm:h-6 md:h-7 w-20 sm:w-24" />
+        </div>
+      ))}
+    </div>
+    {/* TABS SKELETON */}
+    <div className="flex gap-2 mb-4">
+      <Skeleton className="h-9 w-36 rounded-lg" />
+      <Skeleton className="h-9 w-28 rounded-lg" />
+    </div>
+    {/* CUSTOMER TAB CONTROLS SKELETON — ONLY SHOWN WHEN CUSTOMER TAB IS ACTIVE */}
+    {activeTab === "customer" && (
+      <>
+        <div className="flex flex-col gap-2 sm:items-end mb-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Skeleton className="h-9 w-28 rounded-full" />
+            <Skeleton className="h-9 w-full sm:w-44 md:w-52 rounded-lg" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-9 w-24 rounded-lg" />
+              <Skeleton className="h-9 w-20 rounded-lg" />
+            </div>
+          </div>
+        </div>
+        {/* CUSTOMER VIEW-SPECIFIC SKELETON — TABLE USES DEDICATED CUSTOMER SKELETON */}
+        {customerView === "table" && <CustomerTableSkeleton />}
+        <ViewSkeleton view={customerView} />
+      </>
+    )}
+    {/* SHOP TAB CONTROLS SKELETON — ONLY SHOWN WHEN SHOP TAB IS ACTIVE */}
+    {activeTab === "shop" && (
+      <>
+        <div className="flex flex-col gap-2 sm:items-end mb-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Skeleton className="h-9 w-36 rounded-lg" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-9 w-24 rounded-lg" />
+              <Skeleton className="h-9 w-20 rounded-lg" />
+            </div>
+          </div>
+        </div>
+        {/* SHOP VIEW-SPECIFIC SKELETON — TABLE USES DEDICATED SHOP SKELETON */}
+        {shopView === "table" && <ShopTableSkeleton />}
+        <ViewSkeleton view={shopView} />
+      </>
+    )}
+  </div>
+);
+
+// <== SALES PAGE COMPONENT ==>
+const Sales = memo(() => {
+  // ACTIVE TAB STATE — INITIALIZED FROM LOCAL STORAGE
+  const [activeTab, setActiveTab] = useState<SaleTab>(getInitialActiveTab);
+  // SHARED FILTER STATE — APPLIED TO BOTH TABS AND STATS
+  const [filter, setFilter] = useState<SaleFilter>("month");
+  // SELECTED MONTH STATE — USED WHEN FILTER IS MONTH
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  // CUSTOMER VIEW MODE — INITIALIZED FROM LOCAL STORAGE
+  const [customerView, setCustomerView] = useState<ViewMode>(
+    getInitialCustomerView,
   );
-  // RETURNING SALES PAGE COMPONENT
+  // CUSTOMER CURRENT PAGE STATE
+  const [customerPage, setCustomerPage] = useState<number>(1);
+  // CUSTOMER ROWS PER PAGE — INITIALIZED FROM LOCAL STORAGE
+  const [customerRows, setCustomerRows] = useState<number>(
+    getInitialCustomerRows,
+  );
+  // CUSTOMER SEARCH INPUT STATE (RAW — UPDATES ON EVERY KEYSTROKE)
+  const [customerSearch, setCustomerSearch] = useState<string>("");
+  // PENDING ONLY FILTER STATE (CUSTOMER SALES ONLY)
+  const [pendingOnly, setPendingOnly] = useState<boolean>(false);
+  // CUSTOMER SALE DIALOG STATE
+  const [customerFormOpen, setCustomerFormOpen] = useState<boolean>(false);
+  // CUSTOMER SALE BEING EDITED (NULL = ADD MODE)
+  const [editCustomerSale, setEditCustomerSale] = useState<Sale | null>(null);
+  // SHOP VIEW MODE — INITIALIZED FROM LOCAL STORAGE
+  const [shopView, setShopView] = useState<ViewMode>(getInitialShopView);
+  // SHOP CURRENT PAGE STATE
+  const [shopPage, setShopPage] = useState<number>(1);
+  // SHOP ROWS PER PAGE — INITIALIZED FROM LOCAL STORAGE
+  const [shopRows, setShopRows] = useState<number>(getInitialShopRows);
+  // SHOP PRODUCT TYPE FILTER STATE
+  const [shopProductFilter, setShopProductFilter] = useState<string>("");
+  // SHOP SALE DIALOG STATE
+  const [shopFormOpen, setShopFormOpen] = useState<boolean>(false);
+  // SHOP SALE BEING EDITED (NULL = ADD MODE)
+  const [editShopSale, setEditShopSale] = useState<Sale | null>(null);
+  // DEBOUNCE CUSTOMER SEARCH INPUT (300MS) TO AVOID EXCESSIVE API CALLS
+  const debouncedCustomerSearch = useDebounce(customerSearch, 300);
+  // FORMAT SELECTED MONTH AS YYYY-MM FOR API
+  const monthStr = format(selectedMonth, "yyyy-MM");
+  // MONTH PARAM — ONLY PASS WHEN FILTER IS MONTH
+  const activeMonth = filter === "month" ? monthStr : "";
+  // FETCH CUSTOMER SALES FROM SERVER WITH ALL ACTIVE FILTERS
+  const {
+    data: customerData,
+    isLoading: customerLoading,
+    isError: customerError,
+  } = useCustomerSales(
+    filter,
+    activeMonth,
+    debouncedCustomerSearch,
+    pendingOnly,
+    customerPage,
+    customerRows,
+  );
+  // FETCH SHOP SALES FROM SERVER WITH ALL ACTIVE FILTERS
+  const {
+    data: shopData,
+    isLoading: shopLoading,
+    isError: shopError,
+  } = useShopSales(filter, activeMonth, shopProductFilter, shopPage, shopRows);
+  // DELETE SALE MUTATION (SHARED FOR BOTH SALE TYPES)
+  const deleteMutation = useDeleteSale();
+  // RESET CUSTOMER PAGE TO 1 WHEN CUSTOMER-SPECIFIC FILTERS CHANGE
+  useEffect(() => {
+    // RESET CUSTOMER PAGE TO 1
+    setCustomerPage(1);
+  }, [filter, activeMonth, debouncedCustomerSearch, pendingOnly]);
+  // RESET SHOP PAGE TO 1 WHEN SHOP-SPECIFIC FILTERS CHANGE
+  useEffect(() => {
+    // RESET SHOP PAGE TO 1
+    setShopPage(1);
+  }, [filter, activeMonth, shopProductFilter]);
+  // COMBINED STATS FROM API RESPONSE
+  const stats = customerData?.stats ?? shopData?.stats;
+  // COMBINED LOADING STATE FOR STATS CARDS SKELETON
+  const statsLoading = customerLoading && shopLoading;
+  // CUSTOMER SALES RECORDS FROM API RESPONSE — ALREADY PAGINATED BY SERVER
+  const customerSales = useMemo(
+    () => customerData?.records ?? [],
+    [customerData?.records],
+  );
+  // CALCULATE CUSTOMER TOTAL FILTERED
+  const customerTotalFiltered = customerData?.pagination?.total ?? 0;
+  // CALCULATE CUSTOMER TOTAL PAGES
+  const customerTotalPages = customerData?.pagination?.totalPages ?? 1;
+  // CALCULATE CUSTOMER START INDEX
+  const customerStartIndex = (customerPage - 1) * customerRows;
+  // SHOP SALES RECORDS FROM API RESPONSE — ALREADY PAGINATED BY SERVER
+  const shopSales = useMemo(() => shopData?.records ?? [], [shopData?.records]);
+  // CALCULATE SHOP TOTAL FILTERED
+  const shopTotalFiltered = shopData?.pagination?.total ?? 0;
+  // CALCULATE SHOP TOTAL PAGES
+  const shopTotalPages = shopData?.pagination?.totalPages ?? 1;
+  // CALCULATE SHOP START INDEX
+  const shopStartIndex = (shopPage - 1) * shopRows;
+  // IS NEXT MONTH DISABLED (CANNOT NAVIGATE PAST CURRENT MONTH)
+  const isNextMonthDisabled =
+    selectedMonth.getMonth() >= new Date().getMonth() &&
+    selectedMonth.getFullYear() >= new Date().getFullYear();
+  // HANDLE ACTIVE TAB CHANGE — PERSISTS SELECTION TO LOCAL STORAGE
+  const handleTabChange = useCallback((value: string): void => {
+    // GUARD: ENSURE VALUE IS A VALID TAB
+    if (!isSaleTab(value)) return;
+    // UPDATE ACTIVE TAB STATE
+    setActiveTab(value);
+    // PERSIST TO LOCAL STORAGE
+    localStorage.setItem("sales_active_tab", value);
+  }, []);
+  // HANDLE FILTER CHANGE — RESETS BOTH PAGES
+  const handleFilterChange = useCallback((newFilter: SaleFilter): void => {
+    // UPDATE FILTER
+    setFilter(newFilter);
+    // RESET CUSTOMER PAGE TO 1
+    setCustomerPage(1);
+    // RESET SHOP PAGE TO 1
+    setShopPage(1);
+  }, []);
+  // HANDLE MONTH NAVIGATION — DECREMENT MONTH
+  const handlePrevMonth = useCallback((): void => {
+    // DECREMENT MONTH
+    setSelectedMonth(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1),
+    );
+  }, []);
+  // HANDLE MONTH NAVIGATION — INCREMENT MONTH (BLOCKED FOR FUTURE MONTHS)
+  const handleNextMonth = useCallback((): void => {
+    // INCREMENT MONTH
+    setSelectedMonth(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1),
+    );
+  }, []);
+  // SET AND PERSIST CUSTOMER VIEW MODE TO LOCAL STORAGE
+  const handleCustomerSetView = useCallback((mode: ViewMode): void => {
+    // UPDATE VIEW STATE
+    setCustomerView(mode);
+    // PERSIST TO LOCAL STORAGE
+    localStorage.setItem("sales_customer_view", mode);
+  }, []);
+  // SET AND PERSIST SHOP VIEW MODE TO LOCAL STORAGE
+  const handleShopSetView = useCallback((mode: ViewMode): void => {
+    // UPDATE VIEW STATE
+    setShopView(mode);
+    // PERSIST TO LOCAL STORAGE
+    localStorage.setItem("sales_shop_view", mode);
+  }, []);
+  // HANDLE CUSTOMER ROWS PER PAGE CHANGE
+  const handleCustomerRowsChange = useCallback((value: string): void => {
+    // PARSE NEW VALUE
+    const parsed = Number.parseInt(value, 10);
+    // SANITIZE: FALLBACK TO 10 IF INVALID
+    const safe = Number.isNaN(parsed) || parsed <= 0 ? 10 : parsed;
+    // UPDATE STATE
+    setCustomerRows(safe);
+    // RESET TO FIRST PAGE
+    setCustomerPage(1);
+    // PERSIST TO LOCAL STORAGE
+    localStorage.setItem("sales_customer_rows", String(safe));
+  }, []);
+  // HANDLE SHOP ROWS PER PAGE CHANGE
+  const handleShopRowsChange = useCallback((value: string): void => {
+    // PARSE NEW VALUE
+    const parsed = Number.parseInt(value, 10);
+    // SANITIZE: FALLBACK TO 10 IF INVALID
+    const safe = Number.isNaN(parsed) || parsed <= 0 ? 10 : parsed;
+    // UPDATE STATE
+    setShopRows(safe);
+    // RESET TO FIRST PAGE
+    setShopPage(1);
+    // PERSIST TO LOCAL STORAGE
+    localStorage.setItem("sales_shop_rows", String(safe));
+  }, []);
+  // OPEN ADD CUSTOMER SALE DIALOG
+  const handleCustomerAddOpen = useCallback((): void => {
+    // CLEAR ANY EDIT STATE
+    setEditCustomerSale(null);
+    // OPEN DIALOG
+    setCustomerFormOpen(true);
+  }, []);
+  // OPEN EDIT CUSTOMER SALE DIALOG
+  const handleCustomerEdit = useCallback((sale: Sale): void => {
+    // SET SALE TO EDIT
+    setEditCustomerSale(sale);
+    // OPEN DIALOG
+    setCustomerFormOpen(true);
+  }, []);
+  // CLOSE CUSTOMER SALE FORM DIALOG
+  const handleCustomerFormClose = useCallback((): void => {
+    // CLOSE DIALOG
+    setCustomerFormOpen(false);
+    // CLEAR EDIT STATE
+    setEditCustomerSale(null);
+  }, []);
+  // OPEN ADD SHOP SALE DIALOG
+  const handleShopAddOpen = useCallback((): void => {
+    // CLEAR ANY EDIT STATE
+    setEditShopSale(null);
+    // OPEN DIALOG
+    setShopFormOpen(true);
+  }, []);
+  // OPEN EDIT SHOP SALE DIALOG
+  const handleShopEdit = useCallback((sale: Sale): void => {
+    // SET SALE TO EDIT
+    setEditShopSale(sale);
+    // OPEN DIALOG
+    setShopFormOpen(true);
+  }, []);
+  // CLOSE SHOP SALE FORM DIALOG
+  const handleShopFormClose = useCallback((): void => {
+    // CLOSE DIALOG
+    setShopFormOpen(false);
+    // CLEAR EDIT STATE
+    setEditShopSale(null);
+  }, []);
+  // DELETE SALE BY ID (SHARED FOR BOTH SALE TYPES)
+  const handleDelete = useCallback(
+    (id: string): void => {
+      // CALL DELETE MUTATION
+      deleteMutation.mutate(id);
+    },
+    [deleteMutation],
+  );
+  // SHARED CUSTOMER VIEW PROPS
+  const customerViewProps = {
+    sales: customerSales,
+    totalFiltered: customerTotalFiltered,
+    isLoading: customerLoading,
+    currentPage: customerPage,
+    rowsPerPage: customerRows,
+    startIndex: customerStartIndex,
+    totalPages: customerTotalPages,
+    onPageChange: setCustomerPage,
+    onRowsPerPageChange: handleCustomerRowsChange,
+    onEdit: handleCustomerEdit,
+    onDelete: handleDelete,
+  };
+  // SHARED SHOP VIEW PROPS
+  const shopViewProps = {
+    sales: shopSales,
+    totalFiltered: shopTotalFiltered,
+    isLoading: shopLoading,
+    currentPage: shopPage,
+    rowsPerPage: shopRows,
+    startIndex: shopStartIndex,
+    totalPages: shopTotalPages,
+    onPageChange: setShopPage,
+    onRowsPerPageChange: handleShopRowsChange,
+    onEdit: handleShopEdit,
+    onDelete: handleDelete,
+  };
+  // SHOW FULL PAGE SKELETON ON INITIAL LOAD (NO CACHED DATA)
+  if (customerLoading && shopLoading) {
+    // RETURNING FULL PAGE SKELETON
+    return (
+      <SalesPageSkeleton
+        activeTab={activeTab}
+        customerView={customerView}
+        shopView={shopView}
+      />
+    );
+  }
+  // RETURNING SALES PAGE
   return (
-    // MAIN CONTAINER
+    // PAGE WRAPPER WITH TRANSITION
     <PageTransition className="page-container">
-      {/* CONTENT CONTAINER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        {/* HEADER */}
-        <div className="flex items-center gap-3">
-          {/* ICON */}
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+      {/* PAGE HEADER ROW */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+        {/* LEFT: ICON + TITLE + DESCRIPTION */}
+        <div className="flex items-center gap-3 min-w-0">
+          {/* PAGE ICON */}
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <ShoppingCart className="w-5 h-5 text-primary" />
           </div>
-          {/* TITLE & DESCRIPTION */}
-          <div>
-            <h1 className="font-display text-2xl font-bold">Sales</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+          {/* TITLE AND DESCRIPTION */}
+          <div className="min-w-0">
+            <h1 className="font-display text-xl sm:text-2xl font-bold">
+              Sales
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">
               Manage and track all sales transactions
             </p>
           </div>
         </div>
-        {/* ACTION BUTTONS */}
-        <div className="flex items-center gap-2">
-          {/* VIEW BUTTONS */}
-          <div className="flex items-center bg-muted rounded-lg p-0.5">
-            {VIEW_BUTTONS.map(({ mode, icon: Icon, label }) => (
-              <Tooltip key={mode} delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setViewMode(mode)}
-                    className={cn(
-                      "p-1.5 rounded-md transition-all duration-200",
-                      view === mode
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{label} view</TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-          {/* SEARCH INPUT */}
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search sales..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          {/* ADD BUTTON */}
-          <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-1" /> Add
+        {/* RIGHT: FILTER PILLS + MONTH NAVIGATION */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* FILTER TYPE PILLS */}
+          {FILTER_BUTTONS.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => handleFilterChange(value)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border",
+                filter === value
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+          {/* MONTH NAVIGATION — ONLY SHOWN WHEN MONTH FILTER IS ACTIVE */}
+          {filter === "month" && (
+            <div className="flex items-center gap-1 ml-1">
+              {/* PREVIOUS MONTH */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handlePrevMonth}
+              >
+                <ChevronLeft className="w-4 h-4" />
               </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="font-display">
-                  {editItem ? "Edit" : "Add"} Sale
-                </DialogTitle>
-              </DialogHeader>
-              {/* FORM */}
-              <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-                {/* CUSTOMER INPUT */}
-                <div>
-                  <Label>Customer</Label>
-                  <Input
-                    name="customer"
-                    defaultValue={editItem?.customer}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                {/* MILK & YOGHURT INPUT */}
-                <div className="grid grid-cols-2 gap-3">
-                  {/* MILK INPUT */}
-                  <div>
-                    <Label>Milk (L)</Label>
-                    <Input
-                      name="milk"
-                      type="number"
-                      step="0.5"
-                      defaultValue={editItem?.milk || ""}
-                      className="mt-1"
-                    />
-                  </div>
-                  {/* YOGHURT INPUT */}
-                  <div>
-                    <Label>Yoghurt (Kg)</Label>
-                    <Input
-                      name="yoghurt"
-                      type="number"
-                      step="0.5"
-                      defaultValue={editItem?.yoghurt || ""}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-                {/* STATUS INPUT */}
-                <div>
-                  <Label>Status</Label>
-                  <Select
-                    name="status"
-                    defaultValue={editItem?.status || "pending"}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="paid">Paid</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* SUBMIT */}
-                <Button type="submit" className="w-full">
-                  {editItem ? "Update" : "Add"} Sale
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              {/* CURRENT MONTH LABEL */}
+              <span className="text-xs font-medium whitespace-nowrap min-w-[80px] text-center">
+                {format(selectedMonth, "MMM yyyy")}
+              </span>
+              {/* NEXT MONTH (DISABLED FOR FUTURE MONTHS) */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                disabled={isNextMonthDisabled}
+                onClick={handleNextMonth}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
-      {/* STATS CONTAINER */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
-        {stats.map((stat, i) => {
-          // ICON
-          const Icon = stat.icon;
-          // RETURNING STAT CARD
-          return (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              className="glass-card p-4 md:p-5 relative overflow-hidden group hover:shadow-md transition-shadow"
-            >
-              {/* HEADER */}
-              <div className="flex items-start justify-between mb-3">
-                {/* ICON */}
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary">
-                  <Icon className="w-5 h-5" />
+      {/* STATS CARDS — ALWAYS COMBINED (ALL SALE TYPES FOR THE PERIOD) */}
+      <SaleStatsCards stats={stats} isLoading={statsLoading} />
+      {/* TABBED VIEWS — CUSTOMER SALES AND SHOP SALES */}
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
+        {/* TAB LIST */}
+        <TabsList className="mb-4 h-10">
+          {/* CUSTOMER SALES TAB */}
+          <TabsTrigger value="customer" className="gap-2">
+            <Users className="w-4 h-4" />
+            <span>Customer Sales</span>
+          </TabsTrigger>
+          {/* SHOP SALES TAB */}
+          <TabsTrigger value="shop" className="gap-2">
+            <ShoppingCart className="w-4 h-4" />
+            <span>Shop Sales</span>
+          </TabsTrigger>
+        </TabsList>
+        {/* CUSTOMER SALES TAB CONTENT */}
+        <TabsContent value="customer" className="mt-0">
+          {/* CUSTOMER SALES CONTROLS ROW */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end mb-4">
+            {/* PENDING ONLY TOGGLE + SEARCH + VIEW TOGGLES + ADD */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* PENDING ONLY FILTER PILL */}
+              <button
+                onClick={() => {
+                  setPendingOnly((prev) => !prev);
+                  setCustomerPage(1);
+                }}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border shrink-0",
+                  pendingOnly
+                    ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30 shadow-sm"
+                    : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
+                )}
+              >
+                Pending Only
+              </button>
+              {/* CUSTOMER SEARCH INPUT */}
+              <div className="relative flex-1 sm:flex-none sm:w-44 md:w-52">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search customer..."
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  className="pl-9 w-full h-9"
+                />
+              </div>
+              {/* CUSTOMER VIEW TOGGLE + ADD BUTTON */}
+              <div className="flex items-center gap-2">
+                {/* CUSTOMER VIEW TOGGLE BUTTONS */}
+                <div className="flex items-center bg-muted rounded-lg p-0.5 shrink-0">
+                  {VIEW_BUTTONS.map(({ mode, icon: Icon, label }) => (
+                    <Tooltip key={mode} delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => handleCustomerSetView(mode)}
+                          className={cn(
+                            "p-1.5 rounded-md transition-all duration-200",
+                            customerView === mode
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          <Icon className="w-4 h-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {label} view
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
                 </div>
-                {/* TREND */}
-                <div
-                  className={cn(
-                    "flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full",
-                    stat.trend === "up"
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                      : "bg-red-500/10 text-red-600 dark:text-red-400",
-                  )}
+                {/* ADD CUSTOMER SALE BUTTON */}
+                <Button
+                  onClick={handleCustomerAddOpen}
+                  className="shrink-0 h-9 ml-auto sm:ml-0"
                 >
-                  <TrendingUp className="w-3 h-3" />
-                  {stat.change}
-                </div>
+                  <Plus className="w-4 h-4 mr-1" />
+                  <span>Add</span>
+                </Button>
               </div>
-              {/* LABEL */}
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
-              {/* VALUE */}
-              <p className="text-2xl font-bold font-display mt-0.5">
-                {stat.value}
+            </div>
+          </div>
+          {/* CUSTOMER SALES ERROR STATE */}
+          {customerError && (
+            <div className="glass-card p-5 sm:p-6 text-center mb-5 sm:mb-6">
+              <p className="text-sm text-muted-foreground">
+                Failed to load customer sales. Please check your connection and
+                try again.
               </p>
-              <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors" />
-            </motion.div>
-          );
-        })}
-      </div>
-      {/* SALES TABLE VIEW */}
-      {view === "table" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card overflow-hidden"
-        >
-          {/* TABLE CONTAINER */}
-          <div className="overflow-x-auto">
-            {/* TABLE */}
-            <table className="w-full text-sm">
-              {/* TABLE HEADER */}
-              <thead>
-                <tr className="border-b border-border text-left">
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Customer
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Milk (L)
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Yoghurt
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Total
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Date
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              {/* TABLE BODY */}
-              <tbody>
-                {/* SALES */}
-                {paginatedRecords.map((r, i) => (
-                  <motion.tr
-                    key={r.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.04 }}
-                    className="border-b border-border/50 hover:bg-muted/50 transition-colors"
-                  >
-                    <td className="p-3 font-medium">{r.customer}</td>
-                    <td className="p-3">{r.milk}</td>
-                    <td className="p-3">{r.yoghurt}</td>
-                    <td className="p-3 font-semibold">₨{r.total}</td>
-                    <td className="p-3">{statusBadge(r.status)}</td>
-                    <td className="p-3 text-muted-foreground">{r.date}</td>
-                    <td className="p-3">
-                      {/* ACTIONS */}
-                      <div className="flex gap-1">
-                        {/* EDIT */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleEdit(r)}
+            </div>
+          )}
+          {/* CUSTOMER TABLE VIEW */}
+          {customerView === "table" && (
+            <CustomerSaleTableView {...customerViewProps} />
+          )}
+          {/* CUSTOMER LIST VIEW */}
+          {customerView === "list" && (
+            <CustomerSaleListView {...customerViewProps} />
+          )}
+          {/* CUSTOMER GRID VIEW */}
+          {customerView === "grid" && (
+            <CustomerSaleGridView {...customerViewProps} />
+          )}
+        </TabsContent>
+        {/* SHOP SALES TAB CONTENT */}
+        <TabsContent value="shop" className="mt-0">
+          {/* SHOP SALES CONTROLS ROW */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end mb-4">
+            {/* PRODUCT FILTER + VIEW TOGGLES + ADD */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* PRODUCT TYPE FILTER SELECT */}
+              <Select
+                value={shopProductFilter || "__all__"}
+                onValueChange={(val) => {
+                  setShopProductFilter(val === "__all__" ? "" : val);
+                  setShopPage(1);
+                }}
+              >
+                <SelectTrigger className="h-9 w-36 shrink-0">
+                  <SelectValue placeholder="All Products" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All Products</SelectItem>
+                  <SelectItem value="milk">Milk</SelectItem>
+                  <SelectItem value="yoghurt">Yoghurt</SelectItem>
+                </SelectContent>
+              </Select>
+              {/* SHOP VIEW TOGGLE + ADD BUTTON */}
+              <div className="flex items-center gap-2">
+                {/* SHOP VIEW TOGGLE BUTTONS */}
+                <div className="flex items-center bg-muted rounded-lg p-0.5 shrink-0">
+                  {VIEW_BUTTONS.map(({ mode, icon: Icon, label }) => (
+                    <Tooltip key={mode} delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => handleShopSetView(mode)}
+                          className={cn(
+                            "p-1.5 rounded-md transition-all duration-200",
+                            shopView === mode
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
                         >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        {/* DELETE */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(r.id)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-            {/* NO SALES */}
-            {filtered.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground">
-                No sales found.
+                          <Icon className="w-4 h-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {label} view
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+                {/* ADD SHOP SALE BUTTON */}
+                <Button
+                  onClick={handleShopAddOpen}
+                  className="shrink-0 h-9 ml-auto sm:ml-0"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  <span>Add</span>
+                </Button>
               </div>
-            )}
+            </div>
           </div>
-          {/* PAGINATION */}
-          {filtered.length > 0 && <PaginationControls />}
-        </motion.div>
-      )}
-      {/* SALES LIST VIEW */}
-      {view === "list" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card overflow-hidden"
-        >
-          {/* SALES */}
-          <div className="divide-y divide-border/50">
-            {paginatedRecords.map((r, i) => (
-              <motion.div
-                key={r.id}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors group"
-              >
-                {/* CUSTOMER AVATAR */}
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-primary">
-                    {r.customer.charAt(0)}
-                  </span>
-                </div>
-                {/* CUSTOMER INFO */}
-                <div className="flex-1 min-w-0">
-                  {/* CUSTOMER NAME */}
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold truncate">{r.customer}</span>
-                    {statusBadge(r.status)}
-                  </div>
-                  {/* CUSTOMER DETAILS */}
-                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                    {/* MILK */}
-                    <span className="flex items-center gap-1">
-                      <Milk className="w-3 h-3" />
-                      {r.milk}L milk
-                    </span>
-                    {/* YOGHURT */}
-                    {r.yoghurt > 0 && <span>{r.yoghurt}kg yoghurt</span>}
-                    {/* DATE */}
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {r.date}
-                    </span>
-                  </div>
-                </div>
-                {/* TOTAL */}
-                <div className="text-right shrink-0">
-                  <span className="font-display text-lg font-bold">
-                    ₨{r.total}
-                  </span>
-                </div>
-                {/* ACTIONS */}
-                <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  {/* EDIT */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleEdit(r)}
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                  </Button>
-                  {/* DELETE */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(r.id)}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          {/* NO SALES */}
-          {filtered.length === 0 && (
-            <div className="p-8 text-center text-muted-foreground">
-              No sales found.
+          {/* SHOP SALES ERROR STATE */}
+          {shopError && (
+            <div className="glass-card p-5 sm:p-6 text-center mb-5 sm:mb-6">
+              <p className="text-sm text-muted-foreground">
+                Failed to load shop sales. Please check your connection and try
+                again.
+              </p>
             </div>
           )}
-          {/* PAGINATION */}
-          {filtered.length > 0 && <PaginationControls />}
-        </motion.div>
-      )}
-      {/* SALES GRID VIEW */}
-      {view === "grid" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          {/* SALES */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            {paginatedRecords.map((r, i) => (
-              <motion.div
-                key={r.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.06 }}
-                className="glass-card p-5 flex flex-col hover:shadow-md transition-all group relative"
-              >
-                {/* CUSTOMER INFO */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    {/* CUSTOMER AVATAR */}
-                    <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-base font-bold text-primary">
-                        {r.customer.charAt(0)}
-                      </span>
-                    </div>
-                    {/* CUSTOMER NAME & DATE */}
-                    <div>
-                      <h3 className="font-semibold leading-tight">
-                        {r.customer}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {r.date}
-                      </p>
-                    </div>
-                  </div>
-                  {statusBadge(r.status)}
-                </div>
-                {/* PRODUCTS */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {/* MILK */}
-                  <div className="bg-muted/50 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground mb-0.5">Milk</p>
-                    <p className="font-display text-lg font-bold">
-                      {r.milk}
-                      <span className="text-xs font-normal text-muted-foreground ml-0.5">
-                        L
-                      </span>
-                    </p>
-                  </div>
-                  {/* YOGHURT */}
-                  <div className="bg-muted/50 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground mb-0.5">
-                      Yoghurt
-                    </p>
-                    <p className="font-display text-lg font-bold">
-                      {r.yoghurt}
-                      <span className="text-xs font-normal text-muted-foreground ml-0.5">
-                        kg
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                {/* TOTAL & ACTIONS */}
-                <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50">
-                  {/* TOTAL */}
-                  <span className="font-display text-xl font-bold">
-                    ₨{r.total}
-                  </span>
-                  {/* ACTIONS */}
-                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {/* EDIT */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => handleEdit(r)}
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </Button>
-                    {/* DELETE */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(r.id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          {/* NO SALES */}
-          {filtered.length === 0 && (
-            <div className="glass-card p-8 text-center text-muted-foreground">
-              No sales found.
-            </div>
-          )}
-          {/* PAGINATION */}
-          {filtered.length > 0 && (
-            <div className="glass-card">
-              <PaginationControls />
-            </div>
-          )}
-        </motion.div>
-      )}
+          {/* SHOP TABLE VIEW */}
+          {shopView === "table" && <ShopSaleTableView {...shopViewProps} />}
+          {/* SHOP LIST VIEW */}
+          {shopView === "list" && <ShopSaleListView {...shopViewProps} />}
+          {/* SHOP GRID VIEW */}
+          {shopView === "grid" && <ShopSaleGridView {...shopViewProps} />}
+        </TabsContent>
+      </Tabs>
+      {/* CUSTOMER SALE ADD / EDIT FORM DIALOG */}
+      <CustomerSaleFormDialog
+        open={customerFormOpen}
+        editSale={editCustomerSale}
+        onClose={handleCustomerFormClose}
+      />
+      {/* SHOP SALE ADD / EDIT FORM DIALOG */}
+      <ShopSaleFormDialog
+        open={shopFormOpen}
+        editSale={editShopSale}
+        onClose={handleShopFormClose}
+      />
     </PageTransition>
   );
-};
+});
+
+// <== DISPLAY NAME FOR DEVTOOLS ==>
+Sales.displayName = "Sales";
 
 // <== MEMOIZED EXPORT TO PREVENT UNNECESSARY RE-RENDERS ==>
-export default memo(Sales);
+export default Sales;
