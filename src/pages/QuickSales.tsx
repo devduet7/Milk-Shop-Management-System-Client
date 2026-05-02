@@ -1,15 +1,12 @@
 // <== IMPORTS ==>
 import {
   Zap,
-  Plus,
   List,
-  Milk,
-  Trash2,
   Table2,
-  IceCream,
   LayoutGrid,
   ChevronLeft,
   ChevronRight,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Select,
@@ -23,746 +20,619 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
+import type {
+  QuickSale,
+  QuickSaleViewMode,
+  QuickSaleFilterType,
+  QuickSaleProductFilter,
+} from "@/types/quick-sale-types";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { memo, useState, useCallback, useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PageTransition } from "@/components/layout/PageTransition";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useQuickSales, useDeleteQuickSale } from "@/hooks/useQuickSales";
+import QuickSaleListView from "@/components/quickSales/QuickSaleListView";
+import QuickSaleGridView from "@/components/quickSales/QuickSaleGridView";
+import QuickSaleTableView from "@/components/quickSales/QuickSaleTableView";
+import QuickSaleStatsCards from "@/components/quickSales/QuickSaleStatsCards";
+import QuickSaleEntryPanel from "@/components/quickSales/QuickSaleEntryPanel";
+import QuickSaleDatePicker from "@/components/quickSales/QuickSaleDatePicker";
+import QuickSaleEditDialog from "@/components/quickSales/QuickSaleEditDialog";
 
-// <== QUICK SALE INTERFACE ==>
-interface QuickSale {
-  // <== ID ==>
-  id: number;
-  // <== TYPE ==>
-  type: "milk" | "yoghurt";
-  // <== QUANTITY ==>
-  quantity: number;
-  // <== RATE ==>
-  rate: number;
-  // <== TOTAL ==>
-  total: number;
-  // <== TIMESTAMP ==>
-  timestamp: string;
-}
-// <== VIEW MODE TYPE ==>
-type ViewMode = "table" | "list" | "grid";
+// <== LOCAL STORAGE KEY FOR PERSISTED VIEW MODE ==>
+const VIEW_KEY = "qs_view";
+// <== LOCAL STORAGE KEY FOR PERSISTED ROWS PER PAGE ==>
+const ROWS_KEY = "qs_rows_per_page";
+
+// <== VIEW MODE TYPE GUARD ==>
+const isViewMode = (v: string | null): v is QuickSaleViewMode =>
+  v === "table" || v === "list" || v === "grid";
+
+// <== GET INITIAL VIEW FROM LOCAL STORAGE ==>
+const getInitialView = (): QuickSaleViewMode => {
+  // READ SAVED VALUE
+  const saved = localStorage.getItem(VIEW_KEY);
+  // RETURN SAVED MODE OR DEFAULT TO TABLE
+  return isViewMode(saved) ? saved : "table";
+};
+
+// <== GET INITIAL ROWS FROM LOCAL STORAGE ==>
+const getInitialRows = (): number => {
+  // READ SAVED VALUE
+  const saved = localStorage.getItem(ROWS_KEY);
+  // PARSE VALUE
+  const parsed = Number.parseInt(saved ?? "20", 10);
+  // FALLBACK IF INVALID
+  return Number.isNaN(parsed) || parsed <= 0 ? 20 : parsed;
+};
+
 // <== VIEW BUTTON TYPE ==>
 type ViewButton = {
-  // <== MODE ==>
-  mode: ViewMode;
-  // <== ICON ==>
-  icon: typeof Table2;
-  // <== LABEL ==>
+  // <== VIEW MODE ==>
+  mode: QuickSaleViewMode;
+  // <== ICON COMPONENT ==>
+  icon: LucideIcon;
+  // <== TOOLTIP LABEL ==>
   label: string;
 };
-// <== STAT TYPE ==>
-type Stat = {
-  // <== LABEL ==>
-  label: string;
-  // <== VALUE ==>
-  value: string;
-  // <== COLOR ==>
-  color: string;
-};
-// <== DEFAULT MILK RATE ==>
-const DEFAULT_MILK_RATE = "120";
-// <== DEFAULT YOGHURT RATE ==>
-const DEFAULT_YOGHURT_RATE = "180";
-// <== VIEW BUTTONS LIST ==>
+
+// <== VIEW BUTTONS CONFIG ==>
 const VIEW_BUTTONS: ViewButton[] = [
+  // TABLE VIEW
   { mode: "table", icon: Table2, label: "Table" },
+  // LIST VIEW
   { mode: "list", icon: List, label: "List" },
+  // GRID VIEW
   { mode: "grid", icon: LayoutGrid, label: "Grid" },
 ];
-// <== INITIAL SALES ==>
-const INITIAL_SALES: QuickSale[] = [
-  {
-    id: 1,
-    type: "milk",
-    quantity: 2,
-    rate: 120,
-    total: 240,
-    timestamp: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    type: "yoghurt",
-    quantity: 1,
-    rate: 180,
-    total: 180,
-    timestamp: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    type: "milk",
-    quantity: 5,
-    rate: 120,
-    total: 600,
-    timestamp: new Date().toISOString(),
-  },
+
+// <== FILTER BUTTON TYPE ==>
+type FilterButton = {
+  // <== FILTER VALUE ==>
+  value: QuickSaleFilterType;
+  // <== DISPLAY LABEL ==>
+  label: string;
+};
+
+// <== FILTER BUTTONS CONFIG ==>
+const FILTER_BUTTONS: FilterButton[] = [
+  // TODAY FILTER
+  { value: "today", label: "Today" },
+  // WEEK FILTER
+  { value: "week", label: "This Week" },
+  // MONTH FILTER
+  { value: "month", label: "This Month" },
 ];
-// <== FORMAT TIME FUNCTION ==>
-const formatTime = (timestamp: string): string =>
-  new Date(timestamp).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-// <== IS TODAY FUNCTION ==>
-const isToday = (timestamp: string): boolean =>
-  new Date(timestamp).toDateString() === new Date().toDateString();
+
+// <== PRODUCT FILTER OPTIONS ==>
+const PRODUCT_OPTIONS: { value: QuickSaleProductFilter; label: string }[] = [
+  // ALL PRODUCTS
+  { value: "all", label: "All Products" },
+  // MILK ONLY
+  { value: "milk", label: "Milk Only" },
+  // YOGHURT ONLY
+  { value: "yoghurt", label: "Yoghurt Only" },
+];
+
+// <== TABLE SKELETON ==>
+const TableSkeleton = () => (
+  <div className="glass-card overflow-hidden">
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[480px]">
+        <thead>
+          <tr className="border-b border-border bg-muted/30">
+            {[80, 80, 80, 80, 80, 80].map((w, i) => (
+              <th key={i} className="px-3 py-2.5">
+                <Skeleton style={{ width: w, height: 12 }} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <tr key={i} className="border-b border-border/50">
+              <td className="px-3 py-3">
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </td>
+              <td className="px-3 py-3">
+                <Skeleton className="h-4 w-12" />
+              </td>
+              <td className="px-3 py-3 hidden sm:table-cell">
+                <Skeleton className="h-4 w-14" />
+              </td>
+              <td className="px-3 py-3">
+                <Skeleton className="h-4 w-16" />
+              </td>
+              <td className="px-3 py-3 hidden sm:table-cell">
+                <Skeleton className="h-4 w-20" />
+              </td>
+              <td className="px-3 py-3">
+                <div className="flex items-center gap-1">
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-8 w-16 rounded-md" />
+      </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+    </div>
+  </div>
+);
+
+// <== LIST SKELETON ==>
+const ListSkeleton = () => (
+  <div className="glass-card overflow-hidden">
+    <div className="divide-y divide-border/50">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="p-3 sm:p-4 flex items-center gap-3">
+          <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+          <div className="flex-1 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-5 w-14 rounded-full" />
+            </div>
+            <Skeleton className="h-3 w-28" />
+          </div>
+          <div className="hidden sm:block text-right space-y-1">
+            <Skeleton className="h-5 w-16 ml-auto" />
+            <Skeleton className="h-3 w-12 ml-auto" />
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
+        </div>
+      ))}
+    </div>
+    <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-8 w-16 rounded-md" />
+      </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+    </div>
+  </div>
+);
+
+// <== GRID SKELETON ==>
+const GridSkeleton = () => (
+  <div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="glass-card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <Skeleton className="w-10 h-10 rounded-xl" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+          </div>
+          <div>
+            <Skeleton className="h-7 w-24 mb-1" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+          <div className="pt-3 border-t border-border/50 flex items-center justify-between">
+            <div className="space-y-1">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-5 w-16" />
+            </div>
+            <div className="flex items-center gap-1">
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    <div className="glass-card">
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-8 w-8 rounded-md" />
+          <Skeleton className="h-8 w-8 rounded-md" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// <== FULL PAGE SKELETON ==>
+const QuickSalesPageSkeleton = ({ view }: { view: QuickSaleViewMode }) => (
+  <div className="page-container">
+    {/* HEADER SKELETON */}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="flex items-center gap-3">
+        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-28" />
+          <Skeleton className="h-3 w-48 hidden sm:block" />
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <Skeleton className="h-8 w-16 rounded-full" />
+        <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="h-8 w-28 rounded-full" />
+        <Skeleton className="h-8 w-24 rounded-full" />
+      </div>
+    </div>
+    {/* STATS SKELETON */}
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 mb-5 sm:mb-6">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="glass-card p-3 sm:p-4 md:p-5">
+          <div className="flex items-start justify-between mb-2 sm:mb-3">
+            <Skeleton className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
+            <Skeleton className="h-5 w-7 rounded-full" />
+          </div>
+          <Skeleton className="h-3 w-20 mb-1.5" />
+          <Skeleton className="h-5 sm:h-7 w-20 sm:w-28" />
+        </div>
+      ))}
+    </div>
+    {/* ENTRY PANEL SKELETON */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      {[0, 1].map((i) => (
+        <div key={i} className="glass-card p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-xl" />
+              <Skeleton className="h-5 w-20" />
+            </div>
+            <Skeleton className="h-5 w-16" />
+          </div>
+          <Skeleton className="h-3 w-24 mb-1.5" />
+          <Skeleton className="h-9 w-full rounded-md mb-3" />
+          <Skeleton className="h-9 w-full rounded-md" />
+        </div>
+      ))}
+    </div>
+    {/* CONTROLS ROW SKELETON */}
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+      <Skeleton className="h-5 w-36" />
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-9 w-36 rounded-md" />
+        <Skeleton className="h-9 w-9 rounded-md" />
+        <Skeleton className="h-9 w-9 rounded-md" />
+        <Skeleton className="h-9 w-9 rounded-md" />
+      </div>
+    </div>
+    {/* VIEW-SPECIFIC SKELETON */}
+    {view === "table" && <TableSkeleton />}
+    {view === "list" && <ListSkeleton />}
+    {view === "grid" && <GridSkeleton />}
+  </div>
+);
 
 // <== QUICK SALES PAGE COMPONENT ==>
 const QuickSales = memo(() => {
-  // SALES STATE
-  const [sales, setSales] = useState<QuickSale[]>(INITIAL_SALES);
-  // VIEW MODE STATE
-  const [view, setView] = useState<ViewMode>(() => {
-    // VIEW MODE FROM LOCAL STORAGE
-    return (localStorage.getItem("quick_sales_view") as ViewMode) || "table";
-  });
+  // ACTIVE FILTER TYPE STATE — DEFAULTS TO TODAY
+  const [filterType, setFilterType] = useState<QuickSaleFilterType>("today");
+  // SELECTED MONTH FOR MONTH FILTER
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  // SELECTED SPECIFIC DATE FOR DATE PICKER FILTER (YYYY-MM-DD | NULL)
+  const [specificDate, setSpecificDate] = useState<string | null>(null);
+  // PRODUCT TYPE FILTER STATE
+  const [productType, setProductType] = useState<QuickSaleProductFilter>("all");
+  // VIEW MODE STATE — INITIALISED FROM LOCAL STORAGE
+  const [viewMode, setViewMode] = useState<QuickSaleViewMode>(getInitialView);
   // CURRENT PAGE STATE
   const [currentPage, setCurrentPage] = useState<number>(1);
-  // ROWS PER PAGE STATE
-  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
-  // MILK QUANTITY STATE
-  const [milkQty, setMilkQty] = useState<string>("");
-  // MILK RATE STATE
-  const [milkRate, setMilkRate] = useState<string>(DEFAULT_MILK_RATE);
-  // YOGHURT QUANTITY STATE
-  const [yoghurtQty, setYoghurtQty] = useState<string>("");
-  // YOGHURT RATE STATE
-  const [yoghurtRate, setYoghurtRate] = useState<string>(DEFAULT_YOGHURT_RATE);
-  // SET VIEW MODE HANDLER
-  const setViewMode = useCallback((mode: ViewMode): void => {
-    // SET VIEW MODE
-    setView(mode);
-    // PERSIST VIEW MODE TO LOCAL STORAGE
-    localStorage.setItem("quick_sales_view", mode);
+  // ROWS PER PAGE STATE — INITIALISED FROM LOCAL STORAGE
+  const [rowsPerPage, setRowsPerPage] = useState<number>(getInitialRows);
+  // EDIT DIALOG OPEN STATE
+  const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
+  // SELECTED RECORD FOR EDITING
+  const [selectedForEdit, setSelectedForEdit] = useState<QuickSale | null>(
+    null,
+  );
+  // DELETE MUTATION
+  const deleteMutation = useDeleteQuickSale();
+  // DERIVED MONTH STRING FOR MONTH FILTER
+  const monthStr = format(selectedMonth, "yyyy-MM");
+  // DERIVED DATE STRING FOR DATE FILTER
+  const dateStr = specificDate ?? "";
+  // IS NEXT MONTH DISABLED — BLOCK NAVIGATION INTO FUTURE MONTHS
+  const isNextMonthDisabled =
+    selectedMonth.getMonth() >= new Date().getMonth() &&
+    selectedMonth.getFullYear() >= new Date().getFullYear();
+  // FETCH QUICK SALES DATA
+  const { data, isLoading, isError } = useQuickSales(
+    filterType,
+    dateStr,
+    monthStr,
+    productType,
+    currentPage,
+    rowsPerPage,
+  );
+  // RESET PAGE TO 1 WHEN ANY FILTER CHANGES
+  useEffect(() => {
     // RESET CURRENT PAGE
     setCurrentPage(1);
+  }, [filterType, specificDate, monthStr, productType]);
+  // COMPUTED RECORDS WITH SAFE FALLBACK
+  const records = useMemo(() => data?.records ?? [], [data?.records]);
+  // COMPUTED TOTAL COUNT WITH SAFE FALLBACK
+  const totalFiltered = data?.pagination?.total ?? 0;
+  // COMPUTED TOTAL PAGES WITH SAFE FALLBACK
+  const totalPages = data?.pagination?.totalPages ?? 1;
+  // COMPUTE START INDEX FOR PAGINATION
+  const startIndex = (currentPage - 1) * rowsPerPage;
+  // HANDLE FILTER TYPE CHANGE
+  const handleFilterChange = useCallback((type: QuickSaleFilterType): void => {
+    // UPDATE FILTER TYPE
+    setFilterType(type);
+    // CLEAR SPECIFIC DATE WHEN SWITCHING TO NON-DATE FILTERS
+    if (type !== "date") setSpecificDate(null);
+  }, []);
+  // HANDLE DATE PICKER SELECT — AUTOMATICALLY ACTIVATES DATE FILTER
+  const handleDateSelect = useCallback((date: string): void => {
+    // UPDATE SPECIFIC DATE
+    setSpecificDate(date);
+    // SWITCH TO DATE FILTER
+    setFilterType("date");
+  }, []);
+  // HANDLE DATE PICKER CLEAR — REVERT TO TODAY FILTER
+  const handleDateClear = useCallback((): void => {
+    // CLEAR SPECIFIC DATE
+    setSpecificDate(null);
+    // SWITCH BACK TO TODAY FILTER
+    setFilterType("today");
+  }, []);
+  // HANDLE PREV MONTH
+  const handlePrevMonth = useCallback((): void => {
+    // DECREMENT MONTH BY ONE — USE FUNCTIONAL UPDATE TO ENSURE LATEST STATE
+    setSelectedMonth(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1),
+    );
+  }, []);
+  // HANDLE NEXT MONTH
+  const handleNextMonth = useCallback((): void => {
+    // INCREMENT MONTH BY ONE — USE FUNCTIONAL UPDATE TO ENSURE LATEST STATE
+    setSelectedMonth(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1),
+    );
+  }, []);
+  // HANDLE VIEW MODE CHANGE
+  const handleSetView = useCallback((mode: QuickSaleViewMode): void => {
+    // UPDATE VIEW MODE STATE
+    setViewMode(mode);
+    // PERSIST VIEW MODE TO LOCAL STORAGE
+    localStorage.setItem(VIEW_KEY, mode);
   }, []);
   // HANDLE ROWS PER PAGE CHANGE
-  const handleRowsPerPageChange = useCallback((value: string): void => {
-    // SET ROWS PER PAGE
-    setRowsPerPage(Number(value));
-    // RESET CURRENT PAGE
+  const handleRowsChange = useCallback((value: string): void => {
+    // PARSE VALUE TO INTEGER
+    const parsed = Number.parseInt(value, 10);
+    // FALLBACK TO 20 IF PARSE FAILS OR VALUE IS NON-POSITIVE
+    const safe = Number.isNaN(parsed) || parsed <= 0 ? 20 : parsed;
+    // UPDATE ROWS PER PAGE STATE
+    setRowsPerPage(safe);
+    // RESET TO FIRST PAGE
     setCurrentPage(1);
+    // PERSIST TO LOCAL STORAGE
+    localStorage.setItem(ROWS_KEY, String(safe));
   }, []);
-  // HANDLE MILK SALE SUBMIT
-  const handleMilkSale = useCallback(
-    (e: React.FormEvent<HTMLFormElement>): void => {
-      // PREVENT DEFAULT
-      e.preventDefault();
-      // PARSE QUANTITY
-      const qty = parseFloat(milkQty) || 0;
-      // PARSE RATE
-      const rate = parseFloat(milkRate) || 120;
-      // VALIDATE QUANTITY
-      if (qty <= 0) {
-        // ERROR TOAST
-        toast.error("Please enter a valid quantity");
-        // RETURN
-        return;
-      }
-      // ADD SALE RECORD
-      setSales((prev) => [
-        {
-          id: Date.now(),
-          type: "milk",
-          quantity: qty,
-          rate,
-          total: qty * rate,
-          timestamp: new Date().toISOString(),
-        },
-        ...prev,
-      ]);
-      // RESET QUANTITY INPUT
-      setMilkQty("");
-      // SUCCESS TOAST
-      toast.success(`Milk sale recorded: ${qty}L × ₨${rate} = ₨${qty * rate}`);
+  // HANDLE DELETE RECORD
+  const handleDelete = useCallback(
+    (id: string): void => {
+      deleteMutation.mutate(id);
     },
-    [milkQty, milkRate],
+    [deleteMutation],
   );
-  // HANDLE YOGHURT SALE SUBMIT
-  const handleYoghurtSale = useCallback(
-    (e: React.FormEvent<HTMLFormElement>): void => {
-      // PREVENT DEFAULT
-      e.preventDefault();
-      // PARSE QUANTITY
-      const qty = parseFloat(yoghurtQty) || 0;
-      // PARSE RATE
-      const rate = parseFloat(yoghurtRate) || 180;
-      // VALIDATE QUANTITY
-      if (qty <= 0) {
-        // ERROR TOAST
-        toast.error("Please enter a valid quantity");
-        // RETURN
-        return;
-      }
-      // ADD SALE RECORD
-      setSales((prev) => [
-        {
-          id: Date.now(),
-          type: "yoghurt",
-          quantity: qty,
-          rate,
-          total: qty * rate,
-          timestamp: new Date().toISOString(),
-        },
-        ...prev,
-      ]);
-      // RESET QUANTITY INPUT
-      setYoghurtQty("");
-      // SUCCESS TOAST
-      toast.success(
-        `Yoghurt sale recorded: ${qty}kg × ₨${rate} = ₨${qty * rate}`,
-      );
-    },
-    [yoghurtQty, yoghurtRate],
-  );
-  // DELETE HANDLER
-  const handleDelete = useCallback((id: number): void => {
-    // FILTER RECORDS
-    setSales((prev) => prev.filter((s) => s.id !== id));
-    // SUCCESS TOAST
-    toast.success("Sale deleted!");
+  // HANDLE OPEN EDIT DIALOG
+  const handleEdit = useCallback((record: QuickSale): void => {
+    // SET SELECTED RECORD FOR EDITING
+    setSelectedForEdit(record);
+    // OPEN EDIT DIALOG
+    setEditDialogOpen(true);
   }, []);
-  // STATS DERIVED FROM TODAY'S SALES
-  const todaySales = sales.filter((s) => isToday(s.timestamp));
-  // TOTAL REVENUE
-  const totalRevenue = todaySales.reduce((a, s) => a + s.total, 0);
-  // TOTAL MILK
-  const totalMilk = todaySales
-    .filter((s) => s.type === "milk")
-    .reduce((a, s) => a + s.quantity, 0);
-  // TOTAL YOGHURT
-  const totalYoghurt = todaySales
-    .filter((s) => s.type === "yoghurt")
-    .reduce((a, s) => a + s.quantity, 0);
-  // STATS
-  const stats: Stat[] = [
-    // REVENUE
-    {
-      label: "Today's Revenue",
-      value: `₨${totalRevenue.toLocaleString()}`,
-      color: "text-emerald-600 dark:text-emerald-400",
-    },
-    // MILK SOLD
-    {
-      label: "Milk Sold",
-      value: `${totalMilk}L`,
-      color: "text-blue-600 dark:text-blue-400",
-    },
-    // YOGHURT SOLD
-    {
-      label: "Yoghurt Sold",
-      value: `${totalYoghurt}kg`,
-      color: "text-purple-600 dark:text-purple-400",
-    },
-    // TRANSACTIONS
-    {
-      label: "Transactions",
-      value: todaySales.length.toString(),
-      color: "text-amber-600 dark:text-amber-400",
-    },
-  ];
-  // PAGINATION
-  const totalPages = Math.ceil(sales.length / rowsPerPage);
-  // PAGINATED SALES
-  const paginatedSales = useMemo((): QuickSale[] => {
-    // CALCULATE START INDEX
-    const start = (currentPage - 1) * rowsPerPage;
-    // RETURN PAGINATED RECORDS
-    return sales.slice(start, start + rowsPerPage);
-  }, [sales, currentPage, rowsPerPage]);
-  // GO TO PAGE HANDLER
-  const goToPage = useCallback(
-    (page: number): void => {
-      setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-    },
-    [totalPages],
-  );
-  // TYPE BADGE
-  const typeBadge = (type: "milk" | "yoghurt") => (
-    <Badge
-      variant="secondary"
-      className={cn(
-        "text-[10px] font-bold tracking-wider uppercase",
-        type === "milk"
-          ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20"
-          : "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20",
-      )}
-    >
-      {type.toUpperCase()}
-    </Badge>
-  );
-  // PAGINATION CONTROLS
-  const PaginationControls = () => (
-    // PAGINATION CONTROLS MAIN CONTAINER
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-      {/* ROWS PER PAGE */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span>Rows per page:</span>
-        {/* ROWS PER PAGE SELECT */}
-        <Select
-          value={rowsPerPage.toString()}
-          onValueChange={handleRowsPerPageChange}
-        >
-          <SelectTrigger className="w-16 h-8">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {[5, 10, 20, 50].map((n) => (
-              <SelectItem key={n} value={n.toString()}>
-                {n}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {/* PAGINATION BUTTONS */}
-      <div className="flex items-center gap-1">
-        {/* PAGE INFO */}
-        <span className="text-sm text-muted-foreground mr-2">
-          Page {currentPage} of {totalPages || 1}
-        </span>
-        {/* PREV BUTTON */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => goToPage(currentPage - 1)}
-          disabled={currentPage <= 1}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        {/* NEXT BUTTON */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => goToPage(currentPage + 1)}
-          disabled={currentPage >= totalPages}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-  // RETURNING QUICK SALES PAGE COMPONENT
+  // HANDLE CLOSE EDIT DIALOG
+  const handleEditClose = useCallback((): void => {
+    // CLOSE EDIT DIALOG
+    setEditDialogOpen(false);
+    // CLEAR SELECTED RECORD
+    setSelectedForEdit(null);
+  }, []);
+  // DERIVE RECORDS SECTION HEADING BASED ON ACTIVE FILTER
+  const sectionHeading = useMemo((): string => {
+    // IF FILTER TYPE IS TODAY, SHOW TODAY'S SALES
+    if (filterType === "today") return "Today's Sales";
+    // IF FILTER TYPE IS WEEK, SHOW THIS WEEK'S SALES
+    if (filterType === "week") return "This Week's Sales";
+    // IF FILTER TYPE IS MONTH, SHOW SELECTED MONTH AND YEAR
+    if (filterType === "month")
+      return `${format(selectedMonth, "MMMM yyyy")} Sales`;
+    // IF FILTER TYPE IS DATE, SHOW SPECIFIC DATE
+    if (filterType === "date" && specificDate) return `Sales — ${specificDate}`;
+    // DEFAULT HEADING
+    return "Sales";
+  }, [filterType, selectedMonth, specificDate]);
+  // SHARED VIEW PROPS OBJECT — SPREAD INTO ALL THREE VIEW COMPONENTS
+  const viewProps = {
+    records,
+    totalFiltered,
+    isLoading,
+    currentPage,
+    rowsPerPage,
+    startIndex,
+    totalPages,
+    onPageChange: setCurrentPage,
+    onRowsPerPageChange: handleRowsChange,
+    onDelete: handleDelete,
+    onEdit: handleEdit,
+  };
+  // SHOW FULL PAGE SKELETON ON INITIAL LOAD
+  if (isLoading && !data) {
+    // RETURN FULL PAGE SKELETON WITH CURRENT VIEW MODE
+    return <QuickSalesPageSkeleton view={viewMode} />;
+  }
+  // RETURNING QUICK SALES PAGE
   return (
-    // MAIN CONTAINER
     <PageTransition className="page-container">
-      {/* CONTENT CONTAINER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        {/* HEADER */}
-        <div className="flex items-center gap-3">
-          {/* ICON */}
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+      {/* PAGE HEADER ROW */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+        {/* LEFT: ICON + TITLE + DESCRIPTION */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <Zap className="w-5 h-5 text-primary" />
           </div>
-          {/* TITLE & DESCRIPTION */}
-          <div>
-            <h1 className="font-display text-2xl font-bold">Quick Sales</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+          <div className="min-w-0">
+            <h1 className="font-display text-xl sm:text-2xl font-bold">
+              Quick Sales
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">
               Record instant milk and yoghurt sales
             </p>
           </div>
         </div>
-        {/* VIEW BUTTONS */}
-        <div className="flex items-center bg-muted rounded-lg p-0.5">
-          {VIEW_BUTTONS.map(({ mode, icon: Icon, label }) => (
-            <Tooltip key={mode} delayDuration={0}>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setViewMode(mode)}
-                  className={cn(
-                    "p-1.5 rounded-md transition-all duration-200",
-                    view === mode
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{label} view</TooltipContent>
-            </Tooltip>
+        {/* RIGHT: FILTER CONTROLS */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* FILTER TYPE PILLS */}
+          {FILTER_BUTTONS.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => handleFilterChange(value)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border",
+                filterType === value && filterType !== "date"
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
+              )}
+            >
+              {label}
+            </button>
           ))}
-        </div>
-      </div>
-      {/* STATS CONTAINER */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            className="glass-card p-4"
-          >
-            {/* STAT LABEL */}
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-            {/* STAT VALUE */}
-            <p
-              className={cn("text-2xl font-bold font-display mt-1", stat.color)}
-            >
-              {stat.value}
-            </p>
-          </motion.div>
-        ))}
-      </div>
-      {/* QUICK SALE FORMS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        {/* MILK SALE FORM */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="glass-card p-5"
-        >
-          {/* FORM HEADER */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-              <Milk className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Milk Sale</h3>
-              <p className="text-xs text-muted-foreground">₨{milkRate}/liter</p>
-            </div>
-          </div>
-          {/* FORM */}
-          <form onSubmit={handleMilkSale} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              {/* QUANTITY INPUT */}
-              <div>
-                <Label className="text-xs">Quantity (L)</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  placeholder="0"
-                  value={milkQty}
-                  onChange={(e) => setMilkQty(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              {/* RATE INPUT */}
-              <div>
-                <Label className="text-xs">Rate (₨/L)</Label>
-                <Input
-                  type="number"
-                  value={milkRate}
-                  onChange={(e) => setMilkRate(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            {/* SUBMIT BUTTON */}
-            <Button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="w-4 h-4 mr-1" /> Add Milk Sale
-            </Button>
-          </form>
-        </motion.div>
-        {/* YOGHURT SALE FORM */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="glass-card p-5"
-        >
-          {/* FORM HEADER */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
-              <IceCream className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold">Yoghurt Sale</h3>
-              <p className="text-xs text-muted-foreground">₨{yoghurtRate}/kg</p>
-            </div>
-          </div>
-          {/* FORM */}
-          <form onSubmit={handleYoghurtSale} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              {/* QUANTITY INPUT */}
-              <div>
-                <Label className="text-xs">Quantity (kg)</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  placeholder="0"
-                  value={yoghurtQty}
-                  onChange={(e) => setYoghurtQty(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              {/* RATE INPUT */}
-              <div>
-                <Label className="text-xs">Rate (₨/kg)</Label>
-                <Input
-                  type="number"
-                  value={yoghurtRate}
-                  onChange={(e) => setYoghurtRate(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            {/* SUBMIT BUTTON */}
-            <Button
-              type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700"
-            >
-              <Plus className="w-4 h-4 mr-1" /> Add Yoghurt Sale
-            </Button>
-          </form>
-        </motion.div>
-      </div>
-      {/* DAILY SALES HEADER */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display text-lg font-semibold">Today's Sales</h2>
-        <span className="text-sm text-muted-foreground">
-          {sales.length} total records
-        </span>
-      </div>
-      {/* SALES TABLE VIEW */}
-      {view === "table" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card overflow-hidden"
-        >
-          {/* TABLE CONTAINER */}
-          <div className="overflow-x-auto">
-            {/* TABLE */}
-            <table className="w-full text-sm">
-              {/* TABLE HEADER */}
-              <thead>
-                <tr className="border-b border-border text-left">
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Type
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Quantity
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Rate
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Total
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Time
-                  </th>
-                  <th className="p-3 font-medium text-muted-foreground">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              {/* TABLE BODY */}
-              <tbody>
-                {/* SALES */}
-                {paginatedSales.map((s, i) => (
-                  <motion.tr
-                    key={s.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.04 }}
-                    className="border-b border-border/50 hover:bg-muted/50 transition-colors"
-                  >
-                    <td className="p-3">{typeBadge(s.type)}</td>
-                    <td className="p-3">
-                      {s.quantity}
-                      {s.type === "milk" ? "L" : "kg"}
-                    </td>
-                    <td className="p-3">₨{s.rate}</td>
-                    <td className="p-3 font-semibold">₨{s.total}</td>
-                    <td className="p-3 text-muted-foreground">
-                      {formatTime(s.timestamp)}
-                    </td>
-                    <td className="p-3">
-                      {/* ACTIONS */}
-                      <div className="flex gap-1">
-                        {/* DELETE */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(s.id)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-            {/* NO SALES */}
-            {paginatedSales.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground">
-                No sales recorded yet.
-              </div>
-            )}
-          </div>
-          {/* PAGINATION */}
-          <PaginationControls />
-        </motion.div>
-      )}
-      {/* SALES LIST VIEW */}
-      {view === "list" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card overflow-hidden"
-        >
-          {/* SALES */}
-          <div className="divide-y divide-border/50">
-            {paginatedSales.map((s, i) => (
-              <motion.div
-                key={s.id}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors group"
+          {/* CUSTOM DATE PICKER — ACTIVATES DATE FILTER ON SELECTION */}
+          <QuickSaleDatePicker
+            selectedDate={specificDate}
+            onDateSelect={handleDateSelect}
+            onClear={handleDateClear}
+          />
+          {/* MONTH NAVIGATION — ONLY RENDERED WHEN MONTH FILTER IS ACTIVE */}
+          {filterType === "month" && (
+            <div className="flex items-center gap-1 ml-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handlePrevMonth}
               >
-                {/* TYPE ICON */}
-                <div
-                  className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                    s.type === "milk" ? "bg-blue-500/10" : "bg-purple-500/10",
-                  )}
-                >
-                  {s.type === "milk" ? (
-                    <Milk className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  ) : (
-                    <IceCream className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  )}
-                </div>
-                {/* SALE INFO */}
-                <div className="flex-1 min-w-0">
-                  {/* TYPE & BADGE */}
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold capitalize">{s.type}</span>
-                    {typeBadge(s.type)}
-                  </div>
-                  {/* DETAILS */}
-                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                    <span>
-                      {s.quantity}
-                      {s.type === "milk" ? "L" : "kg"} × ₨{s.rate}
-                    </span>
-                    <span>{formatTime(s.timestamp)}</span>
-                  </div>
-                </div>
-                {/* TOTAL */}
-                <div className="text-right shrink-0">
-                  <span className="font-display text-lg font-bold">
-                    ₨{s.total}
-                  </span>
-                </div>
-                {/* ACTIONS */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleDelete(s.id)}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              </motion.div>
-            ))}
-            {/* NO SALES */}
-            {paginatedSales.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground">
-                No sales recorded yet.
-              </div>
-            )}
-          </div>
-          {/* PAGINATION */}
-          <PaginationControls />
-        </motion.div>
-      )}
-      {/* SALES GRID VIEW */}
-      {view === "grid" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          {/* SALES */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
-            {paginatedSales.map((s, i) => (
-              <motion.div
-                key={s.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.06 }}
-                className="glass-card p-4 flex flex-col hover:shadow-md transition-all group relative"
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-xs font-medium whitespace-nowrap min-w-[80px] text-center">
+                {format(selectedMonth, "MMM yyyy")}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                disabled={isNextMonthDisabled}
+                onClick={handleNextMonth}
               >
-                {/* TYPE ICON & BADGE */}
-                <div className="flex items-start justify-between mb-3">
-                  <div
-                    className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center",
-                      s.type === "milk" ? "bg-blue-500/10" : "bg-purple-500/10",
-                    )}
-                  >
-                    {s.type === "milk" ? (
-                      <Milk className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    ) : (
-                      <IceCream className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                    )}
-                  </div>
-                  {typeBadge(s.type)}
-                </div>
-                {/* QUANTITY */}
-                <div className="flex-1">
-                  <p className="text-xs text-muted-foreground">Quantity</p>
-                  <p className="font-display text-xl font-bold">
-                    {s.quantity}
-                    <span className="text-xs font-normal text-muted-foreground ml-0.5">
-                      {s.type === "milk" ? "L" : "kg"}
-                    </span>
-                  </p>
-                </div>
-                {/* TOTAL & ACTIONS */}
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
-                  <div>
-                    {/* TIME */}
-                    <p className="text-xs text-muted-foreground">
-                      {formatTime(s.timestamp)}
-                    </p>
-                    {/* TOTAL */}
-                    <p className="font-display text-lg font-bold">₨{s.total}</p>
-                  </div>
-                  {/* DELETE */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleDelete(s.id)}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          {/* NO SALES */}
-          {paginatedSales.length === 0 && (
-            <div className="glass-card p-8 text-center text-muted-foreground">
-              No sales recorded yet.
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
           )}
-          {/* PAGINATION */}
-          <div className="glass-card overflow-hidden">
-            <PaginationControls />
+        </div>
+      </div>
+      {/* STATS CARDS — ALWAYS REFLECT THE FULL FILTERED DATASET */}
+      <QuickSaleStatsCards stats={data?.stats} isLoading={isLoading} />
+      {/* SALE ENTRY PANEL — MILK AND YOGHURT FORMS WITH LOCKED RATES */}
+      <QuickSaleEntryPanel />
+      {/* RECORDS SECTION HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+        {/* SECTION HEADING — REFLECTS ACTIVE FILTER */}
+        <h2 className="font-display text-base sm:text-lg font-semibold">
+          {sectionHeading}
+          {totalFiltered > 0 && (
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              ({totalFiltered} record{totalFiltered !== 1 ? "s" : ""})
+            </span>
+          )}
+        </h2>
+        {/* RIGHT CONTROLS — PRODUCT FILTER + VIEW TOGGLE */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* PRODUCT TYPE FILTER SELECT */}
+          <Select
+            value={productType}
+            onValueChange={(val) => {
+              setProductType(val as QuickSaleProductFilter);
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="h-9 w-36 shrink-0">
+              <SelectValue placeholder="All Products" />
+            </SelectTrigger>
+            <SelectContent>
+              {PRODUCT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* VIEW TOGGLE */}
+          <div className="flex items-center bg-muted rounded-lg p-0.5 shrink-0">
+            {VIEW_BUTTONS.map(({ mode, icon: Icon, label }) => (
+              <Tooltip key={mode} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => handleSetView(mode)}
+                    className={cn(
+                      "p-1.5 rounded-md transition-all duration-200",
+                      viewMode === mode
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{label} view</TooltipContent>
+              </Tooltip>
+            ))}
           </div>
-        </motion.div>
+        </div>
+      </div>
+      {/* ERROR STATE */}
+      {isError && (
+        <div className="glass-card p-5 sm:p-6 text-center mb-5">
+          <p className="text-sm text-muted-foreground">
+            Failed to load sales data. Please check your connection and try
+            again.
+          </p>
+        </div>
       )}
+      {/* TABLE VIEW */}
+      {viewMode === "table" && <QuickSaleTableView {...viewProps} />}
+      {/* LIST VIEW */}
+      {viewMode === "list" && <QuickSaleListView {...viewProps} />}
+      {/* GRID VIEW */}
+      {viewMode === "grid" && <QuickSaleGridView {...viewProps} />}
+      {/* EDIT DIALOG */}
+      <QuickSaleEditDialog
+        open={editDialogOpen}
+        record={selectedForEdit}
+        onClose={handleEditClose}
+      />
     </PageTransition>
   );
 });
@@ -770,5 +640,5 @@ const QuickSales = memo(() => {
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 QuickSales.displayName = "QuickSales";
 
-// <== MEMOIZED EXPORT TO PREVENT UNNECESSARY RE-RENDERS ==>
+// <== EXPORT ==>
 export default QuickSales;
