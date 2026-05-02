@@ -1,6 +1,7 @@
 // <== IMPORTS ==>
 import Login from "@/pages/Login";
 import Sales from "@/pages/Sales";
+import Staff from "@/pages/Staff";
 import NotFound from "@/pages/NotFound";
 import Dashboard from "@/pages/Dashboard";
 import Purchases from "@/pages/Purchases";
@@ -61,6 +62,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               >
+                <Route path="/staff" element={<Staff />} />
                 <Route path="/" element={<QuickSales />} />
                 <Route path="/sales" element={<Sales />} />
                 <Route path="/dashboard" element={<Dashboard />} />
