@@ -1,8 +1,4 @@
 // <== IMPORTS ==>
-import type {
-  Expenditure,
-  ExpenditureCategory,
-} from "@/types/expenditure-types";
 import {
   Edit,
   Trash2,
@@ -11,13 +7,17 @@ import {
   ShoppingBag,
   type LucideIcon,
 } from "lucide-react";
-import PaginationControls from "@/components/common/PaginationControls";
+import type {
+  Expenditure,
+  ExpenditureCategory,
+} from "@/types/expenditure-types";
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import PaginationControls from "@/components/common/PaginationControls";
 
 // <== CATEGORY CONFIG TYPE ==>
 type CategoryConfig = {

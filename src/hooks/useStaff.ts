@@ -71,6 +71,7 @@ const fetchStaff = async (
       stats: {
         totalStaff: 0,
         totalSalaryBill: 0,
+        totalMonthlyOutgo: 0,
         totalPaid: 0,
         totalPending: 0,
         totalExtraAllocated: 0,

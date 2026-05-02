@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import PaginationControls from "../common/PaginationControls";
 import type { Customer } from "@/types/customer-types";
+import PaginationControls from "../common/PaginationControls";
 import { Eye, Edit, Trash2, MapPin, Users } from "lucide-react";
 
 // <== CUSTOMER GRID VIEW PROPS ==>
