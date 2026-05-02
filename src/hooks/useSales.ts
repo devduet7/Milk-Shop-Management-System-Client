@@ -1,13 +1,13 @@
 // <== IMPORTS ==>
 import type {
   Sale,
-  ApiResponse,
-  ApiErrorResponse,
   SaleFilter,
+  ApiResponse,
   SalesListData,
-  AddCustomerSaleFormValues,
-  AddShopSaleFormValues,
+  ApiErrorResponse,
   UpdateSaleVariables,
+  AddShopSaleFormValues,
+  AddCustomerSaleFormValues,
 } from "../types/sale-types";
 import { toast } from "sonner";
 import { useEffect } from "react";
