@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, Banknote, Users, PlusCircle } from "lucide-react";
 import type { StaffMember } from "@/types/staff-types";
 import PaginationControls from "@/components/common/PaginationControls";
+import { Edit, Trash2, Banknote, Users, PlusCircle } from "lucide-react";
 
 // <== STAFF GRID VIEW PROPS ==>
 interface StaffGridViewProps {
