@@ -12,6 +12,18 @@ export type User = {
   email: string;
   // <== PHONE NUMBER (OPTIONAL) ==>
   phoneNumber?: string | null;
+  // <== ADDRESS (OPTIONAL) ==>
+  address?: string | null;
+  // <== AVATAR (OPTIONAL) ==>
+  avatar?: { url: string; publicId: string } | null;
+  // <== MILK RATE IN RUPEES PER LITER ==>
+  milkRate?: number;
+  // <== YOGHURT RATE IN RUPEES PER KG ==>
+  yoghurtRate?: number;
+  // <== DAILY REPORTS ENABLED FLAG ==>
+  dailyReportsEnabled?: boolean;
+  // <== MONTHLY REPORTS ENABLED FLAG ==>
+  monthlyReportsEnabled?: boolean;
 };
 // <== AUTH STATE INTERFACE ==>
 interface AuthState {
@@ -27,6 +39,8 @@ interface AuthState {
   isCheckingAuth: boolean;
   // <== LOGIN ACTION ==>
   login: (user: User) => void;
+  // <== UPDATE USER ACTION ==>
+  updateUser: (updates: Partial<User>) => void;
   // <== CLEAR USER ACTION ==>
   clearUser: () => void;
   // <== SET SESSION EXPIRED ACTION ==>
@@ -59,7 +73,7 @@ export const useAuthStore = create<AuthState>()(
       isSessionExpired: false,
       isLoggingOut: false,
       isCheckingAuth: false,
-      // <== LOGIN ACTION ==>
+      // <== LOGIN ACTION — SETS FULL USER AND CLEARS TRANSIENT FLAGS ==>
       login: (user: User) =>
         set({
           user,
@@ -67,6 +81,11 @@ export const useAuthStore = create<AuthState>()(
           isSessionExpired: false,
           isLoggingOut: false,
         }),
+      // <== UPDATE USER ACTION — MERGES PARTIAL UPDATES INTO EXISTING USER ==>
+      updateUser: (updates: Partial<User>) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updates } : null,
+        })),
       // <== CLEAR USER ACTION (USED ON LOGOUT / SESSION EXPIRY) ==>
       clearUser: () =>
         set({
@@ -76,19 +95,11 @@ export const useAuthStore = create<AuthState>()(
         }),
       // <== SET SESSION EXPIRED ACTION ==>
       setSessionExpired: (expired: boolean) =>
-        set({
-          isSessionExpired: expired,
-        }),
+        set({ isSessionExpired: expired }),
       // <== SET LOGGING OUT FLAG ==>
-      setLoggingOut: (loggingOut: boolean) =>
-        set({
-          isLoggingOut: loggingOut,
-        }),
+      setLoggingOut: (loggingOut: boolean) => set({ isLoggingOut: loggingOut }),
       // <== SET CHECKING AUTH FLAG ==>
-      setCheckingAuth: (checking: boolean) =>
-        set({
-          isCheckingAuth: checking,
-        }),
+      setCheckingAuth: (checking: boolean) => set({ isCheckingAuth: checking }),
     }),
     persistOptions,
   ),
