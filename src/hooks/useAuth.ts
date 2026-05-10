@@ -29,6 +29,14 @@ export type ApiErrorResponse = {
   success?: boolean;
 };
 
+// <== FORGOT PASSWORD SIMPLE RESPONSE TYPE ==>
+type ForgotPasswordResponse = {
+  // <== SUCCESS FLAG ==>
+  success: boolean;
+  // <== SERVER MESSAGE ==>
+  message: string;
+};
+
 // <== USE REGISTER HOOK ==>
 export const useRegister = () => {
   // NAVIGATE HOOK
@@ -150,3 +158,97 @@ export const useLogout = () => {
     },
   });
 };
+
+/**
+ * INITIATE FORGOT PASSWORD — SENDS OTP TO USER'S REGISTERED EMAIL
+ * ERRORS ARE HANDLED IN THE COMPONENT FOR INLINE DISPLAY
+ */
+// <== USE INITIATE FORGOT PASSWORD HOOK ==>
+export const useInitiateForgotPassword = () =>
+  useMutation<
+    ForgotPasswordResponse,
+    AxiosError<ApiErrorResponse>,
+    { email: string }
+  >({
+    // <== MUTATION FUNCTION ==>
+    mutationFn: async (data): Promise<ForgotPasswordResponse> => {
+      // CALLING INITIATE FORGOT PASSWORD API
+      const response = await apiClient.post<ForgotPasswordResponse>(
+        "/settings/forgot-password/initiate",
+        data,
+      );
+      // RETURNING RESPONSE DATA
+      return response.data;
+    },
+  });
+
+/**
+ * VERIFY FORGOT PASSWORD OTP — VALIDATES OTP CODE AGAINST STORED HASH
+ * ERRORS ARE HANDLED IN THE COMPONENT FOR INLINE DISPLAY (ATTEMPT REMAINING MESSAGES)
+ */
+// <== USE VERIFY FORGOT PASSWORD OTP HOOK ==>
+export const useVerifyForgotPasswordOtp = () =>
+  useMutation<
+    ForgotPasswordResponse,
+    AxiosError<ApiErrorResponse>,
+    { email: string; code: string }
+  >({
+    // <== MUTATION FUNCTION ==>
+    mutationFn: async (data): Promise<ForgotPasswordResponse> => {
+      // CALLING VERIFY FORGOT PASSWORD OTP API
+      const response = await apiClient.post<ForgotPasswordResponse>(
+        "/settings/forgot-password/verify",
+        data,
+      );
+      // RETURNING RESPONSE DATA
+      return response.data;
+    },
+  });
+
+/**
+ * RESET FORGOT PASSWORD — APPLIES NEW PASSWORD USING SERVER-SIDE RESET PERMISSION TOKEN
+ * ERRORS ARE HANDLED IN THE COMPONENT FOR INLINE DISPLAY
+ */
+// <== USE RESET FORGOT PASSWORD HOOK ==>
+export const useResetForgotPassword = () =>
+  useMutation<
+    ForgotPasswordResponse,
+    AxiosError<ApiErrorResponse>,
+    { email: string; newPassword: string }
+  >({
+    // <== MUTATION FUNCTION ==>
+    mutationFn: async (data): Promise<ForgotPasswordResponse> => {
+      // CALLING RESET FORGOT PASSWORD API
+      const response = await apiClient.post<ForgotPasswordResponse>(
+        "/settings/forgot-password/reset",
+        data,
+      );
+      // RETURNING RESPONSE DATA
+      return response.data;
+    },
+  });
+
+/**
+ * CANCEL FORGOT PASSWORD — CLEANS UP ALL SERVER-SIDE CODES FOR THIS USER
+ * SILENTLY FAILS — CODES EXPIRE ON THEIR OWN VIA TTL INDEX IF NOT EXPLICITLY CANCELLED
+ */
+// <== USE CANCEL FORGOT PASSWORD HOOK ==>
+export const useCancelForgotPassword = () =>
+  useMutation<
+    ForgotPasswordResponse,
+    AxiosError<ApiErrorResponse>,
+    { email: string }
+  >({
+    // <== MUTATION FUNCTION ==>
+    mutationFn: async (data): Promise<ForgotPasswordResponse> => {
+      // CALLING CANCEL FORGOT PASSWORD API
+      const response = await apiClient.post<ForgotPasswordResponse>(
+        "/settings/forgot-password/cancel",
+        data,
+      );
+      // RETURNING RESPONSE DATA
+      return response.data;
+    },
+    // <== SILENT FAILURE — CANCELLATION IS BEST-EFFORT ==>
+    onError: () => {},
+  });
