@@ -1,6 +1,7 @@
 // <== IMPORTS ==>
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useLogin } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -170,6 +171,15 @@ const Login = () => {
                   {errors.password.message}
                 </p>
               )}
+              {/* FORGOT PASSWORD LINK */}
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-primary hover:underline transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </motion.div>
             {/* SIGN IN BUTTON */}
             <motion.div

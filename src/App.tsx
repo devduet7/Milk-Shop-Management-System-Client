@@ -14,6 +14,7 @@ import { queryClient } from "@/lib/queryClient";
 import { AnimatePresence } from "framer-motion";
 import Expenditures from "@/pages/Expenditures";
 import Unauthorized from "@/pages/Unauthorized";
+import ForgotPassword from "@/pages/ForgotPassword";
 import { ThemeProvider } from "./contexts/ThemeProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,6 +52,15 @@ const App = () => (
                 element={
                   <PublicRoute>
                     <Login />
+                  </PublicRoute>
+                }
+              />
+              {/* PUBLIC ROUTES - NOT AUTHENTICATED */}
+              <Route
+                path="/forgot-password"
+                element={
+                  <PublicRoute>
+                    <ForgotPassword />
                   </PublicRoute>
                 }
               />
