@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
+import { dashboardKeys } from "./useDashboard";
+import { analyticsKeys } from "./useAnalytics";
 import { useAuthStore } from "../stores/useAuthStore";
 import type { AddStaffFormValues } from "../validators/staffSchemas";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -209,6 +211,10 @@ export const useAddStaff = () => {
     onSuccess: (data): void => {
       // INVALIDATE ALL STAFF LIST QUERIES
       queryClient.invalidateQueries({ queryKey: staffKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — STAFF COUNT AND PAYROLL SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — STAFF PAYROLL CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success(data.message || "Staff member added successfully!");
     },
@@ -249,6 +255,10 @@ export const useUpdateStaff = () => {
     onSuccess: (data): void => {
       // INVALIDATE ALL STAFF LIST QUERIES
       queryClient.invalidateQueries({ queryKey: staffKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — SALARY BILL AND PAYROLL SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — STAFF PAYROLL CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success(data.message || "Staff member updated successfully!");
     },
@@ -289,6 +299,10 @@ export const useDeleteStaff = () => {
     onSuccess: (data): void => {
       // INVALIDATE ALL STAFF LIST QUERIES
       queryClient.invalidateQueries({ queryKey: staffKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — STAFF COUNT AND PAYROLL SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — STAFF PAYROLL CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success(data.message || "Staff member deleted successfully!");
     },
@@ -330,6 +344,10 @@ export const usePaySalary = () => {
     onSuccess: (data): void => {
       // INVALIDATE ALL STAFF LIST QUERIES
       queryClient.invalidateQueries({ queryKey: staffKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — PAYROLL PAID AMOUNTS AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — STAFF PAYROLL CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success(
         (data as ApiResponse<unknown>).message ||
@@ -382,6 +400,10 @@ export const useAddExtraAllocation = () => {
       queryClient.invalidateQueries({
         queryKey: staffKeys.extra(variables.staffId, variables.month),
       });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — TOTAL MONTHLY OUTGO AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — STAFF PAYROLL CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success(
         (data as ApiResponse<unknown>).message ||

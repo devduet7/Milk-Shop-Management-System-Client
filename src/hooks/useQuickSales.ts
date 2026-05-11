@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
+import { dashboardKeys } from "./useDashboard";
+import { analyticsKeys } from "./useAnalytics";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -211,6 +213,10 @@ export const useAddQuickSale = () => {
     onSuccess: (data): void => {
       // INVALIDATE ALL QUICK SALE LIST QUERIES
       queryClient.invalidateQueries({ queryKey: quickSaleKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — REVENUE AND QUICK SALES SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DAILY QUICK SALES CHARTS CHANGE)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success(data.message || "Sale recorded successfully!");
     },
@@ -255,6 +261,10 @@ export const useUpdateQuickSale = () => {
     onSuccess: (data): void => {
       // INVALIDATE ALL QUICK SALE LIST QUERIES
       queryClient.invalidateQueries({ queryKey: quickSaleKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — REVENUE AND QUICK SALES SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DAILY QUICK SALES CHARTS CHANGE)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success(data.message || "Sale updated successfully!");
     },
@@ -293,6 +303,10 @@ export const useDeleteQuickSale = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL QUICK SALE LIST QUERIES
       queryClient.invalidateQueries({ queryKey: quickSaleKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — REVENUE AND QUICK SALES SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DAILY QUICK SALES CHARTS CHANGE)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Sale record deleted successfully!");
     },

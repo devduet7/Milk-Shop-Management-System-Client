@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
+import { dashboardKeys } from "./useDashboard";
+import { analyticsKeys } from "./useAnalytics";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -210,6 +212,10 @@ export const useAddExpenditure = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL LIST QUERIES TO TRIGGER REFETCH
       queryClient.invalidateQueries({ queryKey: expenditureKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — EXPENSE TOTAL AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — EXPENDITURES DONUT CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Expenditure added successfully!");
     },
@@ -255,6 +261,10 @@ export const useUpdateExpenditure = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL LIST QUERIES
       queryClient.invalidateQueries({ queryKey: expenditureKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — EXPENSE TOTAL AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — EXPENDITURES DONUT CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Expenditure updated successfully!");
     },
@@ -295,6 +305,10 @@ export const useDeleteExpenditure = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL LIST QUERIES
       queryClient.invalidateQueries({ queryKey: expenditureKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — EXPENSE TOTAL AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — EXPENDITURES DONUT CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Expenditure deleted successfully!");
     },
