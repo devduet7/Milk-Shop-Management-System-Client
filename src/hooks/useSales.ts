@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
+import { dashboardKeys } from "./useDashboard";
+import { analyticsKeys } from "./useAnalytics";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -369,6 +371,12 @@ export const useAddCustomerSale = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL SALE LIST QUERIES TO TRIGGER REFETCH
       queryClient.invalidateQueries({ queryKey: saleKeys.lists() });
+      // INVALIDATE RECOVERY LIST QUERIES (CROSS-MODULE SYNC — NEW CUSTOMER SALE MAY HAVE PENDING AMOUNT)
+      queryClient.invalidateQueries({ queryKey: ["recoveries", "list"] });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — REVENUE AND SALES SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DAILY SALES CHARTS CHANGE)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Customer sale added successfully!");
     },
@@ -412,6 +420,10 @@ export const useAddShopSale = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL SALE LIST QUERIES TO TRIGGER REFETCH
       queryClient.invalidateQueries({ queryKey: saleKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — REVENUE AND SALES SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DAILY SALES CHARTS CHANGE)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Shop sale added successfully!");
     },
@@ -456,6 +468,12 @@ export const useUpdateSale = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL SALE LIST QUERIES
       queryClient.invalidateQueries({ queryKey: saleKeys.lists() });
+      // INVALIDATE RECOVERY LIST QUERIES (CROSS-MODULE SYNC — PAID/PENDING AMOUNT MAY HAVE CHANGED)
+      queryClient.invalidateQueries({ queryKey: ["recoveries", "list"] });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — REVENUE AND SALES SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DAILY SALES CHARTS CHANGE)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Sale updated successfully!");
     },
@@ -492,6 +510,12 @@ export const useDeleteSale = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL SALE LIST QUERIES
       queryClient.invalidateQueries({ queryKey: saleKeys.lists() });
+      // INVALIDATE RECOVERY LIST QUERIES (CROSS-MODULE SYNC — DELETED SALE REMOVES OUTSTANDING BALANCE)
+      queryClient.invalidateQueries({ queryKey: ["recoveries", "list"] });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — REVENUE AND SALES SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DAILY SALES CHARTS CHANGE)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Sale deleted successfully!");
     },
