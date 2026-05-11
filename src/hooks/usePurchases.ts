@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
+import { dashboardKeys } from "./useDashboard";
+import { analyticsKeys } from "./useAnalytics";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -193,6 +195,10 @@ export const useAddPurchase = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL LIST QUERIES TO TRIGGER REFETCH
       queryClient.invalidateQueries({ queryKey: purchaseKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — PURCHASE COST AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — PURCHASES TREND CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Purchase added successfully!");
     },
@@ -239,6 +245,10 @@ export const useUpdatePurchase = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL LIST QUERIES
       queryClient.invalidateQueries({ queryKey: purchaseKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — PURCHASE COST AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — PURCHASES TREND CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Purchase updated successfully!");
     },
@@ -279,6 +289,10 @@ export const useDeletePurchase = () => {
     onSuccess: (): void => {
       // INVALIDATE ALL LIST QUERIES
       queryClient.invalidateQueries({ queryKey: purchaseKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — PURCHASE COST AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — PURCHASES TREND CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Purchase deleted successfully!");
     },
