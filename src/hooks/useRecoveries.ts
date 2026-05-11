@@ -15,6 +15,8 @@ import { AxiosError } from "axios";
 import { saleKeys } from "./useSales";
 import apiClient from "../lib/apiClient";
 import { customerKeys } from "./useCustomers";
+import { dashboardKeys } from "./useDashboard";
+import { analyticsKeys } from "./useAnalytics";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -375,6 +377,10 @@ export const useAddDeliveryPayment = () => {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       // INVALIDATE CUSTOMER DETAIL QUERIES (CROSS-MODULE SYNC)
       queryClient.invalidateQueries({ queryKey: customerKeys.details() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — OUTSTANDING RECOVERY SECTION CHANGES)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — RECOVERY OVERVIEW CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST WITH SERVER MESSAGE
       toast.success(data.message || "Payment recorded successfully!");
     },
@@ -420,6 +426,10 @@ export const useUpdateSalePayment = () => {
       queryClient.invalidateQueries({ queryKey: recoveryKeys.lists() });
       // INVALIDATE SALE LIST QUERIES (CROSS-MODULE SYNC)
       queryClient.invalidateQueries({ queryKey: saleKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — OUTSTANDING RECOVERY SECTION CHANGES)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — RECOVERY OVERVIEW CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Sale payment updated successfully!");
     },
@@ -462,6 +472,10 @@ export const useDeleteSaleRecord = () => {
       queryClient.invalidateQueries({ queryKey: recoveryKeys.lists() });
       // INVALIDATE SALE LIST QUERIES (CROSS-MODULE SYNC)
       queryClient.invalidateQueries({ queryKey: saleKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — OUTSTANDING RECOVERY SECTION CHANGES)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — RECOVERY OVERVIEW CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Sale record deleted successfully!");
     },
