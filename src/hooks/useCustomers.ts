@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
+import { dashboardKeys } from "./useDashboard";
+import { analyticsKeys } from "./useAnalytics";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -234,6 +236,10 @@ export const useAddCustomer = () => {
     onSuccess: (): void => {
       // INVALIDATE CUSTOMERS LIST TO TRIGGER REFETCH
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — CUSTOMER COUNT AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DELIVERY PERFORMANCE CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Customer added successfully!");
     },
@@ -281,6 +287,10 @@ export const useUpdateCustomer = () => {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       // INVALIDATE ALL DETAIL QUERIES FOR CONSISTENCY
       queryClient.invalidateQueries({ queryKey: customerKeys.details() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — PRICE PER LITER CHANGE AFFECTS BILLING CALCS)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DELIVERY BILLING CALCULATIONS CHANGE)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Customer updated successfully!");
     },
@@ -322,6 +332,12 @@ export const useDeleteCustomer = () => {
     onSuccess: (): void => {
       // INVALIDATE LIST QUERIES
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      // INVALIDATE RECOVERY LIST QUERIES (CROSS-MODULE SYNC — DELETED CUSTOMER REMOVES DELIVERY OUTSTANDING)
+      queryClient.invalidateQueries({ queryKey: ["recoveries", "list"] });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — CUSTOMER COUNT AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DELIVERY PERFORMANCE CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Customer deleted successfully!");
     },
@@ -376,6 +392,12 @@ export const useMarkDelivery = () => {
       queryClient.invalidateQueries({ queryKey: customerKeys.details() });
       // INVALIDATE LIST QUERIES (SUMMARY STATS UPDATE)
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      // INVALIDATE RECOVERY LIST QUERIES (CROSS-MODULE SYNC — DELIVERY BILLING AFFECTS OUTSTANDING)
+      queryClient.invalidateQueries({ queryKey: ["recoveries", "list"] });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — DELIVERY STATS AND CUSTOMERS SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DELIVERY PERFORMANCE CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
     },
     // <== ON ERROR ==>
     onError: (error: AxiosError<ApiErrorResponse>): void => {
@@ -428,6 +450,12 @@ export const useAddPayment = () => {
       queryClient.invalidateQueries({ queryKey: customerKeys.details() });
       // INVALIDATE LIST QUERIES (SUMMARY STATS UPDATE)
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      // INVALIDATE RECOVERY LIST QUERIES (CROSS-MODULE SYNC — PAYMENT REDUCES DELIVERY OUTSTANDING)
+      queryClient.invalidateQueries({ queryKey: ["recoveries", "list"] });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — BILLING PAID AMOUNTS AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — RECOVERY CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST WITH SERVER MESSAGE
       toast.success(data.message || "Payment recorded successfully!");
     },
