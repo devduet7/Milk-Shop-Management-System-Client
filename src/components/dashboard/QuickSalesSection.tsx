@@ -98,20 +98,20 @@ const QuickSalesSection = memo(({ stats, month }: QuickSalesSectionProps) => {
       <div className="overflow-x-auto">
         <table className="w-full text-xs min-w-[360px]">
           <thead>
-            <tr className="bg-muted/30 border-b border-border">
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+            <tr className="bg-muted/50 border-b border-border backdrop-blur-sm">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Type
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Qty
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide hidden sm:table-cell">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                 Rate
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Total
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide hidden sm:table-cell">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                 Date
               </th>
             </tr>
@@ -139,7 +139,6 @@ const QuickSalesSection = memo(({ stats, month }: QuickSalesSectionProps) => {
               ))}
             {/* RENDERING DATA */}
             {!isLoading &&
-              // LOOPING THROUGH QUICK SALES
               data?.records.map((r) => (
                 <tr
                   key={r._id}
