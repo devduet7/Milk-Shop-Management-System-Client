@@ -29,8 +29,8 @@ interface QuickSaleListViewProps {
   onPageChange: (page: number) => void;
   // <== ROWS PER PAGE CHANGE HANDLER ==>
   onRowsPerPageChange: (value: string) => void;
-  // <== DELETE HANDLER ==>
-  onDelete: (id: string) => void;
+  // <== DELETE HANDLER — RECEIVES FULL RECORD FOR CONFIRMATION DIALOG ==>
+  onDelete: (record: QuickSale) => void;
   // <== EDIT HANDLER ==>
   onEdit: (record: QuickSale) => void;
 }
@@ -52,7 +52,6 @@ const QuickSaleListView = memo(
   }: QuickSaleListViewProps) => {
     // RETURNING LIST VIEW
     return (
-      // LIST CARD WRAPPER
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -65,9 +64,9 @@ const QuickSaleListView = memo(
             Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={`skel-${i}`}
-                className="p-3 sm:p-4 flex items-center gap-3"
+                className="px-3 sm:px-4 py-3 flex items-center gap-3"
               >
-                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-4 w-16" />
@@ -80,41 +79,40 @@ const QuickSaleListView = memo(
                   <Skeleton className="h-3 w-12 ml-auto" />
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
                 </div>
               </div>
             ))}
           {/* DATA ROWS */}
           {!isLoading &&
-            // LOOPING THROUGH QUICK SALES RECORDS
             records.map((r, i) => (
               <motion.div
                 key={r._id}
                 initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
-                className="p-3 sm:p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors group"
+                className="px-3 sm:px-4 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors group"
               >
-                {/* TYPE ICON AVATAR */}
+                {/* TYPE ICON — ROUNDED SQUARE STYLE */}
                 <div
                   className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                    "w-9 h-9 rounded-xl flex items-center justify-center shrink-0",
                     r.type === "milk" ? "bg-blue-500/10" : "bg-purple-500/10",
                   )}
                 >
                   {r.type === "milk" ? (
-                    <Milk className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <Milk className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   ) : (
-                    <IceCream className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <IceCream className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                   )}
                 </div>
                 {/* MAIN INFO */}
                 <div className="flex-1 min-w-0">
-                  {/* TYPE NAME + BADGE */}
+                  {/* TYPE + BADGE ROW */}
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-semibold text-sm capitalize">
-                      {r.type}
+                    <span className="font-semibold text-sm capitalize leading-tight">
+                      {r.type === "milk" ? "Milk" : "Yoghurt"}
                     </span>
                     <Badge
                       variant="secondary"
@@ -128,22 +126,26 @@ const QuickSaleListView = memo(
                       {r.type === "milk" ? "Milk" : "Yoghurt"}
                     </Badge>
                   </div>
-                  {/* QUANTITY × RATE + DATE */}
-                  <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground flex-wrap">
-                    <span>
-                      {r.quantity.toLocaleString()}
-                      {r.type === "milk" ? "L" : "kg"} × ₨
-                      {r.rate.toLocaleString()}
-                    </span>
-                    <span className="hidden sm:inline">{r.date}</span>
-                  </div>
+                  {/* QUANTITY × RATE */}
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {r.quantity.toLocaleString()}
+                    {r.type === "milk" ? "L" : "kg"} × ₨
+                    {r.rate.toLocaleString()}
+                    <span className="hidden sm:inline ml-2">{r.date}</span>
+                  </p>
                 </div>
-                {/* TOTAL + DATE — HIDDEN ON VERY SMALL */}
+                {/* TOTAL + DATE — HIDDEN ON VERY SMALL SCREENS */}
                 <div className="text-right shrink-0 hidden sm:block">
                   <p className="font-display text-sm font-bold">
                     ₨{r.total.toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">{r.date}</p>
+                </div>
+                {/* MOBILE TOTAL — VISIBLE ON SMALL SCREENS ONLY */}
+                <div className="shrink-0 sm:hidden">
+                  <p className="font-display text-sm font-bold text-right">
+                    ₨{r.total.toLocaleString()}
+                  </p>
                 </div>
                 {/* ACTION BUTTONS */}
                 <div className="flex items-center gap-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
@@ -151,17 +153,17 @@ const QuickSaleListView = memo(
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-7 w-7 rounded-lg"
                     onClick={() => onEdit(r)}
                   >
                     <Edit className="w-3.5 h-3.5" />
                   </Button>
-                  {/* DELETE BUTTON */}
+                  {/* DELETE BUTTON — TRIGGERS CONFIRMATION DIALOG */}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => onDelete(r._id)}
+                    className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => onDelete(r)}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
@@ -172,8 +174,8 @@ const QuickSaleListView = memo(
         {/* EMPTY STATE */}
         {!isLoading && records.length === 0 && (
           <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <ShoppingBag className="w-6 h-6 text-muted-foreground/40" />
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5 text-muted-foreground/40" />
             </div>
             <div>
               <p className="font-medium text-muted-foreground text-sm">
