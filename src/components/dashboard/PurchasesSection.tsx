@@ -63,20 +63,20 @@ const PurchasesSection = memo(({ stats, month }: PurchasesSectionProps) => {
       <div className="overflow-x-auto">
         <table className="w-full text-xs min-w-[380px]">
           <thead>
-            <tr className="bg-muted/30 border-b border-border">
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+            <tr className="bg-muted/50 border-b border-border backdrop-blur-sm">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Supplier
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Qty (L)
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide hidden sm:table-cell">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                 ₨/L
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Total
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide hidden sm:table-cell">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                 Date
               </th>
             </tr>
@@ -104,7 +104,6 @@ const PurchasesSection = memo(({ stats, month }: PurchasesSectionProps) => {
               ))}
             {/* RENDERING DATA */}
             {!isLoading &&
-              // LOOPING THROUGH PURCHASES RECORDS
               data?.records.map((r) => (
                 <tr
                   key={r._id}
