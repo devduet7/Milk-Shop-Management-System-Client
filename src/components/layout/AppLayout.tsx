@@ -13,23 +13,36 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Outlet } from "react-router-dom";
 import { useLogout } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { memo, useRef, useState, useCallback } from "react";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import SessionExpiredModal from "../common/SessionExpiredModal";
+import { memo, useRef, useState, useCallback, useMemo } from "react";
+
+// <== ROUTE META MAP ==>
+const ROUTE_META: Record<string, { title: string }> = {
+  "/": { title: "Quick Sales" },
+  "/dashboard": { title: "Dashboard" },
+  "/sales": { title: "Sales" },
+  "/purchases": { title: "Purchases" },
+  "/expenditures": { title: "Expenditures" },
+  "/recoveries": { title: "Recoveries" },
+  "/staff": { title: "Staff" },
+  "/customers": { title: "Customers" },
+  "/analytics": { title: "Analytics" },
+  "/settings": { title: "Settings" },
+};
 
 // <== APP LAYOUT COMPONENT ==>
 const AppLayout = memo(() => {
-  // GETTING USER FROM AUTH STORE WITH SELECTOR TO PREVENT UNNECESSARY RE-RENDERS
-  const user = useAuthStore((state) => state.user);
   // THEME HOOK
   const { theme, toggleTheme } = useTheme();
+  // CURRENT LOCATION FOR ROUTE-BASED PAGE TITLE
+  const location = useLocation();
   // LOGOUT MUTATION HOOK - DESTRUCTURE STABLE REFERENCE ONLY
   const { mutate: logoutMutate } = useLogout();
   // MAIN CONTENT REF FOR SCROLL TO TOP
@@ -39,6 +52,11 @@ const AppLayout = memo(() => {
   // DESKTOP SIDEBAR COLLAPSED STATE - INITIALIZED FROM LOCAL STORAGE
   const [collapsed, setCollapsed] = useState<boolean>(
     () => localStorage.getItem("sidebar_collapsed") === "true",
+  );
+  // DERIVING CURRENT PAGE TITLE FROM PATHNAME
+  const pageMeta = useMemo(
+    () => ROUTE_META[location.pathname] ?? { title: "Milk Shop" },
+    [location.pathname],
   );
   // TOGGLE DESKTOP SIDEBAR COLLAPSED STATE
   const toggleCollapsed = useCallback((): void => {
@@ -70,7 +88,7 @@ const AppLayout = memo(() => {
   // RENDERING THE APP LAYOUT
   return (
     // MAIN CONTAINER
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* DESKTOP SIDEBAR */}
       <motion.aside
         className="hidden md:flex flex-col border-r border-sidebar-border bg-sidebar shrink-0 overflow-hidden"
@@ -97,14 +115,15 @@ const AppLayout = memo(() => {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border md:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border md:hidden flex flex-col"
             >
               {/* CLOSE BUTTON */}
-              <div className="absolute top-3 right-3">
+              <div className="absolute top-3 right-3 z-10">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={closeMobileSidebar}
+                  className="w-8 h-8"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -116,18 +135,20 @@ const AppLayout = memo(() => {
       </AnimatePresence>
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* FIXED TOP NAVBAR */}
-        <header className="h-14 shrink-0 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-4 sticky top-0 z-30">
-          {/* LEFT SIDE - MENU TOGGLE AND WELCOME MESSAGE */}
-          <div className="flex items-center gap-1">
-            {/* MOBILE MENU BUTTON */}
+        {/* TOP HEADER */}
+        <header className="relative h-14 shrink-0 border-b border-border/60 bg-background/90 backdrop-blur-xl flex items-center justify-between px-3 top-0 z-30">
+          {/* DECORATIVE GRADIENT ACCENT LINE */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent pointer-events-none" />
+          {/* LEFT SECTION — SIDEBAR TOGGLE AND PAGE TITLE */}
+          <div className="flex items-center gap-2 min-w-0">
+            {/* MOBILE HAMBURGER BUTTON */}
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="md:hidden w-9 h-9 text-muted-foreground hover:text-foreground shrink-0"
               onClick={openMobileSidebar}
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-4 h-4" />
             </Button>
             {/* DESKTOP SIDEBAR COLLAPSE TOGGLE */}
             <Tooltip delayDuration={0}>
@@ -135,7 +156,7 @@ const AppLayout = memo(() => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hidden md:inline-flex"
+                  className="hidden md:inline-flex w-9 h-9 text-muted-foreground hover:text-foreground shrink-0"
                   onClick={toggleCollapsed}
                 >
                   {collapsed ? (
@@ -149,25 +170,78 @@ const AppLayout = memo(() => {
                 {collapsed ? "Expand sidebar" : "Collapse sidebar"}
               </TooltipContent>
             </Tooltip>
-            {/* WELCOME MESSAGE */}
-            <span className="text-sm font-medium text-muted-foreground hidden sm:inline ml-1">
-              Welcome, {user?.fullName}
-            </span>
+            {/* VERTICAL SEPARATOR */}
+            <div className="hidden sm:block w-px h-5 bg-border/70 shrink-0" />
+            {/* ANIMATED PAGE TITLE — TRANSITIONS ON ROUTE CHANGE */}
+            <AnimatePresence mode="wait">
+              <motion.h2
+                key={location.pathname}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                className="hidden sm:block font-display text-[15px] font-semibold text-foreground tracking-tight truncate"
+              >
+                {pageMeta.title}
+              </motion.h2>
+            </AnimatePresence>
           </div>
-          {/* RIGHT SIDE - THEME TOGGLE AND LOGOUT */}
-          <div className="flex items-center gap-1">
-            {/* THEME TOGGLE BUTTON */}
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
-              {theme === "light" ? (
-                <Moon className="w-4 h-4" />
-              ) : (
-                <Sun className="w-4 h-4" />
-              )}
-            </Button>
+          {/* RIGHT SECTION — THEME TOGGLE AND LOGOUT */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* ANIMATED THEME TOGGLE */}
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="w-9 h-9 text-muted-foreground hover:text-foreground relative overflow-hidden"
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    {theme === "light" ? (
+                      <motion.div
+                        key="moon"
+                        initial={{ opacity: 0, rotate: -45, scale: 0.6 }}
+                        animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                        exit={{ opacity: 0, rotate: 45, scale: 0.6 }}
+                        transition={{ duration: 0.18 }}
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <Moon className="w-4 h-4" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="sun"
+                        initial={{ opacity: 0, rotate: 45, scale: 0.6 }}
+                        animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                        exit={{ opacity: 0, rotate: -45, scale: 0.6 }}
+                        transition={{ duration: 0.18 }}
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <Sun className="w-4 h-4" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {theme === "light" ? "Dark mode" : "Light mode"}
+              </TooltipContent>
+            </Tooltip>
             {/* LOGOUT BUTTON */}
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
-              <LogOut className="w-4 h-4" />
-            </Button>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleLogout}
+                  className="w-9 h-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors duration-200"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Sign out</TooltipContent>
+            </Tooltip>
           </div>
         </header>
         {/* SCROLLABLE PAGE CONTENT */}
@@ -185,5 +259,6 @@ const AppLayout = memo(() => {
 });
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 AppLayout.displayName = "AppLayout";
+
 // <== EXPORT ==>
 export { AppLayout };
