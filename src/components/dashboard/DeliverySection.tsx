@@ -78,23 +78,23 @@ const DeliverySection = memo(({ stats, month }: DeliverySectionProps) => {
       <div className="overflow-x-auto">
         <table className="w-full text-xs min-w-[440px]">
           <thead>
-            <tr className="bg-muted/30 border-b border-border">
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+            <tr className="bg-muted/50 border-b border-border backdrop-blur-sm">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Customer
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Delivered
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide hidden sm:table-cell">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                 Missed
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Milk (L)
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Bill Due
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Status
               </th>
             </tr>
@@ -125,16 +125,15 @@ const DeliverySection = memo(({ stats, month }: DeliverySectionProps) => {
               ))}
             {/* RENDERING DATA */}
             {!isLoading &&
-              // LOOPING THROUGH CUSTOMER RECORDS
               data?.records.map((r) => {
                 // CALCULATING CLEARED STATUS
                 const isCleared =
                   r.monthStats.billingPending === 0 &&
                   r.monthStats.billingDue > 0;
-                //   CALCULATING HAS ACTIVITY
+                // CALCULATING HAS ACTIVITY
                 const hasActivity =
                   r.monthStats.deliveredDays > 0 || r.monthStats.missedDays > 0;
-                //   RETURNING TABLE ROW
+                // RETURNING TABLE ROW
                 return (
                   <tr
                     key={r._id}
