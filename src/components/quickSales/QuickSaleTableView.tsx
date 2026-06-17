@@ -11,7 +11,6 @@ import PaginationControls from "@/components/common/PaginationControls";
 
 // <== TYPE BADGE HELPER COMPONENT ==>
 const TypeBadge = ({ type }: { type: "milk" | "yoghurt" }) => (
-  // RETURNING BADGE WITH DYNAMIC STYLES BASED ON TYPE
   <Badge
     variant="secondary"
     className={cn(
@@ -46,7 +45,7 @@ interface QuickSaleTableViewProps {
   // <== ROWS PER PAGE CHANGE HANDLER ==>
   onRowsPerPageChange: (value: string) => void;
   // <== DELETE HANDLER ==>
-  onDelete: (id: string) => void;
+  onDelete: (record: QuickSale) => void;
   // <== EDIT HANDLER ==>
   onEdit: (record: QuickSale) => void;
 }
@@ -68,7 +67,6 @@ const QuickSaleTableView = memo(
   }: QuickSaleTableViewProps) => {
     // RETURNING TABLE VIEW
     return (
-      // TABLE CARD WRAPPER
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -77,25 +75,25 @@ const QuickSaleTableView = memo(
         {/* SCROLLABLE TABLE CONTAINER */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[480px]">
-            {/* TABLE HEAD */}
-            <thead>
-              <tr className="border-b border-border text-left bg-muted/30">
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+            {/* STICKY TABLE HEADER */}
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-border bg-muted/50 backdrop-blur-sm">
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-[10px] uppercase tracking-widest text-left">
                   Type
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-[10px] uppercase tracking-widest text-left">
                   Quantity
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-[10px] uppercase tracking-widest text-left hidden sm:table-cell">
                   Rate
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-[10px] uppercase tracking-widest text-left">
                   Total
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-[10px] uppercase tracking-widest text-left hidden sm:table-cell">
                   Date
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-[10px] uppercase tracking-widest text-left">
                   Actions
                 </th>
               </tr>
@@ -123,64 +121,63 @@ const QuickSaleTableView = memo(
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1">
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                        <Skeleton className="h-8 w-8 rounded-md" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
                       </div>
                     </td>
                   </tr>
                 ))}
               {/* DATA ROWS */}
               {!isLoading &&
-                // LOOPING THROUGH QUICK SALES RECORDS
                 records.map((r, i) => (
                   <motion.tr
                     key={r._id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: i * 0.03 }}
-                    className="border-b border-border/50 hover:bg-muted/40 transition-colors"
+                    className="border-b border-border/50 hover:bg-muted/30 transition-colors"
                   >
                     {/* TYPE BADGE */}
                     <td className="px-3 py-3">
                       <TypeBadge type={r.type} />
                     </td>
                     {/* QUANTITY */}
-                    <td className="px-3 py-3 text-sm font-medium">
+                    <td className="px-3 py-3 font-medium text-sm">
                       {r.quantity.toLocaleString()}
                       <span className="text-muted-foreground text-xs ml-0.5">
                         {r.type === "milk" ? "L" : "kg"}
                       </span>
                     </td>
-                    {/* RATE — HIDDEN ON SMALL */}
+                    {/* RATE — HIDDEN ON SMALL SCREENS */}
                     <td className="px-3 py-3 text-sm text-muted-foreground hidden sm:table-cell">
                       ₨{r.rate.toLocaleString()}
                     </td>
                     {/* TOTAL */}
-                    <td className="px-3 py-3 text-sm font-semibold">
+                    <td className="px-3 py-3 font-semibold text-sm">
                       ₨{r.total.toLocaleString()}
                     </td>
-                    {/* DATE — HIDDEN ON SMALL */}
+                    {/* DATE — HIDDEN ON SMALL SCREENS */}
                     <td className="px-3 py-3 text-sm text-muted-foreground hidden sm:table-cell">
                       {r.date}
                     </td>
-                    {/* ACTION BUTTONS */}
+                    {/* ACTION BUTTONS — ALWAYS VISIBLE */}
                     <td className="px-3 py-3">
                       <div className="flex items-center gap-1">
                         {/* EDIT BUTTON */}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7 rounded-lg"
                           onClick={() => onEdit(r)}
                         >
                           <Edit className="w-3.5 h-3.5" />
                         </Button>
-                        {/* DELETE BUTTON */}
+                        {/* DELETE BUTTON — TRIGGERS CONFIRMATION DIALOG */}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => onDelete(r._id)}
+                          className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => onDelete(r)}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -193,8 +190,8 @@ const QuickSaleTableView = memo(
           {/* EMPTY STATE */}
           {!isLoading && records.length === 0 && (
             <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                <ShoppingBag className="w-6 h-6 text-muted-foreground/40" />
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5 text-muted-foreground/40" />
               </div>
               <div>
                 <p className="font-medium text-muted-foreground text-sm">
