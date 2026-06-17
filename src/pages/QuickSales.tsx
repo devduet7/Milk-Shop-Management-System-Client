@@ -40,6 +40,7 @@ import QuickSaleStatsCards from "@/components/quickSales/QuickSaleStatsCards";
 import QuickSaleEntryPanel from "@/components/quickSales/QuickSaleEntryPanel";
 import QuickSaleDatePicker from "@/components/quickSales/QuickSaleDatePicker";
 import QuickSaleEditDialog from "@/components/quickSales/QuickSaleEditDialog";
+import QuickSaleDeleteDialog from "@/components/quickSales/QuickSaleDeleteDialog";
 
 // <== LOCAL STORAGE KEY FOR PERSISTED VIEW MODE ==>
 const VIEW_KEY = "qs_view";
@@ -150,8 +151,8 @@ const TableSkeleton = () => (
               </td>
               <td className="px-3 py-3">
                 <div className="flex items-center gap-1">
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
                 </div>
               </td>
             </tr>
@@ -179,7 +180,7 @@ const ListSkeleton = () => (
     <div className="divide-y divide-border/50">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="p-3 sm:p-4 flex items-center gap-3">
-          <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+          <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
           <div className="flex-1 space-y-1.5">
             <div className="flex items-center gap-2">
               <Skeleton className="h-4 w-16" />
@@ -192,8 +193,8 @@ const ListSkeleton = () => (
             <Skeleton className="h-3 w-12 ml-auto" />
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-lg" />
+            <Skeleton className="h-7 w-7 rounded-lg" />
           </div>
         </div>
       ))}
@@ -217,23 +218,26 @@ const GridSkeleton = () => (
   <div>
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="glass-card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <Skeleton className="w-10 h-10 rounded-xl" />
-            <Skeleton className="h-5 w-16 rounded-full" />
-          </div>
-          <div>
-            <Skeleton className="h-7 w-24 mb-1" />
-            <Skeleton className="h-3 w-16" />
-          </div>
-          <div className="pt-3 border-t border-border/50 flex items-center justify-between">
-            <div className="space-y-1">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-5 w-16" />
+        <div key={i} className="glass-card overflow-hidden">
+          <div className="h-[3px] bg-muted/50" />
+          <div className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <Skeleton className="w-9 h-9 rounded-xl" />
+              <Skeleton className="h-5 w-16 rounded-full" />
             </div>
-            <div className="flex items-center gap-1">
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
+            <div>
+              <Skeleton className="h-7 w-24 mb-1" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <div className="pt-3 border-t border-border/50 flex items-center justify-between">
+              <div className="space-y-1">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-5 w-16" />
+              </div>
+              <div className="flex items-center gap-1">
+                <Skeleton className="h-7 w-7 rounded-lg" />
+                <Skeleton className="h-7 w-7 rounded-lg" />
+              </div>
             </div>
           </div>
         </div>
@@ -261,7 +265,7 @@ const QuickSalesPageSkeleton = ({ view }: { view: QuickSaleViewMode }) => (
     {/* HEADER SKELETON */}
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
       <div className="flex items-center gap-3">
-        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
         <div className="space-y-2">
           <Skeleton className="h-6 w-28" />
           <Skeleton className="h-3 w-48 hidden sm:block" />
@@ -278,9 +282,8 @@ const QuickSalesPageSkeleton = ({ view }: { view: QuickSaleViewMode }) => (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 mb-5 sm:mb-6">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="glass-card p-3 sm:p-4 md:p-5">
-          <div className="flex items-start justify-between mb-2 sm:mb-3">
-            <Skeleton className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
-            <Skeleton className="h-5 w-7 rounded-full" />
+          <div className="mb-2 sm:mb-3">
+            <Skeleton className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl" />
           </div>
           <Skeleton className="h-3 w-20 mb-1.5" />
           <Skeleton className="h-5 sm:h-7 w-20 sm:w-28" />
@@ -290,17 +293,19 @@ const QuickSalesPageSkeleton = ({ view }: { view: QuickSaleViewMode }) => (
     {/* ENTRY PANEL SKELETON */}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
       {[0, 1].map((i) => (
-        <div key={i} className="glass-card p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-10 h-10 rounded-xl" />
+        <div key={i} className="glass-card overflow-hidden">
+          <div className="px-4 sm:px-5 py-3.5 border-b border-border/50 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="w-9 h-9 rounded-xl" />
               <Skeleton className="h-5 w-20" />
             </div>
             <Skeleton className="h-5 w-16" />
           </div>
-          <Skeleton className="h-3 w-24 mb-1.5" />
-          <Skeleton className="h-9 w-full rounded-md mb-3" />
-          <Skeleton className="h-9 w-full rounded-md" />
+          <div className="p-4 sm:p-5 space-y-3">
+            <Skeleton className="h-3 w-24 mb-1.5" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-10 w-full rounded-md" />
+          </div>
         </div>
       ))}
     </div>
@@ -343,6 +348,10 @@ const QuickSales = memo(() => {
   const [selectedForEdit, setSelectedForEdit] = useState<QuickSale | null>(
     null,
   );
+  // DELETE DIALOG OPEN STATE
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  // STAGED RECORD PENDING DELETION CONFIRMATION
+  const [deleteTarget, setDeleteTarget] = useState<QuickSale | null>(null);
   // DELETE MUTATION
   const deleteMutation = useDeleteQuickSale();
   // DERIVED MONTH STRING FOR MONTH FILTER
@@ -430,13 +439,36 @@ const QuickSales = memo(() => {
     // PERSIST TO LOCAL STORAGE
     localStorage.setItem(ROWS_KEY, String(safe));
   }, []);
-  // HANDLE DELETE RECORD
-  const handleDelete = useCallback(
-    (id: string): void => {
-      deleteMutation.mutate(id);
-    },
-    [deleteMutation],
-  );
+  // HANDLE DELETE — STAGES RECORD FOR CONFIRMATION INSTEAD OF DELETING DIRECTLY
+  const handleDelete = useCallback((record: QuickSale): void => {
+    // STAGE RECORD AS DELETE TARGET
+    setDeleteTarget(record);
+    // OPEN DELETE CONFIRMATION DIALOG
+    setDeleteDialogOpen(true);
+  }, []);
+  // HANDLE DELETE CONFIRM — PERFORMS ACTUAL DELETION AFTER USER CONFIRMS
+  const handleDeleteConfirm = useCallback((): void => {
+    // GUARD: NO TARGET STAGED
+    if (!deleteTarget) return;
+    // FIRE DELETE MUTATION
+    deleteMutation.mutate(deleteTarget._id, {
+      onSuccess: () => {
+        // CLOSE DIALOG ON SUCCESS
+        setDeleteDialogOpen(false);
+        // CLEAR STAGED TARGET
+        setDeleteTarget(null);
+      },
+    });
+  }, [deleteTarget, deleteMutation]);
+  // HANDLE DELETE DIALOG CLOSE
+  const handleDeleteClose = useCallback((): void => {
+    // BLOCK CLOSE WHILE MUTATION IS IN FLIGHT
+    if (deleteMutation.isPending) return;
+    // CLOSE DIALOG
+    setDeleteDialogOpen(false);
+    // CLEAR STAGED TARGET
+    setDeleteTarget(null);
+  }, [deleteMutation.isPending]);
   // HANDLE OPEN EDIT DIALOG
   const handleEdit = useCallback((record: QuickSale): void => {
     // SET SELECTED RECORD FOR EDITING
@@ -489,13 +521,14 @@ const QuickSales = memo(() => {
     <PageTransition className="page-container">
       {/* PAGE HEADER ROW */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {/* LEFT: ICON + TITLE + DESCRIPTION */}
+        {/* LEFT: ICON BADGE + TITLE + DESCRIPTION */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Zap className="w-5 h-5 text-primary" />
+          {/* PAGE ICON BADGE WITH GRADIENT */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+            <Zap className="w-[18px] h-[18px] text-primary-foreground stroke-[2.5]" />
           </div>
           <div className="min-w-0">
-            <h1 className="font-display text-xl sm:text-2xl font-bold">
+            <h1 className="font-display text-xl sm:text-2xl font-bold leading-tight">
               Quick Sales
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">
@@ -511,7 +544,7 @@ const QuickSales = memo(() => {
               key={value}
               onClick={() => handleFilterChange(value)}
               className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border",
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap",
                 filterType === value && filterType !== "date"
                   ? "bg-primary text-primary-foreground border-primary shadow-sm"
                   : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
@@ -520,7 +553,7 @@ const QuickSales = memo(() => {
               {label}
             </button>
           ))}
-          {/* CUSTOM DATE PICKER — ACTIVATES DATE FILTER ON SELECTION */}
+          {/* CUSTOM DATE PICKER */}
           <QuickSaleDatePicker
             selectedDate={specificDate}
             onDateSelect={handleDateSelect}
@@ -528,7 +561,7 @@ const QuickSales = memo(() => {
           />
           {/* MONTH NAVIGATION — ONLY RENDERED WHEN MONTH FILTER IS ACTIVE */}
           {filterType === "month" && (
-            <div className="flex items-center gap-1 ml-1">
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
@@ -559,7 +592,7 @@ const QuickSales = memo(() => {
       <QuickSaleEntryPanel />
       {/* RECORDS SECTION HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-        {/* SECTION HEADING — REFLECTS ACTIVE FILTER */}
+        {/* SECTION HEADING */}
         <h2 className="font-display text-base sm:text-lg font-semibold">
           {sectionHeading}
           {totalFiltered > 0 && (
@@ -632,6 +665,14 @@ const QuickSales = memo(() => {
         open={editDialogOpen}
         record={selectedForEdit}
         onClose={handleEditClose}
+      />
+      {/* DELETE CONFIRMATION DIALOG */}
+      <QuickSaleDeleteDialog
+        open={deleteDialogOpen}
+        record={deleteTarget}
+        isPending={deleteMutation.isPending}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
       />
     </PageTransition>
   );
