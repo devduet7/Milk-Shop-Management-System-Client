@@ -23,18 +23,21 @@ export const StatChip = memo(
   }: StatChipProps) => (
     <div
       className={cn(
-        "flex flex-col items-center px-3 py-1.5 rounded-lg text-center shrink-0",
+        "flex flex-col items-center px-2.5 py-1.5 rounded-lg text-center shrink-0",
         colorClass,
       )}
     >
-      <span className="text-[10px] text-muted-foreground leading-tight">
+      <span className="text-[9px] font-semibold uppercase tracking-widest leading-none">
         {label}
       </span>
-      <span className="text-xs font-bold leading-tight mt-0.5">{value}</span>
+      {value && (
+        <span className="text-[11px] font-bold leading-none mt-0.5">
+          {value}
+        </span>
+      )}
     </div>
   ),
 );
-
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 StatChip.displayName = "StatChip";
 
@@ -71,38 +74,48 @@ const DashboardSectionCard = memo(
     // RETURNING SECTION CARD
     return (
       <div className="glass-card overflow-hidden">
-        {/* SECTION HEADER — ALWAYS VISIBLE */}
+        {/* SECTION HEADER — ALWAYS VISIBLE AND FULLY CLICKABLE */}
         <button
           type="button"
           onClick={handleToggle}
-          className="w-full flex flex-col sm:flex-row sm:items-center gap-3 p-4 sm:p-5 hover:bg-muted/20 transition-colors text-left"
+          className="w-full flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-4 sm:p-5 hover:bg-muted/20 transition-colors text-left"
         >
-          {/* LEFT: ICON + TITLE */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          {/* TOP ROW — ICON, TITLE, MOBILE CHEVRON */}
+          <div className="flex items-center gap-3 w-full sm:min-w-0 sm:flex-1">
+            {/* SECTION ICON BADGE */}
             <div
               className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
                 iconClass,
               )}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-[17px] h-[17px]" />
             </div>
-            <h3 className="font-display font-semibold text-sm sm:text-base">
+            {/* SECTION TITLE */}
+            <h3 className="font-display font-semibold text-sm sm:text-base flex-1 min-w-0">
               {title}
             </h3>
+            {/* CHEVRON — MOBILE ONLY, INLINE WITH TITLE */}
+            <div className="sm:hidden shrink-0 text-muted-foreground">
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </div>
           </div>
-          {/* CENTRE: STAT CHIPS */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* STAT CHIPS ROW */}
+          <div className="flex items-center gap-1.5 flex-wrap">
             {chips.map((chip) => (
               <StatChip key={chip.label} {...chip} />
             ))}
           </div>
-          {/* RIGHT: CHEVRON */}
-          <div className="shrink-0 ml-auto sm:ml-2">
+          {/* CHEVRON — DESKTOP ONLY */}
+          <div className="hidden sm:block shrink-0 sm:ml-2 text-muted-foreground">
             {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+              <ChevronUp className="w-4 h-4" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="w-4 h-4" />
             )}
           </div>
         </button>
