@@ -2,11 +2,9 @@
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { useForm } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useAddQuickSale } from "@/hooks/useQuickSales";
 import type { QuickSaleType } from "@/types/quick-sale-types";
 import { Milk, IceCream, Plus, Edit2, Check, X } from "lucide-react";
@@ -32,9 +30,6 @@ const entrySchema = z.object({
     .min(0.1, { message: "Minimum 0.1!" })
     .max(10_000, { message: "Too Large!" }),
 });
-
-// <== INFERRED ENTRY FORM VALUES TYPE ==>
-type EntryFormValues = z.infer<typeof entrySchema>;
 
 // <== HELPER: READ PERSISTED RATE FROM LOCAL STORAGE ==>
 const getPersistedRate = (key: string, fallback: number): number => {
@@ -130,13 +125,13 @@ const LockedRateDisplay = memo(
               onKeyDown={handleKeyDown}
               className={cn("h-8 w-20 text-xs", NO_SPINNER)}
             />
-            {/* BUTTON ROW — SEPARATED FROM INPUT WITH A VISIBLE GAP */}
+            {/* BUTTON ROW */}
             <div className="flex items-center gap-1.5 shrink-0">
               {/* SAVE BUTTON */}
               <button
                 type="button"
                 onClick={handleSave}
-                className="h-8 w-8 flex items-center justify-center rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
               >
                 <Check className="w-3.5 h-3.5" />
               </button>
@@ -144,17 +139,17 @@ const LockedRateDisplay = memo(
               <button
                 type="button"
                 onClick={handleCancel}
-                className="h-8 w-8 flex items-center justify-center rounded-md border border-border hover:bg-muted transition-colors shrink-0"
+                className="h-8 w-8 flex items-center justify-center rounded-lg border border-border hover:bg-muted transition-colors shrink-0"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         ) : (
-          // LOCKED MODE — RATE VALUE WITH EDIT ICON
+          // LOCKED MODE — RATE VALUE WITH EDIT TRIGGER
           <div className="flex items-center gap-1">
             <span className="text-sm font-bold">₨{rate}</span>
-            {/* EDIT ICON — OPENS EDIT MODE ON CLICK ==>*/}
+            {/* EDIT TRIGGER */}
             <button
               type="button"
               onClick={() => {
@@ -204,67 +199,102 @@ const SaleForm = memo(
   }: SaleFormProps) => {
     // IS MILK FOR LABEL AND STYLE SWITCHING
     const isMilk = type === "milk";
-    // FORM SETUP WITH ZOD RESOLVER
-    const {
-      register,
-      handleSubmit,
-      reset,
-      watch,
-      formState: { errors },
-    } = useForm<EntryFormValues>({
-      // ZOD SCHEMA RESOLVER
-      resolver: zodResolver(entrySchema),
-      // VALIDATE AND CLEAR ERRORS ON CHANGE
-      mode: "onChange",
-      // DEFAULT VALUES
-      defaultValues: { quantity: undefined as unknown as number },
-    });
-    // WATCH QUANTITY FOR LIVE TOTAL PREVIEW
-    const watchedQty = watch("quantity");
-    // COMPUTED PREVIEW TOTAL — UPDATES REACTIVELY AS QUANTITY OR RATE CHANGES
+    // CONTROLLED INPUT VALUE — PURE REACT STATE, NO RHF INTERFERENCE
+    const [inputValue, setInputValue] = useState<string>("");
+    // INLINE VALIDATION ERROR — CLEARED ON RESET, SET ON INVALID INPUT
+    const [inputError, setInputError] = useState<string | null>(null);
+    // DERIVED NUMERIC QUANTITY — 0 WHEN EMPTY OR NON-NUMERIC, NEVER NaN
+    const inputQty = parseFloat(inputValue) || 0;
+    // COMPUTED PREVIEW TOTAL — DERIVED FROM CONTROLLED VALUE, ALWAYS IN SYNC
     const previewTotal = parseFloat(
-      ((Number(watchedQty) || 0) * rate).toFixed(2),
+      ((inputQty > 0 ? inputQty : 0) * rate).toFixed(2),
     );
-    // HANDLE FORM SUBMIT — RESET OPTIMISTICALLY THEN CALL PARENT
-    const handleFormSubmit = useCallback(
-      (data: EntryFormValues): void => {
-        // CALL PARENT SUBMIT WITH VALIDATED QUANTITY
-        onSubmit(data.quantity);
-        // RESET FORM OPTIMISTICALLY
-        reset({ quantity: undefined as unknown as number });
+    // HANDLE INPUT CHANGE — UPDATE VALUE AND RUN INLINE ZOD VALIDATION
+    const handleChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>): void => {
+        // READ RAW STRING FROM THE INPUT
+        const str = e.target.value;
+        // UPDATE CONTROLLED VALUE — REACT NOW OWNS THIS COMPLETELY
+        setInputValue(str);
+        // CLEAR ERROR WHEN FIELD IS EMPTY — NO ERROR SHOWN FOR BLANK INPUT
+        if (!str) {
+          setInputError(null);
+          return;
+        }
+        // PARSE STRING TO NUMBER FOR SCHEMA VALIDATION
+        const num = parseFloat(str);
+        // VALIDATE AGAINST SCHEMA — COVERS MIN, MAX, AND TYPE ERRORS
+        const result = entrySchema.shape.quantity.safeParse(
+          Number.isNaN(num) ? undefined : num,
+        );
+        // APPLY OR CLEAR INLINE ERROR BASED ON RESULT
+        setInputError(result.success ? null : result.error.errors[0].message);
       },
-      [onSubmit, reset],
+      [],
+    );
+    // HANDLE FORM SUBMIT — FINAL VALIDATE, CALL PARENT, RESET ALL STATE
+    const handleFormSubmit = useCallback(
+      (e: React.FormEvent<HTMLFormElement>): void => {
+        // PREVENT NATIVE BROWSER FORM SUBMISSION
+        e.preventDefault();
+        // GUARD: ABORT IF NO VALID POSITIVE QUANTITY PRESENT
+        if (inputQty <= 0) return;
+        // FINAL ZOD VALIDATION BEFORE CALLING PARENT
+        const result = entrySchema.safeParse({ quantity: inputQty });
+        // SHOW ERROR AND ABORT IF SCHEMA VALIDATION FAILS
+        if (!result.success) {
+          // SET INLINE ERROR TO FIRST SCHEMA ERROR MESSAGE
+          setInputError(result.error.errors[0].message);
+          // ABORT SUBMISSION
+          return;
+        }
+        // CALL PARENT WITH VALIDATED QUANTITY
+        onSubmit(result.data.quantity);
+        // CLEAR CONTROLLED VALUE TO RESET FORM
+        setInputValue("");
+        // CLEAR ANY DISPLAYED VALIDATION ERROR
+        setInputError(null);
+      },
+      [inputQty, onSubmit],
     );
     // RETURNING SALE FORM
     return (
-      // GLASS CARD WRAPPER
       <motion.div
         initial={{ opacity: 0, x: isMilk ? -20 : 20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="glass-card p-4 sm:p-5"
+        className="glass-card overflow-hidden"
       >
-        {/* FORM HEADER */}
-        <div className="flex items-center justify-between mb-4 gap-2">
-          <div className="flex items-center gap-3 min-w-0">
-            {/* PRODUCT ICON */}
+        {/* FORM HEADER WITH GRADIENT */}
+        <div
+          className={cn(
+            "px-4 sm:px-5 py-3.5 border-b border-border/50 flex items-center justify-between gap-2",
+            isMilk
+              ? "bg-gradient-to-r from-blue-500/8 to-transparent"
+              : "bg-gradient-to-r from-purple-500/8 to-transparent",
+          )}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            {/* PRODUCT ICON BADGE */}
             <div
               className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                isMilk ? "bg-blue-500/10" : "bg-purple-500/10",
+                "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ring-1",
+                isMilk
+                  ? "bg-blue-500/10 ring-blue-500/20"
+                  : "bg-purple-500/10 ring-purple-500/20",
               )}
             >
               {isMilk ? (
-                <Milk className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <Milk className="w-[18px] h-[18px] text-blue-600 dark:text-blue-400" />
               ) : (
-                <IceCream className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <IceCream className="w-[18px] h-[18px] text-purple-600 dark:text-purple-400" />
               )}
             </div>
             {/* FORM TITLE */}
-            <h3 className="font-semibold text-sm sm:text-base truncate">
+            <h3 className="font-display font-semibold text-sm sm:text-[15px] truncate">
               {isMilk ? "Milk Sale" : "Yoghurt Sale"}
             </h3>
           </div>
-          {/* LOCKED RATE DISPLAY — PERSISTED AND EDIT-PROTECTED ==>*/}
+          {/* LOCKED RATE DISPLAY */}
           <LockedRateDisplay
             type={type}
             rate={rate}
@@ -272,11 +302,14 @@ const SaleForm = memo(
             onRateChange={onRateChange}
           />
         </div>
-        {/* QUANTITY FORM */}
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-3">
+        {/* QUANTITY FORM BODY */}
+        <form onSubmit={handleFormSubmit} className="p-4 sm:p-5 space-y-3">
           {/* QUANTITY FIELD */}
           <div>
-            <Label className="text-xs" htmlFor={`${type}-qty`}>
+            <Label
+              className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+              htmlFor={`${type}-qty`}
+            >
               Quantity ({isMilk ? "Liters" : "kg"})
             </Label>
             <Input
@@ -284,43 +317,62 @@ const SaleForm = memo(
               type="number"
               inputMode="decimal"
               step="0.5"
+              min="0"
               placeholder={isMilk ? "e.g. 2.5" : "e.g. 1.5"}
-              className={cn("mt-1", NO_SPINNER)}
+              className={cn("mt-1.5 h-10", NO_SPINNER)}
               disabled={isPending}
-              {...register("quantity", { valueAsNumber: true })}
+              value={inputValue}
+              onChange={handleChange}
+              onWheel={(e) => e.currentTarget.blur()}
+              onKeyDown={(e) => {
+                // PREVENT NEGATIVE AND SCIENTIFIC NOTATION INPUT
+                if (e.key === "-" || e.key === "e" || e.key === "E")
+                  // PREVENT DEFAULT TO BLOCK THE KEY INPUT
+                  e.preventDefault();
+              }}
             />
-            {/* QUANTITY VALIDATION ERROR */}
-            {errors.quantity && (
-              <p className="text-destructive text-xs mt-1">
-                {errors.quantity.message}
-              </p>
+            {/* VALIDATION ERROR — ONLY SHOWN WHEN FIELD HAS A POSITIVE VALUE */}
+            {inputError && inputQty > 0 && (
+              <p className="text-destructive text-xs mt-1">{inputError}</p>
             )}
           </div>
-          {/* LIVE TOTAL PREVIEW — ONLY SHOWN WHEN QUANTITY IS ENTERED ==>*/}
+          {/* LIVE TOTAL PREVIEW */}
           {previewTotal > 0 && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-xs text-muted-foreground"
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={cn(
+                "rounded-lg px-3 py-2 flex items-center justify-between border",
+                isMilk
+                  ? "bg-blue-500/5 border-blue-500/15"
+                  : "bg-purple-500/5 border-purple-500/15",
+              )}
             >
-              Total:{" "}
-              <span className="font-semibold text-foreground">
+              <span className="text-xs text-muted-foreground">Total</span>
+              <span
+                className={cn(
+                  "font-display text-sm font-bold",
+                  isMilk
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-purple-600 dark:text-purple-400",
+                )}
+              >
                 ₨{previewTotal.toLocaleString()}
               </span>
-            </motion.p>
+            </motion.div>
           )}
-          {/* SUBMIT BUTTON */}
+          {/* SUBMIT BUTTON — ENABLED ONLY WHEN QUANTITY IS POSITIVE AND VALID */}
           <Button
             type="submit"
             className={cn(
-              "w-full text-white",
+              "w-full h-10 text-white gap-2",
               isMilk
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-purple-600 hover:bg-purple-700",
+                ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+                : "bg-purple-600 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-700",
             )}
-            disabled={isPending}
+            disabled={isPending || !(inputQty > 0) || !!inputError}
           >
-            <Plus className="w-4 h-4 mr-1.5" />
+            <Plus className="w-4 h-4" />
             {isPending
               ? "Recording..."
               : `Add ${isMilk ? "Milk" : "Yoghurt"} Sale`}
