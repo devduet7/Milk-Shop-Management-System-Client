@@ -6,9 +6,13 @@
     <title>Milk Shop</title>
     <!-- SPLASH SCREEN SCRIPT -->
     <script>
+      // ADD DARK THEME CLASS
       (function () {
+        // CHECK FOR DARK THEME IN LOCAL STORAGE
         var theme = localStorage.getItem("milk_shop_theme");
+        // IF THEME IS ALREADY SET TO DARK, ADD THE CLASS
         if (theme === "dark") {
+          // ADD DARK CLASS TO HTML ELEMENT
           document.documentElement.classList.add("dark");
         }
       })();
