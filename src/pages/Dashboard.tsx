@@ -22,28 +22,31 @@ const DashboardPageSkeleton = () => (
     {/* HEADER SKELETON */}
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
       <div className="flex items-center gap-3">
-        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
         <div className="space-y-2">
           <Skeleton className="h-6 w-28" />
           <Skeleton className="h-3 w-52 hidden sm:block" />
         </div>
       </div>
-      <div className="flex items-center gap-1">
-        <Skeleton className="h-8 w-8 rounded-md" />
-        <Skeleton className="h-5 w-24" />
-        <Skeleton className="h-8 w-8 rounded-md" />
+      {/* MONTH NAV SKELETON */}
+      <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1">
+        <Skeleton className="h-7 w-7 rounded-lg" />
+        <Skeleton className="h-4 w-28 mx-1" />
+        <Skeleton className="h-7 w-7 rounded-lg" />
       </div>
     </div>
-    {/* OVERVIEW CARDS SKELETON */}
-    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4 mb-6">
+    {/* OVERVIEW CARDS SKELETON — 2 COLS MOBILE, 3 COLS SM AND ABOVE */}
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 md:gap-4 mb-5 sm:mb-6">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="glass-card p-3 sm:p-4">
-          <div className="flex items-start justify-between mb-2">
-            <Skeleton className="w-8 h-8 rounded-lg" />
-            <Skeleton className="h-4 w-10 rounded-full" />
-          </div>
-          <Skeleton className="h-3 w-20 mb-1.5" />
-          <Skeleton className="h-5 w-24" />
+        <div
+          key={i}
+          className="glass-card p-3 sm:p-4 md:p-5 overflow-hidden relative"
+        >
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-muted/60 rounded-t-xl" />
+          <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl mb-2 sm:mb-3" />
+          <Skeleton className="h-3 w-20 mb-1" />
+          <Skeleton className="h-5 sm:h-6 md:h-7 w-16 sm:w-20 mt-1" />
+          <Skeleton className="h-3 w-16 mt-0.5 hidden sm:block" />
         </div>
       ))}
     </div>
@@ -51,11 +54,12 @@ const DashboardPageSkeleton = () => (
     {Array.from({ length: 4 }).map((_, i) => (
       <div key={i} className="glass-card overflow-hidden mb-4">
         <div className="p-4 sm:p-5 flex items-center gap-3">
-          <Skeleton className="w-8 h-8 rounded-lg shrink-0" />
+          <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
           <Skeleton className="h-5 w-32" />
-          <div className="flex gap-2 ml-auto">
-            <Skeleton className="h-7 w-16 rounded-lg" />
-            <Skeleton className="h-7 w-16 rounded-lg" />
+          <div className="flex gap-2 ml-auto flex-wrap">
+            <Skeleton className="h-7 w-14 rounded-lg" />
+            <Skeleton className="h-7 w-14 rounded-lg" />
+            <Skeleton className="h-7 w-14 rounded-lg" />
           </div>
         </div>
       </div>
@@ -99,13 +103,14 @@ const Dashboard = memo(() => {
     <PageTransition className="page-container">
       {/* PAGE HEADER ROW */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {/* LEFT: ICON + TITLE + DESCRIPTION */}
+        {/* LEFT: ICON BADGE + TITLE + DESCRIPTION */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <LayoutDashboard className="w-5 h-5 text-primary" />
+          {/* PAGE ICON BADGE WITH GRADIENT */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+            <LayoutDashboard className="w-[18px] h-[18px] text-primary-foreground stroke-[2.5]" />
           </div>
           <div className="min-w-0">
-            <h1 className="font-display text-xl sm:text-2xl font-bold">
+            <h1 className="font-display text-xl sm:text-2xl font-bold leading-tight">
               Dashboard
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">
@@ -113,23 +118,23 @@ const Dashboard = memo(() => {
             </p>
           </div>
         </div>
-        {/* RIGHT: MONTH NAVIGATION */}
-        <div className="flex items-center gap-1">
+        {/* RIGHT: MONTH NAVIGATION PILL */}
+        <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1 self-start sm:self-auto">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 rounded-lg"
             onClick={handlePrevMonth}
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm font-medium whitespace-nowrap min-w-[100px] text-center">
+          <span className="text-sm font-semibold whitespace-nowrap min-w-[110px] text-center px-1">
             {format(selectedMonth, "MMMM yyyy")}
           </span>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 rounded-lg"
             disabled={isNextMonthDisabled}
             onClick={handleNextMonth}
           >
@@ -194,7 +199,7 @@ const Dashboard = memo(() => {
         >
           <StaffSection stats={summary?.staff} month={monthStr} />
         </motion.div>
-        {/* RECOVERY SECTION — ALL-TIME, STATS ONLY, LINKS TO RECOVERIES PAGE */}
+        {/* RECOVERY SECTION — ALL-TIME STATS, LINKS TO RECOVERIES PAGE */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
