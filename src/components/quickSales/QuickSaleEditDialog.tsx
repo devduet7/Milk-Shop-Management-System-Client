@@ -2,7 +2,6 @@
 import {
   Dialog,
   DialogTitle,
-  DialogHeader,
   DialogContent,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -16,8 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Milk, IceCream } from "lucide-react";
 import { useUpdateQuickSale } from "@/hooks/useQuickSales";
+import { Loader2, Milk, IceCream, Edit2 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { QuickSale, QuickSaleType } from "@/types/quick-sale-types";
 
@@ -123,7 +122,6 @@ const QuickSaleEditDialog = memo(
     const isMilk = selectedType === "milk";
     // RETURNING QUICK SALE EDIT DIALOG
     return (
-      // DIALOG WRAPPER
       <Dialog
         open={open}
         onOpenChange={(v) => {
@@ -131,161 +129,216 @@ const QuickSaleEditDialog = memo(
           if (!v && !isPending) onClose();
         }}
       >
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
-          {/* DIALOG HEADER */}
-          <DialogHeader>
-            <DialogTitle className="font-display">Edit Sale Record</DialogTitle>
-            <DialogDescription className="sr-only">
-              Edit quick sale record details
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="flex flex-col p-0 w-[calc(100vw-2rem)] sm:max-w-md max-h-[92vh] overflow-hidden gap-0">
+          {/* FIXED PRIMARY GRADIENT HEADER */}
+          <div className="shrink-0 px-5 pt-5 pb-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-border/50">
+            <div className="flex items-start gap-3">
+              {/* EDIT ICON BADGE */}
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 ring-1 ring-primary/20 shadow-sm">
+                <Edit2 className="w-[18px] h-[18px] text-primary" />
+              </div>
+              {/* TITLE AND DESCRIPTION */}
+              <div className="min-w-0 pt-0.5">
+                <DialogTitle className="font-display text-[15px] font-bold leading-tight text-left">
+                  Edit Sale Record
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5 text-left">
+                  Update the sale details below
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
+          {/* FORM — FLEX COLUMN TO SUPPORT FIXED FOOTER */}
           {record && (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
-              {/* TYPE TOGGLE */}
-              <div>
-                <Label>Product Type</Label>
-                <div className="flex gap-2 mt-1.5">
-                  {/* MILK BUTTON */}
-                  <button
-                    type="button"
-                    onClick={() => handleTypeSelect("milk")}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border text-sm font-medium transition-all duration-200",
-                      selectedType === "milk"
-                        ? "bg-blue-500/15 border-blue-500/40 text-blue-600 dark:text-blue-400"
-                        : "bg-muted border-border text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <Milk className="w-4 h-4" />
-                    Milk
-                  </button>
-                  {/* YOGHURT BUTTON */}
-                  <button
-                    type="button"
-                    onClick={() => handleTypeSelect("yoghurt")}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border text-sm font-medium transition-all duration-200",
-                      selectedType === "yoghurt"
-                        ? "bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400"
-                        : "bg-muted border-border text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <IceCream className="w-4 h-4" />
-                    Yoghurt
-                  </button>
-                </div>
-              </div>
-              {/* QUANTITY AND RATE — 2-COLUMN GRID */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* QUANTITY FIELD */}
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="flex flex-col flex-1 min-h-0"
+            >
+              {/* SCROLLABLE FORM BODY */}
+              <div className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4">
+                {/* TYPE TOGGLE */}
                 <div>
-                  <Label htmlFor="eq-quantity">
-                    Quantity ({isMilk ? "L" : "kg"})
+                  <Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Product Type
+                  </Label>
+                  <div className="flex gap-2 mt-2">
+                    {/* MILK BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => handleTypeSelect("milk")}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border text-sm font-medium transition-all duration-200",
+                        selectedType === "milk"
+                          ? "bg-blue-500/15 border-blue-500/40 text-blue-600 dark:text-blue-400 shadow-sm"
+                          : "bg-muted border-border text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Milk className="w-4 h-4" />
+                      Milk
+                    </button>
+                    {/* YOGHURT BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => handleTypeSelect("yoghurt")}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-2 h-10 rounded-xl border text-sm font-medium transition-all duration-200",
+                        selectedType === "yoghurt"
+                          ? "bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400 shadow-sm"
+                          : "bg-muted border-border text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <IceCream className="w-4 h-4" />
+                      Yoghurt
+                    </button>
+                  </div>
+                </div>
+                {/* QUANTITY AND RATE — 2-COLUMN GRID */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* QUANTITY FIELD */}
+                  <div>
+                    <Label
+                      htmlFor="eq-quantity"
+                      className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                    >
+                      Qty ({isMilk ? "L" : "kg"})
+                    </Label>
+                    <Input
+                      id="eq-quantity"
+                      type="number"
+                      inputMode="decimal"
+                      step="0.5"
+                      className={cn("mt-1.5 h-10", NO_SPINNER)}
+                      disabled={isPending}
+                      {...register("quantity", { valueAsNumber: true })}
+                    />
+                    {/* QUANTITY VALIDATION ERROR */}
+                    {errors.quantity && (
+                      <p className="text-destructive text-xs mt-1">
+                        {errors.quantity.message}
+                      </p>
+                    )}
+                  </div>
+                  {/* RATE FIELD */}
+                  <div>
+                    <Label
+                      htmlFor="eq-rate"
+                      className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                    >
+                      Rate (₨/{isMilk ? "L" : "kg"})
+                    </Label>
+                    <Input
+                      id="eq-rate"
+                      type="number"
+                      inputMode="numeric"
+                      className={cn("mt-1.5 h-10", NO_SPINNER)}
+                      disabled={isPending}
+                      {...register("rate", { valueAsNumber: true })}
+                    />
+                    {/* RATE VALIDATION ERROR */}
+                    {errors.rate && (
+                      <p className="text-destructive text-xs mt-1">
+                        {errors.rate.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {/* LIVE TOTAL PREVIEW */}
+                <div
+                  className={cn(
+                    "rounded-xl px-4 py-3 flex items-center justify-between border transition-all duration-200",
+                    newTotal > 0
+                      ? "bg-primary/5 border-primary/20"
+                      : "bg-muted/40 border-border/50",
+                  )}
+                >
+                  <span className="text-xs text-muted-foreground font-medium">
+                    New Total
+                  </span>
+                  <span className="font-display font-bold text-sm">
+                    {newTotal > 0 ? `₨${newTotal.toLocaleString()}` : "—"}
+                  </span>
+                </div>
+                {/* DATE FIELD */}
+                <div>
+                  <Label
+                    htmlFor="eq-date"
+                    className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                  >
+                    Date{" "}
+                    <span className="text-muted-foreground text-xs font-normal normal-case tracking-normal">
+                      (YYYY-MM-DD)
+                    </span>
                   </Label>
                   <Input
-                    id="eq-quantity"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.5"
-                    className={cn("mt-1.5", NO_SPINNER)}
+                    id="eq-date"
+                    placeholder="e.g. 2026-05-02"
+                    className="mt-1.5 h-10"
                     disabled={isPending}
-                    {...register("quantity", { valueAsNumber: true })}
+                    {...register("date")}
                   />
-                  {/* QUANTITY VALIDATION ERROR */}
-                  {errors.quantity && (
+                  {/* DATE VALIDATION ERROR */}
+                  {errors.date && (
                     <p className="text-destructive text-xs mt-1">
-                      {errors.quantity.message}
+                      {errors.date.message}
                     </p>
                   )}
                 </div>
-                {/* RATE FIELD */}
+                {/* NOTE FIELD */}
                 <div>
-                  <Label htmlFor="eq-rate">
-                    Rate (₨/{isMilk ? "L" : "kg"})
+                  <Label
+                    htmlFor="eq-note"
+                    className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                  >
+                    Note{" "}
+                    <span className="text-muted-foreground text-xs font-normal normal-case tracking-normal">
+                      (optional)
+                    </span>
                   </Label>
                   <Input
-                    id="eq-rate"
-                    type="number"
-                    inputMode="numeric"
-                    className={cn("mt-1.5", NO_SPINNER)}
+                    id="eq-note"
+                    placeholder="Optional details"
+                    className="mt-1.5 h-10"
                     disabled={isPending}
-                    {...register("rate", { valueAsNumber: true })}
+                    {...register("note")}
                   />
-                  {/* RATE VALIDATION ERROR */}
-                  {errors.rate && (
+                  {/* NOTE VALIDATION ERROR */}
+                  {errors.note && (
                     <p className="text-destructive text-xs mt-1">
-                      {errors.rate.message}
+                      {errors.note.message}
                     </p>
                   )}
                 </div>
               </div>
-              {/* LIVE TOTAL PREVIEW */}
-              <div
-                className={cn(
-                  "rounded-lg px-3.5 py-2.5 flex items-center justify-between transition-colors",
-                  newTotal > 0 ? "bg-muted/50" : "bg-muted/30",
-                )}
-              >
-                <span className="text-sm text-muted-foreground">New Total</span>
-                <span className="font-display font-bold text-sm">
-                  {newTotal > 0 ? `₨${newTotal.toLocaleString()}` : "—"}
-                </span>
-              </div>
-              {/* DATE FIELD */}
-              <div>
-                <Label htmlFor="eq-date">
-                  Date{" "}
-                  <span className="text-muted-foreground text-xs font-normal">
-                    (YYYY-MM-DD)
-                  </span>
-                </Label>
-                <Input
-                  id="eq-date"
-                  placeholder="e.g. 2026-05-02"
-                  className="mt-1.5"
+              {/* FIXED FOOTER */}
+              <div className="shrink-0 px-5 py-3.5 border-t border-border/50 bg-muted/20 flex items-center justify-end gap-2">
+                {/* CANCEL BUTTON */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onClose}
                   disabled={isPending}
-                  {...register("date")}
-                />
-                {/* DATE VALIDATION ERROR */}
-                {errors.date && (
-                  <p className="text-destructive text-xs mt-1">
-                    {errors.date.message}
-                  </p>
-                )}
-              </div>
-              {/* NOTE FIELD */}
-              <div>
-                <Label htmlFor="eq-note">
-                  Note{" "}
-                  <span className="text-muted-foreground text-xs font-normal">
-                    (optional)
-                  </span>
-                </Label>
-                <Input
-                  id="eq-note"
-                  placeholder="Optional details"
-                  className="mt-1.5"
+                  className="h-9 px-4"
+                >
+                  Cancel
+                </Button>
+                {/* SUBMIT BUTTON */}
+                <Button
+                  type="submit"
+                  size="sm"
                   disabled={isPending}
-                  {...register("note")}
-                />
-                {/* NOTE VALIDATION ERROR */}
-                {errors.note && (
-                  <p className="text-destructive text-xs mt-1">
-                    {errors.note.message}
-                  </p>
-                )}
+                  className="h-9 px-4 gap-1.5"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
               </div>
-              {/* SUBMIT BUTTON */}
-              <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
             </form>
           )}
         </DialogContent>
