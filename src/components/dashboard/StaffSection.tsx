@@ -67,20 +67,20 @@ const StaffSection = memo(({ stats, month }: StaffSectionProps) => {
       <div className="overflow-x-auto">
         <table className="w-full text-xs min-w-[400px]">
           <thead>
-            <tr className="bg-muted/30 border-b border-border">
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+            <tr className="bg-muted/50 border-b border-border backdrop-blur-sm">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Name
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Salary
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide hidden sm:table-cell">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                 Paid
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide hidden sm:table-cell">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                 Extra
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="px-3 py-2 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                 Status
               </th>
             </tr>
