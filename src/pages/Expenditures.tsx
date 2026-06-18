@@ -41,6 +41,7 @@ import ExpenditureListView from "@/components/expenditures/ExpenditureListView";
 import ExpenditureTableView from "@/components/expenditures/ExpenditureTableView";
 import ExpenditureStatsCards from "@/components/expenditures/ExpenditureStatsCards";
 import ExpenditureFormDialog from "@/components/expenditures/ExpenditureFormDialog";
+import ExpenditureDeleteDialog from "@/components/expenditures/ExpenditureDeleteDialog";
 
 // <== VIEW MODE TYPE GUARD ==>
 const isViewMode = (value: string | null): value is ViewMode =>
@@ -108,7 +109,7 @@ const TableSkeleton = () => (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[520px]">
         <thead>
-          <tr className="border-b border-border bg-muted/30">
+          <tr className="border-b border-border bg-muted/50">
             {[160, 90, 70, 80, 140, 60].map((w, i) => (
               <th key={i} className="px-3 py-2.5">
                 <Skeleton style={{ width: w, height: 12 }} />
@@ -136,8 +137,8 @@ const TableSkeleton = () => (
               </td>
               <td className="px-3 py-3">
                 <div className="flex gap-1">
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
                 </div>
               </td>
             </tr>
@@ -166,7 +167,7 @@ const ListSkeleton = () => (
     <div className="divide-y divide-border/50">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="p-3 sm:p-4 flex items-center gap-3">
-          <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+          <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2">
               <Skeleton className="h-4 w-32" />
@@ -176,8 +177,8 @@ const ListSkeleton = () => (
           </div>
           <Skeleton className="h-5 w-20 shrink-0 hidden sm:block" />
           <div className="flex gap-0.5 shrink-0">
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-lg" />
+            <Skeleton className="h-7 w-7 rounded-lg" />
           </div>
         </div>
       ))}
@@ -202,23 +203,26 @@ const GridSkeleton = () => (
   <div>
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="glass-card p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-11 h-11 rounded-full" />
-              <div className="space-y-1.5">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-3 w-20" />
+        <div key={i} className="glass-card overflow-hidden">
+          <div className="h-[3px] bg-muted/60" />
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-11 h-11 rounded-xl" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
               </div>
+              <Skeleton className="h-5 w-14 rounded-full" />
             </div>
-            <Skeleton className="h-5 w-14 rounded-full" />
-          </div>
-          <Skeleton className="h-10 w-full rounded-lg" />
-          <div className="flex items-center justify-between pt-1 border-t border-border/50">
-            <Skeleton className="h-6 w-20" />
-            <div className="flex gap-0.5">
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <div className="flex items-center justify-between pt-1 border-t border-border/50">
+              <Skeleton className="h-6 w-20" />
+              <div className="flex gap-0.5">
+                <Skeleton className="h-7 w-7 rounded-lg" />
+                <Skeleton className="h-7 w-7 rounded-lg" />
+              </div>
             </div>
           </div>
         </div>
@@ -249,7 +253,7 @@ const ExpendituresPageSkeleton = ({ view }: { view: ViewMode }) => (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
       {/* LEFT: ICON + TITLE */}
       <div className="flex items-center gap-3">
-        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
         <div className="space-y-2">
           <Skeleton className="h-6 w-32 sm:w-36" />
           <Skeleton className="h-3 w-52 sm:w-64 hidden sm:block" />
@@ -275,13 +279,14 @@ const ExpendituresPageSkeleton = ({ view }: { view: ViewMode }) => (
     {/* STATS CARDS SKELETON — 1 COL MOBILE, 2 COLS SM, 4 COLS DESKTOP */}
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 mb-5 sm:mb-6">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="glass-card p-3 sm:p-4 md:p-5">
-          <div className="flex items-start justify-between mb-2 sm:mb-3">
-            <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg" />
-            <Skeleton className="h-5 w-7 rounded-full" />
-          </div>
-          <Skeleton className="h-3 w-20 mb-1.5" />
-          <Skeleton className="h-5 sm:h-6 md:h-7 w-20 sm:w-24" />
+        <div
+          key={i}
+          className="glass-card p-3 sm:p-4 md:p-5 relative overflow-hidden"
+        >
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-muted/60 rounded-t-xl" />
+          <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl mb-2 sm:mb-3" />
+          <Skeleton className="h-3 w-20 mb-1" />
+          <Skeleton className="h-5 sm:h-6 md:h-7 w-20 sm:w-24 mt-0.5" />
         </div>
       ))}
     </div>
@@ -314,6 +319,10 @@ const Expenditures = memo(() => {
   const [editExpenditure, setEditExpenditure] = useState<Expenditure | null>(
     null,
   );
+  // DELETE DIALOG OPEN STATE
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  // EXPENDITURE RECORD STAGED FOR DELETION (NULL = NO PENDING DELETE)
+  const [deleteTarget, setDeleteTarget] = useState<Expenditure | null>(null);
   // DEBOUNCE SEARCH INPUT (300MS) TO AVOID EXCESSIVE API CALLS
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
@@ -410,14 +419,38 @@ const Expenditures = memo(() => {
     // CLEAR EDIT STATE
     setEditExpenditure(null);
   }, []);
-  // DELETE EXPENDITURE BY ID
-  const handleDelete = useCallback(
-    (id: string): void => {
-      // CALL DELETE MUTATION
-      deleteMutation.mutate(id);
-    },
-    [deleteMutation],
-  );
+  // CONFIRM DELETE — CALLED FROM DELETE DIALOG ON CONFIRM
+  const handleDeleteConfirm = useCallback((): void => {
+    // GUARD: ENSURE A TARGET IS STAGED
+    if (!deleteTarget) return;
+    // CALL DELETE MUTATION
+    deleteMutation.mutate(deleteTarget._id, {
+      // ON SUCCESS
+      onSuccess: () => {
+        // CLOSE DIALOG AND CLEAR TARGET
+        setDeleteDialogOpen(false);
+        // CLEAR STAGED TARGET
+        setDeleteTarget(null);
+      },
+    });
+  }, [deleteTarget, deleteMutation]);
+
+  // CLOSE DELETE DIALOG — BLOCKED WHILE MUTATION IS PENDING
+  const handleDeleteClose = useCallback((): void => {
+    // BLOCK CLOSE WHILE PENDING
+    if (deleteMutation.isPending) return;
+    // CLOSE DIALOG AND CLEAR STAGED TARGET
+    setDeleteDialogOpen(false);
+    // CLEAR STAGED TARGET
+    setDeleteTarget(null);
+  }, [deleteMutation.isPending]);
+  // STAGE EXPENDITURE FOR DELETE — OPENS CONFIRMATION DIALOG
+  const handleDelete = useCallback((record: Expenditure): void => {
+    // STAGE THE RECORD FOR DELETION
+    setDeleteTarget(record);
+    // OPEN CONFIRMATION DIALOG
+    setDeleteDialogOpen(true);
+  }, []);
   // IS NEXT MONTH DISABLED (CANNOT NAVIGATE PAST CURRENT MONTH)
   const isNextMonthDisabled =
     selectedMonth.getMonth() >= new Date().getMonth() &&
@@ -448,11 +481,11 @@ const Expenditures = memo(() => {
     <PageTransition className="page-container">
       {/* PAGE HEADER ROW */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {/* LEFT: ICON + TITLE + DESCRIPTION */}
+        {/* LEFT: ICON BADGE + TITLE + DESCRIPTION */}
         <div className="flex items-center gap-3 min-w-0">
-          {/* PAGE ICON */}
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Wallet className="w-5 h-5 text-primary" />
+          {/* PAGE ICON BADGE WITH GRADIENT */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+            <Wallet className="w-[18px] h-[18px] text-primary-foreground stroke-[2.5]" />
           </div>
           {/* TITLE AND DESCRIPTION */}
           <div className="min-w-0">
@@ -474,7 +507,7 @@ const Expenditures = memo(() => {
                 key={value}
                 onClick={() => handleFilterChange(value)}
                 className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border",
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap",
                   filter === value
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
                     : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
@@ -599,6 +632,14 @@ const Expenditures = memo(() => {
         open={formOpen}
         editExpenditure={editExpenditure}
         onClose={handleFormClose}
+      />
+      {/* EXPENDITURE DELETE CONFIRMATION DIALOG */}
+      <ExpenditureDeleteDialog
+        open={deleteDialogOpen}
+        record={deleteTarget}
+        isPending={deleteMutation.isPending}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
       />
     </PageTransition>
   );
