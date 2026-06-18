@@ -1,0 +1,127 @@
+// <== IMPORTS ==>
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { memo } from "react";
+import { Loader2, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { Purchase } from "@/types/purchase-types";
+
+// <== PURCHASE DELETE DIALOG PROPS ==>
+interface PurchaseDeleteDialogProps {
+  // <== DIALOG OPEN STATE ==>
+  open: boolean;
+  // <== PURCHASE RECORD TO DELETE ==>
+  record: Purchase | null;
+  // <== PENDING DELETE STATE ==>
+  isPending: boolean;
+  // <== CLOSE HANDLER ==>
+  onClose: () => void;
+  // <== CONFIRM DELETE HANDLER ==>
+  onConfirm: () => void;
+}
+
+// <== PURCHASE DELETE DIALOG COMPONENT ==>
+const PurchaseDeleteDialog = memo(
+  ({
+    open,
+    record,
+    isPending,
+    onClose,
+    onConfirm,
+  }: PurchaseDeleteDialogProps) => {
+    // RETURNING DELETE CONFIRMATION DIALOG
+    return (
+      <Dialog
+        open={open}
+        onOpenChange={(v) => {
+          // ONLY ALLOW CLOSE WHEN NOT PENDING
+          if (!v && !isPending) onClose();
+        }}
+      >
+        <DialogContent className="flex flex-col p-0 w-[calc(100vw-2rem)] sm:max-w-sm overflow-hidden gap-0">
+          {/* FIXED DESTRUCTIVE GRADIENT HEADER */}
+          <div className="shrink-0 px-5 pt-5 pb-4 bg-gradient-to-br from-destructive/10 via-destructive/5 to-transparent border-b border-border/50">
+            <div className="flex items-start gap-3">
+              {/* DESTRUCTIVE ICON BADGE */}
+              <div className="w-10 h-10 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0 ring-1 ring-destructive/20 shadow-sm">
+                <Trash2 className="w-[18px] h-[18px] text-destructive" />
+              </div>
+              {/* TITLE AND DESCRIPTION */}
+              <div className="min-w-0 pt-0.5">
+                <DialogTitle className="font-display text-[15px] font-bold leading-tight text-left">
+                  Delete Purchase
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5 text-left">
+                  This action cannot be undone
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
+          {/* BODY — CONFIRMATION MESSAGE WITH RECORD SPECIFICS */}
+          {record && (
+            <div className="px-5 py-4">
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to permanently delete the{" "}
+                <span className="font-semibold text-foreground">
+                  {record.milkQuantity.toLocaleString()}L
+                </span>{" "}
+                purchase from{" "}
+                <span className="font-semibold text-foreground">
+                  {record.supplier}
+                </span>{" "}
+                on{" "}
+                <span className="font-semibold text-foreground">
+                  {record.date}
+                </span>
+                ?
+              </p>
+            </div>
+          )}
+          {/* FIXED FOOTER */}
+          <div className="shrink-0 px-5 py-3.5 border-t border-border/50 bg-muted/20 flex items-center justify-end gap-2">
+            {/* CANCEL BUTTON */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              disabled={isPending}
+              className="h-9 px-4"
+            >
+              Cancel
+            </Button>
+            {/* CONFIRM DELETE BUTTON */}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={onConfirm}
+              disabled={isPending}
+              className="h-9 px-4 gap-1.5"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  },
+);
+
+// <== DISPLAY NAME FOR DEVTOOLS ==>
+PurchaseDeleteDialog.displayName = "PurchaseDeleteDialog";
+
+// <== EXPORT ==>
+export default PurchaseDeleteDialog;
