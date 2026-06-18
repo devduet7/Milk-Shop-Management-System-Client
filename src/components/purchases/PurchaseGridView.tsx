@@ -29,8 +29,8 @@ interface PurchaseGridViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== EDIT PURCHASE HANDLER ==>
   onEdit: (purchase: Purchase) => void;
-  // <== DELETE PURCHASE HANDLER ==>
-  onDelete: (id: string) => void;
+  // <== ON DELETE HANDLER ==>
+  onDelete: (record: Purchase) => void;
 }
 
 // <== PURCHASE GRID VIEW COMPONENT ==>
@@ -56,28 +56,31 @@ const PurchaseGridView = memo(
           {/* LOADING SKELETON CARDS */}
           {isLoading &&
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={`skel-${i}`} className="glass-card p-4 space-y-4">
-                {/* SKELETON HEADER */}
-                <div className="flex items-center gap-3">
-                  <Skeleton className="w-11 h-11 rounded-full" />
-                  <div className="space-y-1.5">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-3 w-16" />
+              <div key={`skel-${i}`} className="glass-card overflow-hidden">
+                <div className="h-[3px] bg-muted/60" />
+                <div className="p-4 space-y-4">
+                  {/* SKELETON HEADER */}
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="w-11 h-11 rounded-xl" />
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
                   </div>
-                </div>
-                {/* SKELETON MINI STATS */}
-                <div className="grid grid-cols-2 gap-2">
-                  <Skeleton className="h-16 rounded-lg" />
-                  <Skeleton className="h-16 rounded-lg" />
-                </div>
-                {/* SKELETON NOTE */}
-                <Skeleton className="h-10 w-full rounded-lg" />
-                {/* SKELETON FOOTER */}
-                <div className="flex items-center justify-between pt-1 border-t border-border/50">
-                  <Skeleton className="h-6 w-20" />
-                  <div className="flex gap-0.5">
-                    <Skeleton className="h-8 w-8 rounded-md" />
-                    <Skeleton className="h-8 w-8 rounded-md" />
+                  {/* SKELETON MINI STATS */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-16 rounded-lg" />
+                    <Skeleton className="h-16 rounded-lg" />
+                  </div>
+                  {/* SKELETON NOTE */}
+                  <Skeleton className="h-10 w-full rounded-lg" />
+                  {/* SKELETON FOOTER */}
+                  <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                    <Skeleton className="h-6 w-20" />
+                    <div className="flex gap-0.5">
+                      <Skeleton className="h-7 w-7 rounded-lg" />
+                      <Skeleton className="h-7 w-7 rounded-lg" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -89,88 +92,93 @@ const PurchaseGridView = memo(
               // GRID CARD
               <motion.div
                 key={r._id}
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.05 }}
-                className="glass-card p-4 flex flex-col hover:shadow-md transition-all group relative"
+                className="glass-card overflow-hidden flex flex-col hover:shadow-md transition-all group"
               >
-                {/* CARD HEADER */}
-                <div className="flex items-center gap-3 mb-3">
-                  {/* SUPPLIER AVATAR */}
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <span className="text-sm sm:text-base font-bold text-primary">
-                      {r.supplier.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  {/* SUPPLIER NAME + DATE */}
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-sm leading-tight truncate">
-                      {r.supplier}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {r.date}
-                    </p>
-                  </div>
-                </div>
-                {/* MILK + PRICE PER LITER MINI STATS */}
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {/* MILK QUANTITY */}
-                  <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground mb-0.5 flex items-center justify-center gap-1">
-                      <Milk className="w-3 h-3" />
-                      Milk
-                    </p>
-                    <p className="font-display text-base font-bold">
-                      {r.milkQuantity.toLocaleString()}
-                      <span className="text-[10px] font-normal text-muted-foreground ml-0.5">
-                        L
+                {/* PURCHASE TOP COLOR BAR */}
+                <div className="h-[3px] bg-emerald-500" />
+                {/* CARD BODY */}
+                <div className="p-4 flex flex-col flex-1">
+                  {/* CARD HEADER */}
+                  <div className="flex items-center gap-3 mb-3">
+                    {/* SUPPLIER AVATAR */}
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-sm sm:text-base font-bold text-primary">
+                        {r.supplier.charAt(0).toUpperCase()}
                       </span>
-                    </p>
+                    </div>
+                    {/* SUPPLIER NAME + DATE */}
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-sm leading-tight truncate">
+                        {r.supplier}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {r.date}
+                      </p>
+                    </div>
                   </div>
-                  {/* PRICE PER LITER */}
-                  <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                    <p className="text-[10px] text-muted-foreground mb-0.5">
-                      Price / L
-                    </p>
-                    <p className="font-display text-base font-bold">
-                      ₨{r.pricePerLiter.toLocaleString()}
-                    </p>
+                  {/* MILK + PRICE PER LITER MINI STATS */}
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {/* MILK QUANTITY */}
+                    <div className="bg-muted/50 rounded-lg p-2.5 text-center">
+                      <p className="text-[10px] text-muted-foreground mb-0.5 flex items-center justify-center gap-1">
+                        <Milk className="w-3 h-3" />
+                        Milk
+                      </p>
+                      <p className="font-display text-base font-bold">
+                        {r.milkQuantity.toLocaleString()}
+                        <span className="text-[10px] font-normal text-muted-foreground ml-0.5">
+                          L
+                        </span>
+                      </p>
+                    </div>
+                    {/* PRICE PER LITER */}
+                    <div className="bg-muted/50 rounded-lg p-2.5 text-center">
+                      <p className="text-[10px] text-muted-foreground mb-0.5">
+                        Price / L
+                      </p>
+                      <p className="font-display text-base font-bold">
+                        ₨{r.pricePerLiter.toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                {/* NOTE (SHOWN ONLY WHEN PRESENT) */}
-                {r.note && (
-                  <div className="bg-muted/50 rounded-lg p-2.5 mb-3">
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {r.note}
-                    </p>
-                  </div>
-                )}
-                {/* CARD FOOTER */}
-                <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50 gap-2">
-                  {/* TOTAL COST */}
-                  <span className="font-display text-lg sm:text-xl font-bold">
-                    ₨{r.totalCost.toLocaleString()}
-                  </span>
-                  {/* ACTION BUTTONS — ALWAYS VISIBLE ON MOBILE, HOVER ON DESKTOP */}
-                  <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                    {/* EDIT */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => onEdit(r)}
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </Button>
-                    {/* DELETE */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => onDelete(r._id)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                  {/* NOTE (SHOWN ONLY WHEN PRESENT) */}
+                  {r.note && (
+                    <div className="bg-muted/50 rounded-lg p-2.5 mb-3">
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {r.note}
+                      </p>
+                    </div>
+                  )}
+                  {/* CARD FOOTER */}
+                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50 gap-2">
+                    {/* TOTAL COST */}
+                    <span className="font-display text-lg sm:text-xl font-bold">
+                      ₨{r.totalCost.toLocaleString()}
+                    </span>
+                    {/* ACTION BUTTONS — ALWAYS VISIBLE ON MOBILE, HOVER ON DESKTOP */}
+                    <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+                      {/* EDIT */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-lg"
+                        onClick={() => onEdit(r)}
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
+                      {/* DELETE */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => onDelete(r)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -179,8 +187,8 @@ const PurchaseGridView = memo(
         {/* EMPTY STATE WITH ICON */}
         {!isLoading && purchases.length === 0 && (
           <div className="glass-card flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <Package className="w-6 h-6 text-muted-foreground/40" />
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <Package className="w-5 h-5 text-muted-foreground/40" />
             </div>
             <div>
               <p className="font-medium text-muted-foreground text-sm">
