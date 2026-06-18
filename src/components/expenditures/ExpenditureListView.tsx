@@ -27,6 +27,8 @@ type CategoryConfig = {
   icon: LucideIcon;
   // <== TAILWIND COLOR CLASSES ==>
   color: string;
+  // <== AVATAR COLOR CLASS ==>
+  avatarClass: string;
 };
 
 // <== CATEGORY CONFIG MAP ==>
@@ -36,6 +38,7 @@ const CATEGORY_CONFIG: Record<ExpenditureCategory, CategoryConfig> = {
     label: "Supplies",
     icon: ShoppingBag,
     color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    avatarClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   },
   // MEALS CATEGORY
   meals: {
@@ -43,6 +46,7 @@ const CATEGORY_CONFIG: Record<ExpenditureCategory, CategoryConfig> = {
     icon: Receipt,
     color:
       "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    avatarClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   },
   // TRANSPORT CATEGORY
   transport: {
@@ -50,6 +54,7 @@ const CATEGORY_CONFIG: Record<ExpenditureCategory, CategoryConfig> = {
     icon: Wallet,
     color:
       "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/20",
+    avatarClass: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
   },
   // MISCELLANEOUS CATEGORY
   misc: {
@@ -57,6 +62,7 @@ const CATEGORY_CONFIG: Record<ExpenditureCategory, CategoryConfig> = {
     icon: Receipt,
     color:
       "bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/20",
+    avatarClass: "bg-slate-500/10 text-slate-600 dark:text-slate-400",
   },
 };
 
@@ -82,8 +88,8 @@ interface ExpenditureListViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== EDIT EXPENDITURE HANDLER ==>
   onEdit: (expenditure: Expenditure) => void;
-  // <== DELETE EXPENDITURE HANDLER ==>
-  onDelete: (id: string) => void;
+  // <== ON DELETE HANDLER ==>
+  onDelete: (record: Expenditure) => void;
 }
 
 // <== EXPENDITURE LIST VIEW COMPONENT ==>
@@ -118,7 +124,7 @@ const ExpenditureListView = memo(
                 key={`skel-${i}`}
                 className="p-3 sm:p-4 flex items-center gap-3"
               >
-                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-4 w-32" />
@@ -128,8 +134,8 @@ const ExpenditureListView = memo(
                 </div>
                 <Skeleton className="h-5 w-20 shrink-0" />
                 <div className="flex gap-0.5 shrink-0">
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
                 </div>
               </div>
             ))}
@@ -152,8 +158,13 @@ const ExpenditureListView = memo(
                   className="p-3 sm:p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors group"
                 >
                   {/* CATEGORY ICON AVATAR */}
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <CatIcon className="w-4 h-4 text-primary" />
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                      config.avatarClass,
+                    )}
+                  >
+                    <CatIcon className="w-4 h-4" />
                   </div>
                   {/* MAIN INFO */}
                   <div className="flex-1 min-w-0">
@@ -194,7 +205,7 @@ const ExpenditureListView = memo(
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-7 w-7 rounded-lg"
                       onClick={() => onEdit(r)}
                     >
                       <Edit className="w-3.5 h-3.5" />
@@ -203,8 +214,8 @@ const ExpenditureListView = memo(
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => onDelete(r._id)}
+                      className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => onDelete(r)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -216,8 +227,8 @@ const ExpenditureListView = memo(
         {/* EMPTY STATE WITH ICON */}
         {!isLoading && expenditures.length === 0 && (
           <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <Wallet className="w-6 h-6 text-muted-foreground/40" />
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <Wallet className="w-5 h-5 text-muted-foreground/40" />
             </div>
             <div>
               <p className="font-medium text-muted-foreground text-sm">
