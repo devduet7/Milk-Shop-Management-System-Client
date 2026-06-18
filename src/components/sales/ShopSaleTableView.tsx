@@ -51,8 +51,8 @@ interface ShopSaleTableViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== EDIT SALE HANDLER ==>
   onEdit: (sale: Sale) => void;
-  // <== DELETE SALE HANDLER ==>
-  onDelete: (id: string) => void;
+  // <== ON DELETE HANDLER ==>
+  onDelete: (record: Sale) => void;
 }
 
 // <== SHOP SALE TABLE VIEW COMPONENT ==>
@@ -81,28 +81,28 @@ const ShopSaleTableView = memo(
         {/* SCROLLABLE TABLE CONTAINER */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[400px]">
-            {/* TABLE HEAD */}
-            <thead>
-              <tr className="border-b border-border text-left bg-muted/30">
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+            {/* STICKY TABLE HEADER */}
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-border text-left bg-muted/50 backdrop-blur-sm">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Product
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Qty
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                   Price / Unit
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Total
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                   Date
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden md:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden md:table-cell">
                   Note
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Actions
                 </th>
               </tr>
@@ -133,8 +133,8 @@ const ShopSaleTableView = memo(
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex gap-1">
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                        <Skeleton className="h-8 w-8 rounded-md" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
                       </div>
                     </td>
                   </tr>
@@ -152,7 +152,7 @@ const ShopSaleTableView = memo(
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.03 }}
-                      className="border-b border-border/50 hover:bg-muted/40 transition-colors"
+                      className="border-b border-border/50 hover:bg-muted/30 transition-colors"
                     >
                       {/* PRODUCT BADGE */}
                       <td className="px-3 py-3">
@@ -194,7 +194,7 @@ const ShopSaleTableView = memo(
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-7 w-7 rounded-lg"
                             onClick={() => onEdit(r)}
                           >
                             <Edit className="w-3.5 h-3.5" />
@@ -203,8 +203,8 @@ const ShopSaleTableView = memo(
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => onDelete(r._id)}
+                            className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => onDelete(r)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -218,8 +218,8 @@ const ShopSaleTableView = memo(
           {/* EMPTY STATE WITH ICON */}
           {!isLoading && sales.length === 0 && (
             <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                <ShoppingCart className="w-6 h-6 text-muted-foreground/40" />
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <ShoppingCart className="w-5 h-5 text-muted-foreground/40" />
               </div>
               <div>
                 <p className="font-medium text-muted-foreground text-sm">

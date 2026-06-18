@@ -12,13 +12,14 @@ import PaginationControls from "@/components/common/PaginationControls";
 // <== PRODUCT CONFIG MAP ==>
 const PRODUCT_CONFIG: Record<
   SaleProductType,
-  { label: string; unit: string; color: string }
+  { label: string; unit: string; color: string; topBar: string }
 > = {
   // MILK PRODUCT CONFIG
   milk: {
     label: "Milk",
     unit: "L",
     color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    topBar: "bg-blue-500",
   },
   // YOGHURT PRODUCT CONFIG
   yoghurt: {
@@ -26,6 +27,7 @@ const PRODUCT_CONFIG: Record<
     unit: "kg",
     color:
       "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    topBar: "bg-amber-500",
   },
 };
 
@@ -51,8 +53,8 @@ interface ShopSaleGridViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== EDIT SALE HANDLER ==>
   onEdit: (sale: Sale) => void;
-  // <== DELETE SALE HANDLER ==>
-  onDelete: (id: string) => void;
+  // <== ON DELETE HANDLER ==>
+  onDelete: (record: Sale) => void;
 }
 
 // <== SHOP SALE GRID VIEW COMPONENT ==>
@@ -78,27 +80,30 @@ const ShopSaleGridView = memo(
           {/* LOADING SKELETON CARDS */}
           {isLoading &&
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={`skel-${i}`} className="glass-card p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="w-11 h-11 rounded-full" />
-                    <div className="space-y-1.5">
-                      <Skeleton className="h-5 w-16 rounded-full" />
-                      <Skeleton className="h-3 w-20" />
+              <div key={`skel-${i}`} className="glass-card overflow-hidden">
+                <div className="h-[3px] bg-muted/60" />
+                <div className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="w-11 h-11 rounded-xl" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
                     </div>
+                    <Skeleton className="h-5 w-14 rounded-full" />
                   </div>
-                  <Skeleton className="h-5 w-14 rounded-full" />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Skeleton className="h-16 rounded-lg" />
-                  <Skeleton className="h-16 rounded-lg" />
-                </div>
-                <Skeleton className="h-10 w-full rounded-lg" />
-                <div className="flex items-center justify-between pt-1 border-t border-border/50">
-                  <Skeleton className="h-6 w-20" />
-                  <div className="flex gap-0.5">
-                    <Skeleton className="h-8 w-8 rounded-md" />
-                    <Skeleton className="h-8 w-8 rounded-md" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-16 rounded-lg" />
+                    <Skeleton className="h-16 rounded-lg" />
+                  </div>
+                  <Skeleton className="h-10 w-full rounded-lg" />
+                  <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                    <Skeleton className="h-6 w-20" />
+                    <div className="flex gap-0.5">
+                      <Skeleton className="h-7 w-7 rounded-lg" />
+                      <Skeleton className="h-7 w-7 rounded-lg" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -113,89 +118,94 @@ const ShopSaleGridView = memo(
               return (
                 <motion.div
                   key={r._id}
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.05 }}
-                  className="glass-card p-4 flex flex-col hover:shadow-md transition-all group relative"
+                  className="glass-card overflow-hidden flex flex-col hover:shadow-md transition-all group"
                 >
-                  {/* CARD HEADER */}
-                  <div className="flex items-center gap-3 mb-3">
-                    {/* PRODUCT ICON AVATAR */}
-                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Milk className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  {/* PRODUCT TYPE TOP COLOR BAR */}
+                  <div className={cn("h-[3px]", config.topBar)} />
+                  {/* CARD BODY */}
+                  <div className="p-4 flex flex-col flex-1">
+                    {/* CARD HEADER */}
+                    <div className="flex items-center gap-3 mb-3">
+                      {/* PRODUCT ICON AVATAR */}
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <Milk className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                      </div>
+                      {/* PRODUCT BADGE + DATE */}
+                      <div className="min-w-0">
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "text-[10px] font-bold tracking-wider uppercase",
+                            config.color,
+                          )}
+                        >
+                          {config.label}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {r.date}
+                        </p>
+                      </div>
                     </div>
-                    {/* PRODUCT BADGE + DATE */}
-                    <div className="min-w-0">
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-[10px] font-bold tracking-wider uppercase",
-                          config.color,
-                        )}
-                      >
-                        {config.label}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {r.date}
-                      </p>
+                    {/* QUANTITY + PRICE MINI STATS */}
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="bg-muted/50 rounded-lg p-2.5 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">
+                          Quantity
+                        </p>
+                        <p className="font-display text-base font-bold">
+                          {r.quantity.toLocaleString()}
+                          <span className="text-[10px] font-normal text-muted-foreground ml-0.5">
+                            {config.unit}
+                          </span>
+                        </p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-2.5 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">
+                          Price / {config.unit}
+                        </p>
+                        <p className="font-display text-base font-bold">
+                          ₨{r.pricePerUnit.toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  {/* QUANTITY + PRICE MINI STATS */}
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                      <p className="text-[10px] text-muted-foreground mb-0.5">
-                        Quantity
-                      </p>
-                      <p className="font-display text-base font-bold">
-                        {r.quantity.toLocaleString()}
-                        <span className="text-[10px] font-normal text-muted-foreground ml-0.5">
-                          {config.unit}
-                        </span>
-                      </p>
-                    </div>
-                    <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                      <p className="text-[10px] text-muted-foreground mb-0.5">
-                        Price / {config.unit}
-                      </p>
-                      <p className="font-display text-base font-bold">
-                        ₨{r.pricePerUnit.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  {/* NOTE (SHOWN ONLY WHEN PRESENT) */}
-                  {r.note && (
-                    <div className="bg-muted/50 rounded-lg p-2.5 mb-3">
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {r.note}
-                      </p>
-                    </div>
-                  )}
-                  {/* CARD FOOTER */}
-                  <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50 gap-2">
-                    {/* TOTAL AMOUNT */}
-                    <span className="font-display text-lg sm:text-xl font-bold">
-                      ₨{r.totalAmount.toLocaleString()}
-                    </span>
-                    {/* ACTION BUTTONS — ALWAYS VISIBLE ON MOBILE, HOVER ON DESKTOP */}
-                    <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                      {/* EDIT */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => onEdit(r)}
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                      </Button>
-                      {/* DELETE */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => onDelete(r._id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                    {/* NOTE (SHOWN ONLY WHEN PRESENT) */}
+                    {r.note && (
+                      <div className="bg-muted/50 rounded-lg p-2.5 mb-3">
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {r.note}
+                        </p>
+                      </div>
+                    )}
+                    {/* CARD FOOTER */}
+                    <div className="flex items-center justify-between mt-auto pt-3 border-t border-border/50 gap-2">
+                      {/* TOTAL AMOUNT */}
+                      <span className="font-display text-lg sm:text-xl font-bold">
+                        ₨{r.totalAmount.toLocaleString()}
+                      </span>
+                      {/* ACTION BUTTONS — ALWAYS VISIBLE ON MOBILE, HOVER ON DESKTOP */}
+                      <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+                        {/* EDIT */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-lg"
+                          onClick={() => onEdit(r)}
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                        {/* DELETE */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => onDelete(r)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -205,8 +215,8 @@ const ShopSaleGridView = memo(
         {/* EMPTY STATE WITH ICON */}
         {!isLoading && sales.length === 0 && (
           <div className="glass-card flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <ShoppingCart className="w-6 h-6 text-muted-foreground/40" />
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <ShoppingCart className="w-5 h-5 text-muted-foreground/40" />
             </div>
             <div>
               <p className="font-medium text-muted-foreground text-sm">
