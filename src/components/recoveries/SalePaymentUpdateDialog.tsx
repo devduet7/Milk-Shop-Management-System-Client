@@ -6,7 +6,6 @@ import {
 import {
   Dialog,
   DialogTitle,
-  DialogHeader,
   DialogContent,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -14,6 +13,7 @@ import {
   updateSalePaymentSchema,
   type UpdateSalePaymentFormValues,
 } from "@/validators/recoverySchemas";
+import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -114,143 +114,170 @@ const SalePaymentUpdateDialog = memo(
           if (!v && !isPending) onClose();
         }}
       >
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="flex flex-col p-0 w-[calc(100vw-2rem)] sm:max-w-md max-h-[92vh] overflow-hidden gap-0">
           {sale && (
             <>
-              {/* DIALOG HEADER */}
-              <DialogHeader>
-                <DialogTitle className="font-display flex items-center gap-3">
-                  {/* CUSTOMER AVATAR */}
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              {/* FIXED PRIMARY GRADIENT HEADER */}
+              <div className="shrink-0 px-5 pt-5 pb-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-border/50">
+                <div className="flex items-start gap-3">
+                  {/* CUSTOMER AVATAR BADGE */}
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 ring-1 ring-primary/20 shadow-sm">
                     <span className="text-base font-bold text-primary">
                       {(sale.customerName ?? "?").charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  {/* CUSTOMER NAME + DATE */}
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold leading-tight">
+                  {/* TITLE AND DESCRIPTION */}
+                  <div className="min-w-0 pt-0.5">
+                    <DialogTitle className="font-display text-[15px] font-bold leading-tight text-left truncate">
                       {sale.customerName}
-                    </p>
-                    <p className="text-xs text-muted-foreground font-normal">
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground mt-0.5 text-left">
                       {sale.productType === "milk" ? "Milk" : "Yoghurt"} •{" "}
                       {sale.quantity.toLocaleString()}
                       {sale.productType === "milk" ? "L" : "kg"} • {sale.date}
-                    </p>
+                    </DialogDescription>
                   </div>
-                </DialogTitle>
-                <DialogDescription className="sr-only">
-                  Record a payment for {sale.customerName}
-                </DialogDescription>
-              </DialogHeader>
-              {/* SALE SUMMARY */}
-              <div className="grid grid-cols-3 gap-2 mt-1">
-                {/* TOTAL AMOUNT */}
-                <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">
-                    Total
-                  </p>
-                  <p className="font-display text-sm font-bold">
-                    ₨{sale.totalAmount.toLocaleString()}
-                  </p>
-                </div>
-                {/* CURRENT PAID */}
-                <div className="bg-emerald-500/10 rounded-lg p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">
-                    Paid
-                  </p>
-                  <p className="font-display text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                    ₨{sale.paidAmount.toLocaleString()}
-                  </p>
-                </div>
-                {/* COMPUTED PENDING */}
-                <div className="bg-red-500/10 rounded-lg p-2.5 text-center">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">
-                    Pending
-                  </p>
-                  <p className="font-display text-sm font-bold text-red-600 dark:text-red-400">
-                    ₨{computedPending.toLocaleString()}
-                  </p>
                 </div>
               </div>
-              {/* FORM */}
+              {/* FORM — FLEX COLUMN TO SUPPORT FIXED FOOTER */}
               <form
                 onSubmit={handleSubmit(onSubmit)}
-                className="space-y-4 mt-2"
+                className="flex flex-col flex-1 min-h-0"
               >
-                {/* NEW PAID AMOUNT FIELD */}
-                <div>
-                  <Label htmlFor="spud-paidAmount">
-                    New Paid Amount (₨){" "}
-                    <span className="text-muted-foreground text-xs font-normal">
-                      (max ₨{sale.totalAmount.toLocaleString()})
-                    </span>
-                  </Label>
-                  <Input
-                    id="spud-paidAmount"
-                    type="number"
-                    inputMode="numeric"
-                    placeholder={`0 – ${sale.totalAmount.toLocaleString()}`}
-                    // HIDE NATIVE BROWSER SPINNER ARROWS
-                    className={`mt-1.5 ${NO_SPINNER}`}
-                    disabled={isPending}
-                    {...register("paidAmount", { valueAsNumber: true })}
-                  />
-                  {/* PAID AMOUNT VALIDATION ERROR */}
-                  {errors.paidAmount && (
-                    <p className="text-destructive text-xs mt-1">
-                      {errors.paidAmount.message}
-                    </p>
-                  )}
-                </div>
-                {/* COMPUTED PENDING DISPLAY */}
-                <div
-                  className={`rounded-lg px-3.5 py-2.5 flex items-center justify-between ${
-                    computedPending > 0 ? "bg-red-500/10" : "bg-emerald-500/10"
-                  }`}
-                >
-                  <span className="text-sm text-muted-foreground">
-                    New Pending
-                  </span>
-                  <span
-                    className={`font-display font-bold text-sm ${
+                {/* SCROLLABLE FORM BODY */}
+                <div className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4">
+                  {/* SALE SUMMARY */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* TOTAL AMOUNT */}
+                    <div className="bg-muted/50 border border-border/50 rounded-xl p-2.5 text-center">
+                      <p className="text-[10px] text-muted-foreground mb-0.5">
+                        Total
+                      </p>
+                      <p className="font-display text-sm font-bold">
+                        ₨{sale.totalAmount.toLocaleString()}
+                      </p>
+                    </div>
+                    {/* CURRENT PAID */}
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2.5 text-center">
+                      <p className="text-[10px] text-muted-foreground mb-0.5">
+                        Paid
+                      </p>
+                      <p className="font-display text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                        ₨{sale.paidAmount.toLocaleString()}
+                      </p>
+                    </div>
+                    {/* COMPUTED PENDING */}
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-2.5 text-center">
+                      <p className="text-[10px] text-muted-foreground mb-0.5">
+                        Pending
+                      </p>
+                      <p className="font-display text-sm font-bold text-red-600 dark:text-red-400">
+                        ₨{computedPending.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  {/* NEW PAID AMOUNT FIELD */}
+                  <div>
+                    <Label
+                      htmlFor="spud-paidAmount"
+                      className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                    >
+                      New Paid Amount (₨){" "}
+                      <span className="text-muted-foreground text-xs font-normal normal-case tracking-normal">
+                        (max ₨{sale.totalAmount.toLocaleString()})
+                      </span>
+                    </Label>
+                    <Input
+                      id="spud-paidAmount"
+                      type="number"
+                      inputMode="numeric"
+                      placeholder={`0 – ${sale.totalAmount.toLocaleString()}`}
+                      className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                      disabled={isPending}
+                      {...register("paidAmount", { valueAsNumber: true })}
+                    />
+                    {/* PAID AMOUNT VALIDATION ERROR */}
+                    {errors.paidAmount && (
+                      <p className="text-destructive text-xs mt-1">
+                        {errors.paidAmount.message}
+                      </p>
+                    )}
+                  </div>
+                  {/* COMPUTED PENDING DISPLAY */}
+                  <div
+                    className={cn(
+                      "rounded-xl px-4 py-3 flex items-center justify-between border",
                       computedPending > 0
-                        ? "text-red-600 dark:text-red-400"
-                        : "text-emerald-600 dark:text-emerald-400"
-                    }`}
+                        ? "bg-red-500/10 border-red-500/20"
+                        : "bg-emerald-500/10 border-emerald-500/20",
+                    )}
                   >
-                    {computedPending > 0
-                      ? `₨${computedPending.toLocaleString()}`
-                      : "Fully Cleared"}
-                  </span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      New Pending
+                    </span>
+                    <span
+                      className={cn(
+                        "font-display font-bold text-sm",
+                        computedPending > 0
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-emerald-600 dark:text-emerald-400",
+                      )}
+                    >
+                      {computedPending > 0
+                        ? `₨${computedPending.toLocaleString()}`
+                        : "Fully Cleared"}
+                    </span>
+                  </div>
                 </div>
-                {/* SUBMIT BUTTON */}
-                <Button type="submit" className="w-full" disabled={isPending}>
-                  {updateMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    "Update Payment"
-                  )}
-                </Button>
-                {/* DELETE BUTTON */}
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="w-full"
-                  disabled={isPending}
-                  onClick={handleDelete}
-                >
-                  {deleteMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    "Delete Sale Record"
-                  )}
-                </Button>
+                {/* FIXED FOOTER — DELETE LEFT, CANCEL + UPDATE RIGHT */}
+                <div className="shrink-0 px-5 py-3.5 border-t border-border/50 bg-muted/20 flex items-center justify-between gap-2">
+                  {/* DELETE BUTTON */}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={handleDelete}
+                    className="h-9 px-4 gap-1.5"
+                  >
+                    {deleteMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
+                  </Button>
+                  {/* CANCEL + UPDATE */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={onClose}
+                      disabled={isPending}
+                      className="h-9 px-4"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={isPending}
+                      className="h-9 px-4 gap-1.5"
+                    >
+                      {updateMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        "Update"
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </form>
             </>
           )}

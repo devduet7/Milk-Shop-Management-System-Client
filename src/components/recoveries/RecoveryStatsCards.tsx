@@ -1,11 +1,5 @@
 // <== IMPORTS ==>
-import {
-  Target,
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  type LucideIcon,
-} from "lucide-react";
+import { Target, RefreshCw, TrendingDown, type LucideIcon } from "lucide-react";
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -20,10 +14,10 @@ type StatCard = {
   value: string;
   // <== LUCIDE ICON ==>
   icon: LucideIcon;
-  // <== TREND DIRECTION ==>
-  trend: "up" | "down";
-  // <== TREND BADGE COLOR CLASS ==>
-  colorClass: string;
+  // <== ICON COLOR CLASS ==>
+  iconClass: string;
+  // <== TOP BAR COLOR CLASS ==>
+  topBar: string;
 };
 
 // <== RECOVERY STATS CARDS PROPS ==>
@@ -37,6 +31,8 @@ interface RecoveryStatsCardsProps {
 // <== RECOVERY STATS CARDS COMPONENT ==>
 const RecoveryStatsCards = memo(
   ({ stats, isLoading }: RecoveryStatsCardsProps) => {
+    // RECOVERY RATE IS GOOD IF >= 70%
+    const rateIsGood = (stats?.recoveryRate ?? 0) >= 70;
     // BUILD STAT CARDS FROM COMBINED STATS DATA
     const cards: StatCard[] = [
       // TOTAL OUTSTANDING (COMBINED)
@@ -44,35 +40,34 @@ const RecoveryStatsCards = memo(
         label: "Total Outstanding",
         value: `₨${(stats?.totalOutstanding ?? 0).toLocaleString()}`,
         icon: TrendingDown,
-        trend: "down",
-        colorClass: "bg-red-500/10 text-red-600 dark:text-red-400",
+        iconClass: "bg-red-500/10 text-red-600 dark:text-red-400",
+        topBar: "bg-red-500",
       },
       // DELIVERY OUTSTANDING
       {
         label: "Delivery Pending",
         value: `₨${(stats?.deliveryOutstanding ?? 0).toLocaleString()}`,
         icon: RefreshCw,
-        trend: "down",
-        colorClass: "bg-red-500/10 text-red-600 dark:text-red-400",
+        iconClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+        topBar: "bg-amber-500",
       },
       // SALES OUTSTANDING
       {
         label: "Sales Pending",
         value: `₨${(stats?.salesOutstanding ?? 0).toLocaleString()}`,
         icon: TrendingDown,
-        trend: "down",
-        colorClass: "bg-red-500/10 text-red-600 dark:text-red-400",
+        iconClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+        topBar: "bg-blue-500",
       },
-      // RECOVERY RATE
+      // RECOVERY RATE — COLOR DEPENDS ON THRESHOLD
       {
         label: "Recovery Rate",
         value: `${(stats?.recoveryRate ?? 0).toFixed(1)}%`,
         icon: Target,
-        trend: (stats?.recoveryRate ?? 0) >= 70 ? "up" : "down",
-        colorClass:
-          (stats?.recoveryRate ?? 0) >= 70
-            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-            : "bg-red-500/10 text-red-600 dark:text-red-400",
+        iconClass: rateIsGood
+          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          : "bg-red-500/10 text-red-600 dark:text-red-400",
+        topBar: rateIsGood ? "bg-emerald-500" : "bg-red-500",
       },
     ];
     // RETURNING STATS GRID
@@ -92,25 +87,21 @@ const RecoveryStatsCards = memo(
               transition={{ delay: i * 0.08 }}
               className="glass-card p-3 sm:p-4 md:p-5 relative overflow-hidden group hover:shadow-md transition-shadow"
             >
-              {/* CARD HEADER */}
-              <div className="flex items-start justify-between mb-2 sm:mb-3">
-                {/* ICON WRAPPER */}
-                <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl flex items-center justify-center bg-primary/10 text-primary">
-                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
-                </div>
-                {/* TREND BADGE */}
-                <div
-                  className={cn(
-                    "flex items-center gap-0.5 text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full",
-                    stat.colorClass,
-                  )}
-                >
-                  {stat.trend === "up" ? (
-                    <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                  ) : (
-                    <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                  )}
-                </div>
+              {/* COLORED TOP BAR — UNIQUE IDENTITY PER STAT */}
+              <div
+                className={cn(
+                  "absolute inset-x-0 top-0 h-[3px] rounded-t-xl",
+                  stat.topBar,
+                )}
+              />
+              {/* ICON */}
+              <div
+                className={cn(
+                  "w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3",
+                  stat.iconClass,
+                )}
+              >
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
               </div>
               {/* LABEL */}
               <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
@@ -125,7 +116,7 @@ const RecoveryStatsCards = memo(
                 </p>
               )}
               {/* DECORATIVE CIRCLE */}
-              <div className="absolute -bottom-4 -right-4 w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors" />
+              <div className="absolute -bottom-4 -right-4 w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors pointer-events-none" />
             </motion.div>
           );
         })}

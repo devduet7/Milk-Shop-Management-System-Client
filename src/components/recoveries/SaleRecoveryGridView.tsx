@@ -13,18 +13,20 @@ import PaginationControls from "@/components/common/PaginationControls";
 // <== PRODUCT CONFIG MAP ==>
 const PRODUCT_CONFIG: Record<
   SaleProductType,
-  { label: string; unit: string; color: string }
+  { label: string; unit: string; color: string; topBar: string }
 > = {
   milk: {
     label: "Milk",
     unit: "L",
     color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    topBar: "bg-blue-500",
   },
   yoghurt: {
     label: "Yoghurt",
     unit: "kg",
     color:
       "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    topBar: "bg-amber-500",
   },
 };
 
@@ -74,31 +76,34 @@ const SaleRecoveryGridView = memo(
           {/* LOADING SKELETON CARDS */}
           {isLoading &&
             Array.from({ length: 6 }).map((_, i) => (
-              <div key={`skel-${i}`} className="glass-card p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="w-11 h-11 rounded-full" />
-                    <div className="space-y-1.5">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-3 w-16" />
+              <div key={`skel-${i}`} className="glass-card overflow-hidden">
+                <div className="h-[3px] bg-muted/60" />
+                <div className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="w-11 h-11 rounded-xl" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
                     </div>
+                    <Skeleton className="h-5 w-14 rounded-full" />
                   </div>
-                  <Skeleton className="h-5 w-14 rounded-full" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Skeleton className="h-16 rounded-lg" />
+                    <Skeleton className="h-16 rounded-lg" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3.5 w-full" />
+                    <Skeleton className="h-3.5 w-full" />
+                  </div>
+                  <Skeleton className="h-9 w-full rounded-md" />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Skeleton className="h-16 rounded-lg" />
-                  <Skeleton className="h-16 rounded-lg" />
-                </div>
-                <div className="space-y-1.5">
-                  <Skeleton className="h-3.5 w-full" />
-                  <Skeleton className="h-3.5 w-full" />
-                </div>
-                <Skeleton className="h-9 w-full rounded-md" />
               </div>
             ))}
           {/* DATA CARDS */}
           {!isLoading &&
-            // LOPPING THROUGH SALE RECOVERY RECORDS
+            // LOOPING THROUGH SALE RECOVERY RECORDS
             records.map((r, i) => {
               // GET PRODUCT CONFIG
               const config = PRODUCT_CONFIG[r.productType];
@@ -108,108 +113,113 @@ const SaleRecoveryGridView = memo(
               return (
                 <motion.div
                   key={r._id}
-                  initial={{ opacity: 0, scale: 0.95 }}
+                  initial={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.05 }}
-                  className="glass-card p-4 flex flex-col hover:shadow-md transition-all"
+                  className="glass-card overflow-hidden flex flex-col hover:shadow-md transition-all"
                 >
-                  {/* CARD HEADER */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {/* CUSTOMER AVATAR */}
-                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <span className="text-sm sm:text-base font-bold text-primary">
-                          {(r.customerName ?? "?").charAt(0).toUpperCase()}
-                        </span>
+                  {/* PRODUCT TYPE TOP COLOR BAR */}
+                  <div className={cn("h-[3px]", config.topBar)} />
+                  {/* CARD BODY */}
+                  <div className="p-4 flex flex-col flex-1">
+                    {/* CARD HEADER */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* CUSTOMER AVATAR */}
+                        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                          <span className="text-sm sm:text-base font-bold text-primary">
+                            {(r.customerName ?? "?").charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        {/* CUSTOMER NAME + DATE */}
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-sm leading-tight truncate">
+                            {r.customerName}
+                          </h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {r.date}
+                          </p>
+                        </div>
                       </div>
-                      {/* CUSTOMER NAME + DATE */}
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-sm leading-tight truncate">
-                          {r.customerName}
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {r.date}
+                      {/* PRODUCT BADGE */}
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-[10px] font-bold tracking-wider uppercase shrink-0 ml-2",
+                          config.color,
+                        )}
+                      >
+                        {config.label}
+                      </Badge>
+                    </div>
+                    {/* QTY + PRICE MINI STATS */}
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="bg-muted/50 rounded-lg p-2.5 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">
+                          Quantity
+                        </p>
+                        <p className="font-display text-base font-bold">
+                          {r.quantity.toLocaleString()}
+                          <span className="text-[10px] font-normal text-muted-foreground ml-0.5">
+                            {config.unit}
+                          </span>
+                        </p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-2.5 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">
+                          Price / {config.unit}
+                        </p>
+                        <p className="font-display text-base font-bold">
+                          ₨{r.pricePerUnit.toLocaleString()}
                         </p>
                       </div>
                     </div>
-                    {/* PRODUCT BADGE */}
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "text-[10px] font-bold tracking-wider uppercase shrink-0 ml-2",
-                        config.color,
-                      )}
-                    >
-                      {config.label}
-                    </Badge>
-                  </div>
-                  {/* QTY + PRICE MINI STATS */}
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                      <p className="text-[10px] text-muted-foreground mb-0.5">
-                        Quantity
-                      </p>
-                      <p className="font-display text-base font-bold">
-                        {r.quantity.toLocaleString()}
-                        <span className="text-[10px] font-normal text-muted-foreground ml-0.5">
-                          {config.unit}
+                    {/* PAYMENT SUMMARY */}
+                    <div className="space-y-1.5 mb-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          Total
                         </span>
-                      </p>
+                        <span className="text-xs font-semibold">
+                          ₨{r.totalAmount.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          Paid
+                        </span>
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                          ₨{r.paidAmount.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-2.5 text-center">
-                      <p className="text-[10px] text-muted-foreground mb-0.5">
-                        Price / {config.unit}
-                      </p>
-                      <p className="font-display text-base font-bold">
-                        ₨{r.pricePerUnit.toLocaleString()}
-                      </p>
+                    {/* CARD FOOTER */}
+                    <div className="mt-auto pt-3 border-t border-border/50 space-y-3">
+                      {/* PENDING STATUS BADGE */}
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          "text-[10px] font-bold tracking-wider uppercase w-full justify-center py-1",
+                          isCleared
+                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                            : "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
+                        )}
+                      >
+                        {isCleared
+                          ? "FULLY CLEARED"
+                          : `₨${r.pendingAmount.toLocaleString()} PENDING`}
+                      </Badge>
+                      {/* ACTION BUTTON */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full h-9 text-xs gap-1.5"
+                        onClick={() => onUpdatePayment(r)}
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        Update Payment
+                      </Button>
                     </div>
-                  </div>
-                  {/* PAYMENT SUMMARY */}
-                  <div className="space-y-1.5 mb-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Total
-                      </span>
-                      <span className="text-xs font-semibold">
-                        ₨{r.totalAmount.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        Paid
-                      </span>
-                      <span className="text-xs text-emerald-600 dark:text-emerald-400">
-                        ₨{r.paidAmount.toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                  {/* CARD FOOTER */}
-                  <div className="mt-auto pt-3 border-t border-border/50 space-y-3">
-                    {/* PENDING STATUS BADGE */}
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        "text-[10px] font-bold tracking-wider uppercase w-full justify-center py-1",
-                        isCleared
-                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                          : "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20",
-                      )}
-                    >
-                      {isCleared
-                        ? "FULLY CLEARED"
-                        : `₨${r.pendingAmount.toLocaleString()} PENDING`}
-                    </Badge>
-                    {/* ACTION BUTTON */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full h-9 text-xs gap-1.5"
-                      onClick={() => onUpdatePayment(r)}
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                      Update Payment
-                    </Button>
                   </div>
                 </motion.div>
               );
@@ -218,8 +228,8 @@ const SaleRecoveryGridView = memo(
         {/* EMPTY STATE */}
         {!isLoading && records.length === 0 && (
           <div className="glass-card flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-muted-foreground/40" />
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-muted-foreground/40" />
             </div>
             <div>
               <p className="font-medium text-muted-foreground text-sm">
