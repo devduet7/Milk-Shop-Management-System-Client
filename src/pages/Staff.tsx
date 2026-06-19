@@ -17,9 +17,9 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useStaff } from "@/hooks/useStaff";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useStaff } from "@/hooks/useStaff";
 import { useDeleteStaff } from "@/hooks/useStaff";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +30,7 @@ import StaffFormDialog from "@/components/staff/StaffFormDialog";
 import StaffStatsCards from "@/components/staff/StaffStatsCards";
 import { PageTransition } from "@/components/layout/PageTransition";
 import ExtraHistoryModal from "@/components/staff/ExtraHistoryModal";
+import StaffDeleteDialog from "@/components/staff/StaffDeleteDialog";
 import type { StaffMember, StaffViewMode } from "@/types/staff-types";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import SalaryPaymentDialog from "@/components/staff/SalaryPaymentDialog";
@@ -83,7 +84,7 @@ const TableSkeleton = () => (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[640px]">
         <thead>
-          <tr className="border-b border-border bg-muted/30">
+          <tr className="border-b border-border bg-muted/50">
             {[120, 100, 90, 80, 80, 120].map((w, i) => (
               <th key={i} className="px-3 py-2.5">
                 <Skeleton style={{ width: w, height: 12 }} />
@@ -138,7 +139,7 @@ const ListSkeleton = () => (
     <div className="divide-y divide-border/50">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="p-3 sm:p-4 flex items-center gap-3">
-          <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+          <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2">
               <Skeleton className="h-4 w-24" />
@@ -176,27 +177,30 @@ const GridSkeleton = () => (
   <div>
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="glass-card p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-11 h-11 rounded-full" />
-              <div className="space-y-1.5">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-3 w-16" />
+        <div key={i} className="glass-card overflow-hidden">
+          <div className="h-[3px] bg-muted/60" />
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-11 h-11 rounded-xl" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
               </div>
+              <Skeleton className="h-5 w-20 rounded-full" />
             </div>
-            <Skeleton className="h-5 w-20 rounded-full" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Skeleton className="h-16 rounded-lg" />
-            <Skeleton className="h-16 rounded-lg" />
-          </div>
-          <Skeleton className="h-3 w-28" />
-          <div className="flex gap-2 pt-2 border-t border-border/50">
-            <Skeleton className="h-9 flex-1 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
+            <div className="grid grid-cols-2 gap-2">
+              <Skeleton className="h-16 rounded-lg" />
+              <Skeleton className="h-16 rounded-lg" />
+            </div>
+            <Skeleton className="h-3 w-28" />
+            <div className="flex gap-2 pt-2 border-t border-border/50">
+              <Skeleton className="h-9 flex-1 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
+            </div>
           </div>
         </div>
       ))}
@@ -223,28 +227,30 @@ const StaffPageSkeleton = ({ view }: { view: StaffViewMode }) => (
     {/* HEADER SKELETON */}
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
       <div className="flex items-center gap-3">
-        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
         <div className="space-y-2">
           <Skeleton className="h-6 w-24 sm:w-28" />
           <Skeleton className="h-3 w-40 sm:w-52 hidden sm:block" />
         </div>
       </div>
-      <div className="flex items-center gap-1.5">
-        <Skeleton className="h-8 w-8 rounded-md" />
-        <Skeleton className="h-5 w-20" />
-        <Skeleton className="h-8 w-8 rounded-md" />
+      {/* MONTH NAV PILL SKELETON */}
+      <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1">
+        <Skeleton className="h-7 w-7 rounded-lg" />
+        <Skeleton className="h-4 w-24 mx-1" />
+        <Skeleton className="h-7 w-7 rounded-lg" />
       </div>
     </div>
     {/* STATS CARDS SKELETON */}
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 mb-5 sm:mb-6">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="glass-card p-3 sm:p-4 md:p-5">
-          <div className="flex items-start justify-between mb-2 sm:mb-3">
-            <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg" />
-            <Skeleton className="h-5 w-7 rounded-full" />
-          </div>
-          <Skeleton className="h-3 w-24 mb-1.5" />
-          <Skeleton className="h-5 sm:h-6 md:h-7 w-20 sm:w-28" />
+        <div
+          key={i}
+          className="glass-card p-3 sm:p-4 md:p-5 relative overflow-hidden"
+        >
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-muted/60 rounded-t-xl" />
+          <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl mb-2 sm:mb-3" />
+          <Skeleton className="h-3 w-24 mb-1" />
+          <Skeleton className="h-5 sm:h-6 md:h-7 w-20 sm:w-28 mt-0.5" />
         </div>
       ))}
     </div>
@@ -297,6 +303,10 @@ const Staff = memo(() => {
   // SELECTED STAFF FOR EXTRA HISTORY
   const [selectedForHistory, setSelectedForHistory] =
     useState<StaffMember | null>(null);
+  // DELETE DIALOG OPEN STATE
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  // STAFF RECORD STAGED FOR DELETION (NULL = NO PENDING DELETE)
+  const [deleteTarget, setDeleteTarget] = useState<StaffMember | null>(null);
   // DELETE STAFF MUTATION
   const deleteMutation = useDeleteStaff();
   // DEBOUNCE SEARCH INPUT AT 300MS
@@ -382,14 +392,13 @@ const Staff = memo(() => {
     // CLEAR EDIT TARGET
     setEditStaff(null);
   }, []);
-  // HANDLE DELETE STAFF
-  const handleDelete = useCallback(
-    (record: StaffMember): void => {
-      // CALL DELETE MUTATION
-      deleteMutation.mutate(record._id);
-    },
-    [deleteMutation],
-  );
+  // STAGE STAFF FOR DELETE — OPENS CONFIRMATION DIALOG
+  const handleDelete = useCallback((record: StaffMember): void => {
+    // STAGE THE RECORD FOR DELETION
+    setDeleteTarget(record);
+    // OPEN CONFIRMATION DIALOG
+    setDeleteDialogOpen(true);
+  }, []);
   // HANDLE OPEN SALARY PAYMENT DIALOG
   const handlePaySalary = useCallback((record: StaffMember): void => {
     // SET SELECTED STAFF FOR SALARY PAYMENT
@@ -432,6 +441,31 @@ const Staff = memo(() => {
     // CLEAR SELECTED STAFF
     setSelectedForHistory(null);
   }, []);
+  // CONFIRM DELETE — CALLED FROM DELETE DIALOG ON CONFIRM
+  const handleDeleteConfirm = useCallback((): void => {
+    // GUARD: ENSURE A TARGET IS STAGED
+    if (!deleteTarget) return;
+    // CALL DELETE MUTATION
+    deleteMutation.mutate(deleteTarget._id, {
+      // ON SUCCESS
+      onSuccess: () => {
+        // CLOSE DIALOG AND CLEAR TARGET
+        setDeleteDialogOpen(false);
+        // CLEAR STAGED TARGET
+        setDeleteTarget(null);
+      },
+    });
+  }, [deleteTarget, deleteMutation]);
+
+  // CLOSE DELETE DIALOG — BLOCKED WHILE MUTATION IS PENDING
+  const handleDeleteClose = useCallback((): void => {
+    // BLOCK CLOSE WHILE PENDING
+    if (deleteMutation.isPending) return;
+    // CLOSE DIALOG AND CLEAR STAGED TARGET
+    setDeleteDialogOpen(false);
+    // CLEAR STAGED TARGET
+    setDeleteTarget(null);
+  }, [deleteMutation.isPending]);
   // SHARED VIEW PROPS OBJECT
   const viewProps = {
     records,
@@ -459,10 +493,11 @@ const Staff = memo(() => {
     <PageTransition className="page-container">
       {/* PAGE HEADER ROW */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {/* LEFT: ICON + TITLE + DESCRIPTION */}
+        {/* LEFT: ICON BADGE + TITLE + DESCRIPTION */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Users className="w-5 h-5 text-primary" />
+          {/* PAGE ICON BADGE WITH GRADIENT */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+            <Users className="w-[18px] h-[18px] text-primary-foreground stroke-[2.5]" />
           </div>
           <div className="min-w-0">
             <h1 className="font-display text-xl sm:text-2xl font-bold">
@@ -473,26 +508,26 @@ const Staff = memo(() => {
             </p>
           </div>
         </div>
-        {/* RIGHT: MONTH NAVIGATION */}
-        <div className="flex items-center gap-1">
+        {/* RIGHT: MONTH NAVIGATION PILL */}
+        <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1 self-start sm:self-auto">
           {/* PREV MONTH BUTTON */}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 rounded-lg"
             onClick={handlePrevMonth}
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
           {/* CURRENT MONTH LABEL */}
-          <span className="text-sm font-medium whitespace-nowrap min-w-[90px] text-center">
+          <span className="text-sm font-semibold whitespace-nowrap min-w-[90px] text-center px-1">
             {format(selectedMonth, "MMM yyyy")}
           </span>
           {/* NEXT MONTH BUTTON */}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 rounded-lg"
             disabled={isNextMonthDisabled}
             onClick={handleNextMonth}
           >
@@ -585,6 +620,14 @@ const Staff = memo(() => {
         staff={selectedForHistory}
         month={monthStr}
         onClose={handleHistoryClose}
+      />
+      {/* STAFF DELETE CONFIRMATION DIALOG */}
+      <StaffDeleteDialog
+        open={deleteDialogOpen}
+        record={deleteTarget}
+        isPending={deleteMutation.isPending}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
       />
     </PageTransition>
   );
