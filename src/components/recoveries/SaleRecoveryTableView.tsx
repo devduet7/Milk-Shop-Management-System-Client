@@ -76,31 +76,31 @@ const SaleRecoveryTableView = memo(
         {/* SCROLLABLE TABLE CONTAINER */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[560px]">
-            {/* TABLE HEAD */}
-            <thead>
-              <tr className="border-b border-border text-left bg-muted/30">
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+            {/* STICKY TABLE HEADER */}
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-border text-left bg-muted/50 backdrop-blur-sm">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Customer
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Product
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                   Qty
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Total
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                   Paid
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Pending
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                   Date
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Action
                 </th>
               </tr>
@@ -139,7 +139,7 @@ const SaleRecoveryTableView = memo(
                 ))}
               {/* DATA ROWS */}
               {!isLoading &&
-                // LOPPING THROUGH SALE RECOVERY
+                // LOOPING THROUGH SALE RECOVERY
                 records.map((r, i) => {
                   // GET PRODUCT CONFIG
                   const config = PRODUCT_CONFIG[r.productType];
@@ -152,7 +152,7 @@ const SaleRecoveryTableView = memo(
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.03 }}
-                      className="border-b border-border/50 hover:bg-muted/40 transition-colors"
+                      className="border-b border-border/50 hover:bg-muted/30 transition-colors"
                     >
                       {/* CUSTOMER NAME */}
                       <td className="px-3 py-3 font-medium text-sm">
@@ -223,8 +223,8 @@ const SaleRecoveryTableView = memo(
           {/* EMPTY STATE */}
           {!isLoading && records.length === 0 && (
             <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-muted-foreground/40" />
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-muted-foreground/40" />
               </div>
               <div>
                 <p className="font-medium text-muted-foreground text-sm">
