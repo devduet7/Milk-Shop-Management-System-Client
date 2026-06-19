@@ -2,7 +2,6 @@
 import {
   Dialog,
   DialogTitle,
-  DialogHeader,
   DialogContent,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -95,125 +94,155 @@ const ExtraAllocationDialog = memo(
           if (!v && !isPending) onClose();
         }}
       >
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="flex flex-col p-0 w-[calc(100vw-2rem)] sm:max-w-md max-h-[92vh] overflow-hidden gap-0">
           {staff && (
             <>
-              {/* DIALOG HEADER */}
-              <DialogHeader>
-                <DialogTitle className="font-display flex items-center gap-3">
-                  {/* STAFF AVATAR */}
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              {/* FIXED PRIMARY GRADIENT HEADER */}
+              <div className="shrink-0 px-5 pt-5 pb-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-border/50">
+                <div className="flex items-start gap-3">
+                  {/* STAFF AVATAR BADGE */}
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 ring-1 ring-primary/20 shadow-sm">
                     <span className="text-base font-bold text-primary">
                       {staff.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  {/* STAFF NAME + MONTH */}
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold leading-tight">
+                  {/* TITLE AND DESCRIPTION */}
+                  <div className="min-w-0 pt-0.5">
+                    <DialogTitle className="font-display text-[15px] font-bold leading-tight text-left truncate">
                       {staff.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground font-normal">
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground mt-0.5 text-left">
                       Extra Allocation — {month}
-                    </p>
+                    </DialogDescription>
                   </div>
-                </DialogTitle>
-                <DialogDescription className="sr-only">
-                  Allocate extra money to {staff.name}
-                </DialogDescription>
-              </DialogHeader>
-              {/* EXISTING EXTRA TOTAL SUMMARY */}
-              {(staff.monthRecord?.totalExtraAllocated ?? 0) > 0 && (
-                <div className="bg-amber-500/10 rounded-lg p-2.5 text-center mt-1">
-                  <p className="text-[10px] text-muted-foreground mb-0.5">
-                    Already Allocated This Month
-                  </p>
-                  <p className="font-display text-sm font-bold text-amber-600 dark:text-amber-400">
-                    ₨
-                    {(
-                      staff.monthRecord?.totalExtraAllocated ?? 0
-                    ).toLocaleString()}
-                  </p>
                 </div>
-              )}
-              {/* FORM */}
+              </div>
+              {/* FORM — FLEX COLUMN TO SUPPORT FIXED FOOTER */}
               <form
                 onSubmit={handleSubmit(onSubmit)}
-                className="space-y-4 mt-2"
+                className="flex flex-col flex-1 min-h-0"
               >
-                {/* AMOUNT FIELD */}
-                <div>
-                  <Label htmlFor="ea-amount">Amount (₨)</Label>
-                  <Input
-                    id="ea-amount"
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="Enter amount"
-                    className={`mt-1.5 ${NO_SPINNER}`}
-                    disabled={isPending}
-                    {...register("amount", { valueAsNumber: true })}
-                  />
-                  {/* AMOUNT VALIDATION ERROR */}
-                  {errors.amount && (
-                    <p className="text-destructive text-xs mt-1">
-                      {errors.amount.message}
-                    </p>
+                {/* SCROLLABLE FORM BODY */}
+                <div className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4">
+                  {/* EXISTING EXTRA TOTAL SUMMARY */}
+                  {(staff.monthRecord?.totalExtraAllocated ?? 0) > 0 && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-center">
+                      <p className="text-[10px] text-muted-foreground mb-0.5">
+                        Already Allocated This Month
+                      </p>
+                      <p className="font-display text-sm font-bold text-amber-600 dark:text-amber-400">
+                        ₨
+                        {(
+                          staff.monthRecord?.totalExtraAllocated ?? 0
+                        ).toLocaleString()}
+                      </p>
+                    </div>
                   )}
+                  {/* AMOUNT FIELD */}
+                  <div>
+                    <Label
+                      htmlFor="ea-amount"
+                      className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                    >
+                      Amount (₨)
+                    </Label>
+                    <Input
+                      id="ea-amount"
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="Enter amount"
+                      className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                      disabled={isPending}
+                      {...register("amount", { valueAsNumber: true })}
+                    />
+                    {/* AMOUNT VALIDATION ERROR */}
+                    {errors.amount && (
+                      <p className="text-destructive text-xs mt-1">
+                        {errors.amount.message}
+                      </p>
+                    )}
+                  </div>
+                  {/* DATE FIELD (OPTIONAL) */}
+                  <div>
+                    <Label
+                      htmlFor="ea-date"
+                      className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                    >
+                      Date{" "}
+                      <span className="text-muted-foreground text-xs font-normal normal-case tracking-normal">
+                        (optional — defaults to today)
+                      </span>
+                    </Label>
+                    <Input
+                      id="ea-date"
+                      placeholder="YYYY-MM-DD"
+                      className="mt-1.5 h-10"
+                      disabled={isPending}
+                      {...register("date")}
+                    />
+                    {/* DATE VALIDATION ERROR */}
+                    {errors.date && (
+                      <p className="text-destructive text-xs mt-1">
+                        {errors.date.message}
+                      </p>
+                    )}
+                  </div>
+                  {/* NOTE FIELD */}
+                  <div>
+                    <Label
+                      htmlFor="ea-note"
+                      className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                    >
+                      Reason{" "}
+                      <span className="text-muted-foreground text-xs font-normal normal-case tracking-normal">
+                        (optional)
+                      </span>
+                    </Label>
+                    <Input
+                      id="ea-note"
+                      placeholder="e.g. Eid bonus, advance..."
+                      className="mt-1.5 h-10"
+                      disabled={isPending}
+                      {...register("note")}
+                    />
+                    {/* NOTE VALIDATION ERROR */}
+                    {errors.note && (
+                      <p className="text-destructive text-xs mt-1">
+                        {errors.note.message}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                {/* DATE FIELD (OPTIONAL) */}
-                <div>
-                  <Label htmlFor="ea-date">
-                    Date{" "}
-                    <span className="text-muted-foreground text-xs font-normal">
-                      (optional — defaults to today)
-                    </span>
-                  </Label>
-                  <Input
-                    id="ea-date"
-                    placeholder="YYYY-MM-DD"
-                    className="mt-1.5"
+                {/* FIXED FOOTER */}
+                <div className="shrink-0 px-5 py-3.5 border-t border-border/50 bg-muted/20 flex items-center justify-end gap-2">
+                  {/* CANCEL BUTTON */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onClose}
                     disabled={isPending}
-                    {...register("date")}
-                  />
-                  {/* DATE VALIDATION ERROR */}
-                  {errors.date && (
-                    <p className="text-destructive text-xs mt-1">
-                      {errors.date.message}
-                    </p>
-                  )}
-                </div>
-                {/* NOTE FIELD */}
-                <div>
-                  <Label htmlFor="ea-note">
-                    Reason{" "}
-                    <span className="text-muted-foreground text-xs font-normal">
-                      (optional)
-                    </span>
-                  </Label>
-                  <Input
-                    id="ea-note"
-                    placeholder="e.g. Eid bonus, advance..."
-                    className="mt-1.5"
+                    className="h-9 px-4"
+                  >
+                    Cancel
+                  </Button>
+                  {/* SUBMIT BUTTON */}
+                  <Button
+                    type="submit"
+                    size="sm"
                     disabled={isPending}
-                    {...register("note")}
-                  />
-                  {/* NOTE VALIDATION ERROR */}
-                  {errors.note && (
-                    <p className="text-destructive text-xs mt-1">
-                      {errors.note.message}
-                    </p>
-                  )}
+                    className="h-9 px-4 gap-1.5"
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Allocating...
+                      </>
+                    ) : (
+                      "Allocate Extra"
+                    )}
+                  </Button>
                 </div>
-                {/* SUBMIT BUTTON */}
-                <Button type="submit" className="w-full" disabled={isPending}>
-                  {isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Allocating...
-                    </>
-                  ) : (
-                    "Allocate Extra"
-                  )}
-                </Button>
               </form>
             </>
           )}
