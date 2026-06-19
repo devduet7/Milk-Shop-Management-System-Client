@@ -76,7 +76,7 @@ const StaffListView = memo(
                 key={`skel-${i}`}
                 className="p-3 sm:p-4 flex items-center gap-3"
               >
-                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-4 w-24" />
@@ -96,7 +96,7 @@ const StaffListView = memo(
             ))}
           {/* DATA ROWS */}
           {!isLoading &&
-            // LOPPING THROUGH STAFF MEMBERS RECORDS
+            // LOOPING THROUGH STAFF MEMBERS RECORDS
             records.map((r, i) => {
               // IS CLEARED FOR THIS BILLING MONTH
               const isCleared = r.monthRecord?.status === "cleared";
@@ -112,7 +112,7 @@ const StaffListView = memo(
                   className="p-3 sm:p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors group"
                 >
                   {/* STAFF AVATAR */}
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <span className="text-sm font-bold text-primary">
                       {r.name.charAt(0).toUpperCase()}
                     </span>
@@ -181,7 +181,7 @@ const StaffListView = memo(
                     <Button
                       variant="outline"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-8 w-8 rounded-lg"
                       onClick={() => onExtraAllocation(r)}
                     >
                       <PlusCircle className="w-3.5 h-3.5" />
@@ -190,7 +190,7 @@ const StaffListView = memo(
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-7 w-7 rounded-lg"
                       onClick={() => onEdit(r)}
                     >
                       <Edit className="w-3.5 h-3.5" />
@@ -199,7 +199,7 @@ const StaffListView = memo(
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => onDelete(r)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -212,8 +212,8 @@ const StaffListView = memo(
         {/* EMPTY STATE */}
         {!isLoading && records.length === 0 && (
           <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <Users className="w-6 h-6 text-muted-foreground/40" />
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <Users className="w-5 h-5 text-muted-foreground/40" />
             </div>
             <div>
               <p className="font-medium text-muted-foreground text-sm">

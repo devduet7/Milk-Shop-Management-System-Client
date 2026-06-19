@@ -20,10 +20,10 @@ type StatCard = {
   value: string;
   // <== LUCIDE ICON ==>
   icon: LucideIcon;
-  // <== COLOR CLASS ==>
-  colorClass: string;
-  // <== ICON BG CLASS ==>
+  // <== ICON COLOR CLASS ==>
   iconClass: string;
+  // <== TOP BAR COLOR CLASS ==>
+  topBar: string;
 };
 
 // <== STAFF STATS CARDS PROPS ==>
@@ -36,6 +36,10 @@ interface StaffStatsCardsProps {
 
 // <== STAFF STATS CARDS COMPONENT ==>
 const StaffStatsCards = memo(({ stats, isLoading }: StaffStatsCardsProps) => {
+  // ALL STAFF CLEARED IF CLEARED COUNT EQUALS TOTAL STAFF
+  const allCleared =
+    (stats?.clearedCount ?? 0) > 0 &&
+    (stats?.clearedCount ?? 0) === (stats?.totalStaff ?? 0);
   // BUILD STAT CARDS FROM STATS DATA
   const cards: StatCard[] = [
     // TOTAL STAFF
@@ -43,36 +47,34 @@ const StaffStatsCards = memo(({ stats, isLoading }: StaffStatsCardsProps) => {
       label: "Total Staff",
       value: String(stats?.totalStaff ?? 0),
       icon: Users,
-      colorClass: "bg-primary/10 text-primary",
       iconClass: "bg-primary/10 text-primary",
+      topBar: "bg-primary",
     },
     // TOTAL MONTHLY OUTGO (SALARIES + EXTRAS)
     {
       label: "Monthly Bill",
       value: `₨${(stats?.totalMonthlyOutgo ?? 0).toLocaleString()}`,
       icon: Wallet,
-      colorClass: "bg-primary/10 text-primary",
-      iconClass: "bg-primary/10 text-primary",
+      iconClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      topBar: "bg-emerald-500",
     },
     // TOTAL PENDING
     {
       label: "Salary Pending",
       value: `₨${(stats?.totalPending ?? 0).toLocaleString()}`,
       icon: TrendingDown,
-      colorClass: "bg-red-500/10 text-red-600 dark:text-red-400",
-      iconClass: "bg-primary/10 text-primary",
+      iconClass: "bg-red-500/10 text-red-600 dark:text-red-400",
+      topBar: "bg-red-500",
     },
-    // CLEARED COUNT
+    // CLEARED COUNT — COLOR DEPENDS ON WHETHER ALL CLEARED
     {
       label: "Salaries Cleared",
       value: `${stats?.clearedCount ?? 0} / ${stats?.totalStaff ?? 0}`,
       icon: CheckCircle,
-      colorClass:
-        (stats?.clearedCount ?? 0) > 0 &&
-        (stats?.clearedCount ?? 0) === (stats?.totalStaff ?? 0)
-          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-          : "bg-red-500/10 text-red-600 dark:text-red-400",
-      iconClass: "bg-primary/10 text-primary",
+      iconClass: allCleared
+        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+        : "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      topBar: allCleared ? "bg-emerald-500" : "bg-amber-500",
     },
   ];
   // RETURNING STATS GRID
@@ -92,26 +94,21 @@ const StaffStatsCards = memo(({ stats, isLoading }: StaffStatsCardsProps) => {
             transition={{ delay: i * 0.08 }}
             className="glass-card p-3 sm:p-4 md:p-5 relative overflow-hidden group hover:shadow-md transition-shadow"
           >
-            {/* CARD HEADER */}
-            <div className="flex items-start justify-between mb-2 sm:mb-3">
-              {/* ICON WRAPPER */}
-              <div
-                className={cn(
-                  "w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl flex items-center justify-center",
-                  stat.iconClass,
-                )}
-              >
-                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
-              </div>
-              {/* TREND BADGE */}
-              <div
-                className={cn(
-                  "flex items-center text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded-full",
-                  stat.colorClass,
-                )}
-              >
-                <Icon className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-              </div>
+            {/* COLORED TOP BAR — UNIQUE IDENTITY PER STAT */}
+            <div
+              className={cn(
+                "absolute inset-x-0 top-0 h-[3px] rounded-t-xl",
+                stat.topBar,
+              )}
+            />
+            {/* ICON */}
+            <div
+              className={cn(
+                "w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3",
+                stat.iconClass,
+              )}
+            >
+              <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
             </div>
             {/* LABEL */}
             <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
@@ -126,7 +123,7 @@ const StaffStatsCards = memo(({ stats, isLoading }: StaffStatsCardsProps) => {
               </p>
             )}
             {/* DECORATIVE CIRCLE */}
-            <div className="absolute -bottom-4 -right-4 w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors" />
+            <div className="absolute -bottom-4 -right-4 w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors pointer-events-none" />
           </motion.div>
         );
       })}
