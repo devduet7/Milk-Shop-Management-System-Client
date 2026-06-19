@@ -2,7 +2,6 @@
 import {
   Dialog,
   DialogTitle,
-  DialogHeader,
   DialogContent,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -12,9 +11,9 @@ import {
   type AddStaffFormValues,
   type UpdateStaffFormValues,
 } from "@/validators/staffSchemas";
-import { Loader2 } from "lucide-react";
 import { memo, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { Users, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -119,91 +118,144 @@ const StaffFormDialog = memo(
           if (!v && !isPending) onClose();
         }}
       >
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
-          {/* DIALOG HEADER */}
-          <DialogHeader>
-            <DialogTitle className="font-display">
-              {isEditMode ? `Edit — ${editStaff.name}` : "Add Staff Member"}
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              {isEditMode
-                ? "Update staff member details"
-                : "Add a new staff member"}
-            </DialogDescription>
-          </DialogHeader>
-          {/* FORM */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
-            {/* NAME FIELD */}
-            <div>
-              <Label htmlFor="sf-name">Full Name</Label>
-              <Input
-                id="sf-name"
-                placeholder="e.g. Ahmed Raza"
-                className="mt-1.5"
-                disabled={isPending}
-                {...register("name")}
-              />
-              {/* NAME VALIDATION ERROR */}
-              {errors.name && (
-                <p className="text-destructive text-xs mt-1">
-                  {errors.name.message}
-                </p>
-              )}
+        <DialogContent className="flex flex-col p-0 w-[calc(100vw-2rem)] sm:max-w-md max-h-[92vh] overflow-hidden gap-0">
+          {/* FIXED PRIMARY GRADIENT HEADER */}
+          <div className="shrink-0 px-5 pt-5 pb-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-border/50">
+            <div className="flex items-start gap-3">
+              {/* ICON BADGE — STAFF INITIAL IN EDIT MODE, USERS ICON IN ADD MODE */}
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 ring-1 ring-primary/20 shadow-sm">
+                {isEditMode ? (
+                  <span className="text-base font-bold text-primary">
+                    {editStaff.name.charAt(0).toUpperCase()}
+                  </span>
+                ) : (
+                  <Users className="w-[18px] h-[18px] text-primary" />
+                )}
+              </div>
+              {/* TITLE AND DESCRIPTION */}
+              <div className="min-w-0 pt-0.5">
+                <DialogTitle className="font-display text-[15px] font-bold leading-tight text-left">
+                  {isEditMode ? `Edit — ${editStaff.name}` : "Add Staff Member"}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5 text-left">
+                  {isEditMode
+                    ? "Update staff member details below"
+                    : "Fill in the details to add a new staff member"}
+                </DialogDescription>
+              </div>
             </div>
-            {/* MONTHLY SALARY FIELD */}
-            <div>
-              <Label htmlFor="sf-salary">Monthly Salary (₨)</Label>
-              <Input
-                id="sf-salary"
-                type="number"
-                inputMode="numeric"
-                placeholder="Enter monthly salary"
-                className={`mt-1.5 ${NO_SPINNER}`}
-                disabled={isPending}
-                {...register("monthlySalary", { valueAsNumber: true })}
-              />
-              {/* SALARY VALIDATION ERROR */}
-              {errors.monthlySalary && (
-                <p className="text-destructive text-xs mt-1">
-                  {errors.monthlySalary.message}
-                </p>
-              )}
+          </div>
+          {/* FORM — FLEX COLUMN TO SUPPORT FIXED FOOTER */}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col flex-1 min-h-0"
+          >
+            {/* SCROLLABLE FORM BODY */}
+            <div className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4">
+              {/* NAME FIELD */}
+              <div>
+                <Label
+                  htmlFor="sf-name"
+                  className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                >
+                  Full Name
+                </Label>
+                <Input
+                  id="sf-name"
+                  placeholder="e.g. Ahmed Raza"
+                  className="mt-1.5 h-10"
+                  disabled={isPending}
+                  {...register("name")}
+                />
+                {/* NAME VALIDATION ERROR */}
+                {errors.name && (
+                  <p className="text-destructive text-xs mt-1">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
+              {/* MONTHLY SALARY FIELD */}
+              <div>
+                <Label
+                  htmlFor="sf-salary"
+                  className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                >
+                  Monthly Salary (₨)
+                </Label>
+                <Input
+                  id="sf-salary"
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Enter monthly salary"
+                  className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                  disabled={isPending}
+                  {...register("monthlySalary", { valueAsNumber: true })}
+                />
+                {/* SALARY VALIDATION ERROR */}
+                {errors.monthlySalary && (
+                  <p className="text-destructive text-xs mt-1">
+                    {errors.monthlySalary.message}
+                  </p>
+                )}
+              </div>
+              {/* NOTE FIELD */}
+              <div>
+                <Label
+                  htmlFor="sf-note"
+                  className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                >
+                  Note{" "}
+                  <span className="text-muted-foreground text-xs font-normal normal-case tracking-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id="sf-note"
+                  placeholder="e.g. Driver, part-time..."
+                  className="mt-1.5 h-10"
+                  disabled={isPending}
+                  {...register("note")}
+                />
+                {/* NOTE VALIDATION ERROR */}
+                {errors.note && (
+                  <p className="text-destructive text-xs mt-1">
+                    {errors.note.message}
+                  </p>
+                )}
+              </div>
             </div>
-            {/* NOTE FIELD */}
-            <div>
-              <Label htmlFor="sf-note">
-                Note{" "}
-                <span className="text-muted-foreground text-xs font-normal">
-                  (optional)
-                </span>
-              </Label>
-              <Input
-                id="sf-note"
-                placeholder="e.g. Driver, part-time..."
-                className="mt-1.5"
+            {/* FIXED FOOTER */}
+            <div className="shrink-0 px-5 py-3.5 border-t border-border/50 bg-muted/20 flex items-center justify-end gap-2">
+              {/* CANCEL BUTTON */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onClose}
                 disabled={isPending}
-                {...register("note")}
-              />
-              {/* NOTE VALIDATION ERROR */}
-              {errors.note && (
-                <p className="text-destructive text-xs mt-1">
-                  {errors.note.message}
-                </p>
-              )}
+                className="h-9 px-4"
+              >
+                Cancel
+              </Button>
+              {/* SUBMIT BUTTON */}
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isPending}
+                className="h-9 px-4 gap-1.5"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    {isEditMode ? "Saving..." : "Adding..."}
+                  </>
+                ) : isEditMode ? (
+                  "Save Changes"
+                ) : (
+                  "Add Staff Member"
+                )}
+              </Button>
             </div>
-            {/* SUBMIT BUTTON */}
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isEditMode ? "Saving..." : "Adding..."}
-                </>
-              ) : isEditMode ? (
-                "Save Changes"
-              ) : (
-                "Add Staff Member"
-              )}
-            </Button>
           </form>
         </DialogContent>
       </Dialog>
