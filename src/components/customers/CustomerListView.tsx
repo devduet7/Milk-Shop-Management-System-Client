@@ -32,8 +32,8 @@ interface CustomerListViewProps {
   onView: (customer: Customer) => void;
   // <== EDIT CUSTOMER HANDLER ==>
   onEdit: (customer: Customer) => void;
-  // <== DELETE CUSTOMER HANDLER ==>
-  onDelete: (id: string) => void;
+  // <== ON DELETE HANDLER ==>
+  onDelete: (record: Customer) => void;
 }
 
 // <== CUSTOMER LIST VIEW COMPONENT ==>
@@ -69,7 +69,7 @@ const CustomerListView = memo(
                 key={`skel-${i}`}
                 className="p-3 sm:p-4 flex items-center gap-3"
               >
-                <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-4 w-28" />
@@ -82,9 +82,9 @@ const CustomerListView = memo(
                   <Skeleton className="h-3 w-16 ml-auto" />
                 </div>
                 <div className="flex gap-0.5 shrink-0">
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
                 </div>
               </div>
             ))}
@@ -106,7 +106,7 @@ const CustomerListView = memo(
                   className="p-3 sm:p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors group"
                 >
                   {/* AVATAR */}
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <span className="text-sm font-bold text-primary">
                       {c.name.charAt(0)}
                     </span>
@@ -162,7 +162,7 @@ const CustomerListView = memo(
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-7 w-7 rounded-lg"
                       onClick={() => onView(c)}
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -171,7 +171,7 @@ const CustomerListView = memo(
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-7 w-7 rounded-lg"
                       onClick={() => onEdit(c)}
                     >
                       <Edit className="w-3.5 h-3.5" />
@@ -180,8 +180,8 @@ const CustomerListView = memo(
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => onDelete(c._id)}
+                      className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => onDelete(c)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -193,8 +193,8 @@ const CustomerListView = memo(
         {/* EMPTY STATE WITH ICON */}
         {!isLoading && customers.length === 0 && (
           <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-            <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-              <Users className="w-6 h-6 text-muted-foreground/40" />
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <Users className="w-5 h-5 text-muted-foreground/40" />
             </div>
             <div>
               <p className="font-medium text-muted-foreground text-sm">

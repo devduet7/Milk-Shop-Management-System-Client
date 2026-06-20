@@ -2,7 +2,6 @@
 import {
   Dialog,
   DialogTitle,
-  DialogHeader,
   DialogContent,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -12,7 +11,7 @@ import {
 } from "@/validators/customerSchemas";
 import { memo, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Loader2 } from "lucide-react";
+import { Users, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -111,135 +110,194 @@ const CustomerFormDialog = memo(
           if (!v && !isPending) onClose();
         }}
       >
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto">
-          {/* DIALOG HEADER */}
-          <DialogHeader>
-            <DialogTitle className="font-display">
-              {editCustomer ? "Edit" : "Add"} Customer
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              {editCustomer
-                ? "Edit an existing customer"
-                : "Add a new customer"}
-            </DialogDescription>
-          </DialogHeader>
-          {/* FORM */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
-            {/* NAME FIELD */}
-            <div>
-              <Label htmlFor="cf-name">Name</Label>
-              <Input
-                id="cf-name"
-                placeholder="Customer name"
-                className="mt-1.5"
-                disabled={isPending}
-                {...register("name")}
-              />
-              {/* NAME VALIDATION ERROR */}
-              {errors.name && (
-                <p className="text-destructive text-xs mt-1">
-                  {errors.name.message}
-                </p>
-              )}
+        <DialogContent className="flex flex-col p-0 w-[calc(100vw-2rem)] sm:max-w-md max-h-[92vh] overflow-hidden gap-0">
+          {/* FIXED PRIMARY GRADIENT HEADER */}
+          <div className="shrink-0 px-5 pt-5 pb-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-border/50">
+            <div className="flex items-start gap-3">
+              {/* ICON BADGE — CUSTOMER INITIAL IN EDIT MODE, USERS ICON IN ADD MODE */}
+              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 ring-1 ring-primary/20 shadow-sm">
+                {editCustomer ? (
+                  <span className="text-base font-bold text-primary">
+                    {editCustomer.name.charAt(0).toUpperCase()}
+                  </span>
+                ) : (
+                  <Users className="w-[18px] h-[18px] text-primary" />
+                )}
+              </div>
+              {/* TITLE AND DESCRIPTION */}
+              <div className="min-w-0 pt-0.5">
+                <DialogTitle className="font-display text-[15px] font-bold leading-tight text-left">
+                  {editCustomer ? "Edit" : "Add"} Customer
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5 text-left">
+                  {editCustomer
+                    ? "Update customer details below"
+                    : "Fill in the details to add a new customer"}
+                </DialogDescription>
+              </div>
             </div>
-            {/* PHONE FIELD */}
-            <div>
-              <Label htmlFor="cf-phone">
-                Phone{" "}
-                <span className="text-muted-foreground text-xs font-normal">
-                  (optional)
-                </span>
-              </Label>
-              <Input
-                id="cf-phone"
-                placeholder="e.g. 0300-1234567"
-                className="mt-1.5"
-                disabled={isPending}
-                {...register("phone")}
-              />
-              {/* PHONE VALIDATION ERROR */}
-              {errors.phone && (
-                <p className="text-destructive text-xs mt-1">
-                  {errors.phone.message}
-                </p>
-              )}
-            </div>
-            {/* ADDRESS FIELD */}
-            <div>
-              <Label htmlFor="cf-address">
-                Address{" "}
-                <span className="text-muted-foreground text-xs font-normal">
-                  (optional)
-                </span>
-              </Label>
-              <Input
-                id="cf-address"
-                placeholder="Customer address"
-                className="mt-1.5"
-                disabled={isPending}
-                {...register("address")}
-              />
-              {/* ADDRESS VALIDATION ERROR */}
-              {errors.address && (
-                <p className="text-destructive text-xs mt-1">
-                  {errors.address.message}
-                </p>
-              )}
-            </div>
-            {/* MILK AND RATE GRID */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* DAILY MILK FIELD */}
+          </div>
+          {/* FORM — FLEX COLUMN TO SUPPORT FIXED FOOTER */}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col flex-1 min-h-0"
+          >
+            {/* SCROLLABLE FORM BODY */}
+            <div className="flex-1 overflow-y-auto min-h-0 px-5 py-4 space-y-4">
+              {/* NAME FIELD */}
               <div>
-                <Label htmlFor="cf-dailyMilk">Daily Milk (L)</Label>
+                <Label
+                  htmlFor="cf-name"
+                  className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                >
+                  Name
+                </Label>
                 <Input
-                  id="cf-dailyMilk"
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="e.g. 1.5"
-                  // HIDE NATIVE BROWSER SPINNER ARROWS
-                  className={`mt-1.5 ${NO_SPINNER}`}
+                  id="cf-name"
+                  placeholder="Customer name"
+                  className="mt-1.5 h-10"
                   disabled={isPending}
-                  {...register("dailyMilk", { valueAsNumber: true })}
+                  {...register("name")}
                 />
-                {/* DAILY MILK VALIDATION ERROR */}
-                {errors.dailyMilk && (
+                {/* NAME VALIDATION ERROR */}
+                {errors.name && (
                   <p className="text-destructive text-xs mt-1">
-                    {errors.dailyMilk.message}
+                    {errors.name.message}
                   </p>
                 )}
               </div>
-              {/* PRICE PER LITER FIELD */}
+              {/* PHONE FIELD */}
               <div>
-                <Label htmlFor="cf-pricePerLiter">Price/Liter (₨)</Label>
+                <Label
+                  htmlFor="cf-phone"
+                  className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                >
+                  Phone{" "}
+                  <span className="text-muted-foreground text-xs font-normal normal-case tracking-normal">
+                    (optional)
+                  </span>
+                </Label>
                 <Input
-                  id="cf-pricePerLiter"
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="e.g. 180"
-                  // HIDE NATIVE BROWSER SPINNER ARROWS
-                  className={`mt-1.5 ${NO_SPINNER}`}
+                  id="cf-phone"
+                  placeholder="e.g. 0300-1234567"
+                  className="mt-1.5 h-10"
                   disabled={isPending}
-                  {...register("pricePerLiter", { valueAsNumber: true })}
+                  {...register("phone")}
                 />
-                {/* PRICE VALIDATION ERROR */}
-                {errors.pricePerLiter && (
+                {/* PHONE VALIDATION ERROR */}
+                {errors.phone && (
                   <p className="text-destructive text-xs mt-1">
-                    {errors.pricePerLiter.message}
+                    {errors.phone.message}
                   </p>
                 )}
               </div>
+              {/* ADDRESS FIELD */}
+              <div>
+                <Label
+                  htmlFor="cf-address"
+                  className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                >
+                  Address{" "}
+                  <span className="text-muted-foreground text-xs font-normal normal-case tracking-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id="cf-address"
+                  placeholder="Customer address"
+                  className="mt-1.5 h-10"
+                  disabled={isPending}
+                  {...register("address")}
+                />
+                {/* ADDRESS VALIDATION ERROR */}
+                {errors.address && (
+                  <p className="text-destructive text-xs mt-1">
+                    {errors.address.message}
+                  </p>
+                )}
+              </div>
+              {/* MILK AND RATE GRID */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* DAILY MILK FIELD */}
+                <div>
+                  <Label
+                    htmlFor="cf-dailyMilk"
+                    className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                  >
+                    Daily Milk (L)
+                  </Label>
+                  <Input
+                    id="cf-dailyMilk"
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="e.g. 1.5"
+                    className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                    disabled={isPending}
+                    {...register("dailyMilk", { valueAsNumber: true })}
+                  />
+                  {/* DAILY MILK VALIDATION ERROR */}
+                  {errors.dailyMilk && (
+                    <p className="text-destructive text-xs mt-1">
+                      {errors.dailyMilk.message}
+                    </p>
+                  )}
+                </div>
+                {/* PRICE PER LITER FIELD */}
+                <div>
+                  <Label
+                    htmlFor="cf-pricePerLiter"
+                    className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                  >
+                    Price/Liter (₨)
+                  </Label>
+                  <Input
+                    id="cf-pricePerLiter"
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="e.g. 180"
+                    className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                    disabled={isPending}
+                    {...register("pricePerLiter", { valueAsNumber: true })}
+                  />
+                  {/* PRICE VALIDATION ERROR */}
+                  {errors.pricePerLiter && (
+                    <p className="text-destructive text-xs mt-1">
+                      {errors.pricePerLiter.message}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
-            {/* SUBMIT BUTTON */}
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {editCustomer ? "Updating..." : "Adding..."}
-                </>
-              ) : (
-                `${editCustomer ? "Update" : "Add"} Customer`
-              )}
-            </Button>
+            {/* FIXED FOOTER */}
+            <div className="shrink-0 px-5 py-3.5 border-t border-border/50 bg-muted/20 flex items-center justify-end gap-2">
+              {/* CANCEL BUTTON */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                disabled={isPending}
+                className="h-9 px-4"
+              >
+                Cancel
+              </Button>
+              {/* SUBMIT BUTTON */}
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isPending}
+                className="h-9 px-4 gap-1.5"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    {editCustomer ? "Updating..." : "Adding..."}
+                  </>
+                ) : (
+                  `${editCustomer ? "Update" : "Add"} Customer`
+                )}
+              </Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

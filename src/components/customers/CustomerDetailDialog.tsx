@@ -22,7 +22,6 @@ import {
 import {
   Dialog,
   DialogTitle,
-  DialogHeader,
   DialogContent,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -169,8 +168,11 @@ const CustomerDetailDialog = memo(
         { customerId: customer._id, amount, billingMonth: monthStr },
         // CLEAR INPUT ON SUCCESS
         {
+          // ON SUCCESS
           onSuccess: () => {
+            // CLEAR PAYMENT INPUT
             setPaymentAmount("");
+            // CLEAR PAYMENT ERROR
             setPaymentError("");
           },
         },
@@ -184,258 +186,275 @@ const CustomerDetailDialog = memo(
     return (
       // DIALOG WRAPPER
       <Dialog open={!!customer} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent className="w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="flex flex-col p-0 w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[92vh] sm:max-h-[90vh] overflow-hidden gap-0">
           {customer && (
             <>
-              {/* DIALOG HEADER */}
-              <DialogHeader>
-                <DialogTitle className="font-display flex items-center gap-3">
-                  {/* AVATAR */}
-                  <div className="w-9 h-9 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+              {/* FIXED PRIMARY GRADIENT HEADER */}
+              <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-b border-border/50">
+                <div className="flex items-start gap-3">
+                  {/* CUSTOMER AVATAR BADGE */}
+                  <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 ring-1 ring-primary/20 shadow-sm">
                     <span className="text-base font-bold text-primary">
                       {customer.name.charAt(0)}
                     </span>
                   </div>
-                  {/* NAME */}
-                  <span className="truncate">{customer.name}</span>
-                </DialogTitle>
-                <DialogDescription className="sr-only">
-                  View customer details, delivery calendar, and payment
-                  information.
-                </DialogDescription>
-              </DialogHeader>
-              {/* MONTH NAVIGATION */}
-              <div className="flex items-center justify-between py-2">
-                {/* PREVIOUS MONTH */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setSelectedMonth(
-                      (prev) =>
-                        new Date(prev.getFullYear(), prev.getMonth() - 1),
-                    )
-                  }
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                {/* MONTH LABEL */}
-                <span className="font-medium text-sm sm:text-base">
-                  {format(selectedMonth, "MMMM yyyy")}
-                </span>
-                {/* NEXT MONTH (BLOCKED FOR FUTURE MONTHS) */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={
-                    selectedMonth.getMonth() >= today.getMonth() &&
-                    selectedMonth.getFullYear() >= today.getFullYear()
-                  }
-                  onClick={() =>
-                    setSelectedMonth(
-                      (prev) =>
-                        new Date(prev.getFullYear(), prev.getMonth() + 1),
-                    )
-                  }
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-              {/* CALENDAR GRID */}
-              <div className="bg-muted/30 rounded-lg p-3 sm:p-4">
-                {/* INSTRUCTION BOX */}
-                <div className="flex items-start gap-2 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 mb-3">
-                  <Info className="w-3.5 h-3.5 text-primary mt-px shrink-0" />
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    <span className="font-semibold text-foreground">
-                      Click to cycle:{" "}
-                    </span>
-                    1st →{" "}
-                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                      Delivered
-                    </span>
-                    {"  "}·{"  "}2nd →{" "}
-                    <span className="font-medium text-red-600 dark:text-red-400">
-                      Missed
-                    </span>
-                    {"  "}·{"  "}3rd →{" "}
-                    <span className="font-medium">Clear</span>
-                  </p>
-                </div>
-                {/* DAY HEADERS */}
-                <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
-                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                    <div
-                      key={day}
-                      className="text-center text-[10px] sm:text-xs font-medium text-muted-foreground py-1"
-                    >
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                {/* DATE CELLS */}
-                <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
-                  {/* EMPTY CELLS BEFORE MONTH START */}
-                  {Array.from({
-                    length: startOfMonth(selectedMonth).getDay(),
-                  }).map((_, i) => (
-                    <div key={`empty-${i}`} className="aspect-square" />
-                  ))}
-                  {/* DAY CELLS */}
-                  {daysInMonth.map((date) => {
-                    // FORMAT DATE STRING
-                    const dateStr = format(date, "yyyy-MM-dd");
-                    // DELIVERY STATUS FOR THIS DATE
-                    const status = getDeliveryStatus(dateStr);
-                    // IS TODAY
-                    const isToday = isSameDay(date, today);
-                    // IS FUTURE DATE (CANNOT MARK)
-                    const isFuture = date > today;
-                    // IS MUTATION IN PROGRESS
-                    const isUpdating = markDelivery.isPending;
-                    // RETURNING DATE CELL
-                    return (
-                      <button
-                        key={dateStr}
-                        onClick={() =>
-                          !isFuture && handleToggleDelivery(dateStr)
-                        }
-                        disabled={isFuture || isUpdating}
-                        className={cn(
-                          "aspect-square rounded-md sm:rounded-lg flex flex-col items-center justify-center text-[10px] sm:text-xs transition-all",
-                          isFuture && "opacity-40 cursor-not-allowed",
-                          isUpdating && !isFuture && "opacity-60 cursor-wait",
-                          !isFuture &&
-                            !isUpdating &&
-                            "hover:ring-2 hover:ring-primary/50 cursor-pointer",
-                          isToday && "ring-2 ring-primary",
-                          status === "delivered" &&
-                            "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
-                          status === "missed" &&
-                            "bg-red-500/20 text-red-700 dark:text-red-300",
-                          (!status || status === "unmarked") &&
-                            !isFuture &&
-                            "bg-muted hover:bg-muted/80",
-                        )}
-                      >
-                        {/* DAY NUMBER */}
-                        <span className="font-medium leading-none">
-                          {format(date, "d")}
-                        </span>
-                        {/* STATUS ICON */}
-                        {status === "delivered" && (
-                          <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 mt-0.5" />
-                        )}
-                        {status === "missed" && (
-                          <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mt-0.5" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-                {/* CALENDAR LEGEND */}
-                <div className="flex items-center justify-center flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded bg-emerald-500/20 inline-block" />
-                    Delivered
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded bg-red-500/20 inline-block" />
-                    Missed
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded bg-muted inline-block" />
-                    Not marked
-                  </span>
-                </div>
-              </div>
-              {/* MONTHLY SUMMARY CARDS */}
-              <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-2">
-                {/* TOTAL DUE */}
-                <div className="bg-muted/50 rounded-lg p-2 sm:p-3 text-center">
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">
-                    Total Due
-                  </p>
-                  {isLoading ? (
-                    <Skeleton className="h-6 w-16 mx-auto mt-1" />
-                  ) : (
-                    <p className="font-display text-sm sm:text-base md:text-lg font-bold">
-                      ₨{(stats?.monthlyTotal ?? 0).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-                {/* PAID */}
-                <div className="bg-emerald-500/10 rounded-lg p-2 sm:p-3 text-center">
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">
-                    Paid
-                  </p>
-                  {isLoading ? (
-                    <Skeleton className="h-6 w-16 mx-auto mt-1" />
-                  ) : (
-                    <p className="font-display text-sm sm:text-base md:text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                      ₨{(stats?.totalPaid ?? 0).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-                {/* PENDING */}
-                <div className="bg-red-500/10 rounded-lg p-2 sm:p-3 text-center">
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">
-                    Pending
-                  </p>
-                  {isLoading ? (
-                    <Skeleton className="h-6 w-16 mx-auto mt-1" />
-                  ) : (
-                    <p className="font-display text-sm sm:text-base md:text-lg font-bold text-red-600 dark:text-red-400">
-                      ₨{(stats?.pending ?? 0).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              </div>
-              {/* ERROR STATE */}
-              {isError && (
-                <p className="text-sm text-destructive text-center py-2">
-                  Failed to load delivery data. Please try again.
-                </p>
-              )}
-              {/* ADD PAYMENT SECTION */}
-              <div className="mt-2 space-y-1.5">
-                {/* INPUT ROW */}
-                <div className="flex gap-2">
-                  {/* PAYMENT AMOUNT INPUT — NO SPINNER, NO NEGATIVE */}
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min="1"
-                      placeholder="Enter payment amount (₨)"
-                      value={paymentAmount}
-                      onChange={(e) =>
-                        handlePaymentAmountChange(e.target.value)
-                      }
-                      // HIDE NATIVE BROWSER SPINNER ARROWS
-                      className={cn(
-                        "w-full",
-                        NO_SPINNER,
-                        paymentError &&
-                          "border-destructive focus-visible:ring-destructive",
-                      )}
-                      disabled={addPayment.isPending}
-                    />
+                  {/* TITLE AND DESCRIPTION */}
+                  <div className="min-w-0 pt-0.5">
+                    <DialogTitle className="font-display text-[15px] font-bold leading-tight text-left truncate">
+                      {customer.name}
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground mt-0.5 text-left">
+                      View deliveries, calendar, and payments
+                    </DialogDescription>
                   </div>
-                  {/* SUBMIT PAYMENT BUTTON */}
+                </div>
+              </div>
+              {/* SCROLLABLE DIALOG BODY */}
+              <div className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 py-4 sm:py-5">
+                {/* MONTH NAVIGATION */}
+                <div className="flex items-center justify-between py-2">
+                  {/* PREVIOUS MONTH */}
                   <Button
-                    onClick={handleAddPayment}
-                    disabled={addPayment.isPending || !paymentAmount}
-                    className="shrink-0"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setSelectedMonth(
+                        (prev) =>
+                          new Date(prev.getFullYear(), prev.getMonth() - 1),
+                      )
+                    }
                   >
-                    <DollarSign className="w-4 h-4 mr-1" />
-                    {addPayment.isPending ? "Adding..." : "Add Payment"}
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  {/* MONTH LABEL */}
+                  <span className="font-medium text-sm sm:text-base">
+                    {format(selectedMonth, "MMMM yyyy")}
+                  </span>
+                  {/* NEXT MONTH (BLOCKED FOR FUTURE MONTHS) */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={
+                      selectedMonth.getMonth() >= today.getMonth() &&
+                      selectedMonth.getFullYear() >= today.getFullYear()
+                    }
+                    onClick={() =>
+                      setSelectedMonth(
+                        (prev) =>
+                          new Date(prev.getFullYear(), prev.getMonth() + 1),
+                      )
+                    }
+                  >
+                    <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
-                {/* INLINE PAYMENT VALIDATION ERROR */}
-                {paymentError && (
-                  <p className="text-destructive text-xs">{paymentError}</p>
+                {/* CALENDAR GRID */}
+                <div className="bg-muted/30 rounded-lg p-3 sm:p-4">
+                  {/* INSTRUCTION BOX */}
+                  <div className="flex items-start gap-2 bg-primary/5 border border-primary/10 rounded-lg px-3 py-2 mb-3">
+                    <Info className="w-3.5 h-3.5 text-primary mt-px shrink-0" />
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      <span className="font-semibold text-foreground">
+                        Click to cycle:{" "}
+                      </span>
+                      1st →{" "}
+                      <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                        Delivered
+                      </span>
+                      {"  "}·{"  "}2nd →{" "}
+                      <span className="font-medium text-red-600 dark:text-red-400">
+                        Missed
+                      </span>
+                      {"  "}·{"  "}3rd →{" "}
+                      <span className="font-medium">Clear</span>
+                    </p>
+                  </div>
+                  {/* DAY HEADERS */}
+                  <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
+                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                      <div
+                        key={day}
+                        className="text-center text-[10px] sm:text-xs font-medium text-muted-foreground py-1"
+                      >
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  {/* DATE CELLS */}
+                  <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+                    {/* EMPTY CELLS BEFORE MONTH START */}
+                    {Array.from({
+                      length: startOfMonth(selectedMonth).getDay(),
+                    }).map((_, i) => (
+                      <div key={`empty-${i}`} className="aspect-square" />
+                    ))}
+                    {/* DAY CELLS */}
+                    {daysInMonth.map((date) => {
+                      // FORMAT DATE STRING
+                      const dateStr = format(date, "yyyy-MM-dd");
+                      // DELIVERY STATUS FOR THIS DATE
+                      const status = getDeliveryStatus(dateStr);
+                      // IS TODAY
+                      const isToday = isSameDay(date, today);
+                      // IS FUTURE DATE (CANNOT MARK)
+                      const isFuture = date > today;
+                      // IS MUTATION IN PROGRESS
+                      const isUpdating = markDelivery.isPending;
+                      // RETURNING DATE CELL
+                      return (
+                        <button
+                          key={dateStr}
+                          onClick={() =>
+                            !isFuture && handleToggleDelivery(dateStr)
+                          }
+                          disabled={isFuture || isUpdating}
+                          className={cn(
+                            "aspect-square rounded-md sm:rounded-lg flex flex-col items-center justify-center text-[10px] sm:text-xs transition-all",
+                            isFuture && "opacity-40 cursor-not-allowed",
+                            isUpdating && !isFuture && "opacity-60 cursor-wait",
+                            !isFuture &&
+                              !isUpdating &&
+                              "hover:ring-2 hover:ring-primary/50 cursor-pointer",
+                            isToday && "ring-2 ring-primary",
+                            status === "delivered" &&
+                              "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+                            status === "missed" &&
+                              "bg-red-500/20 text-red-700 dark:text-red-300",
+                            (!status || status === "unmarked") &&
+                              !isFuture &&
+                              "bg-muted hover:bg-muted/80",
+                          )}
+                        >
+                          {/* DAY NUMBER */}
+                          <span className="font-medium leading-none">
+                            {format(date, "d")}
+                          </span>
+                          {/* STATUS ICON */}
+                          {status === "delivered" && (
+                            <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 mt-0.5" />
+                          )}
+                          {status === "missed" && (
+                            <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 mt-0.5" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* CALENDAR LEGEND */}
+                  <div className="flex items-center justify-center flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <span className="w-3 h-3 rounded bg-emerald-500/20 inline-block" />
+                      Delivered
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-3 h-3 rounded bg-red-500/20 inline-block" />
+                      Missed
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-3 h-3 rounded bg-muted inline-block" />
+                      Not marked
+                    </span>
+                  </div>
+                </div>
+                {/* MONTHLY SUMMARY CARDS */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-2">
+                  {/* TOTAL DUE */}
+                  <div className="bg-muted/50 border border-border/50 rounded-xl p-2 sm:p-3 text-center">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">
+                      Total Due
+                    </p>
+                    {isLoading ? (
+                      <Skeleton className="h-6 w-16 mx-auto mt-1" />
+                    ) : (
+                      <p className="font-display text-sm sm:text-base md:text-lg font-bold">
+                        ₨{(stats?.monthlyTotal ?? 0).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  {/* PAID */}
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2 sm:p-3 text-center">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">
+                      Paid
+                    </p>
+                    {isLoading ? (
+                      <Skeleton className="h-6 w-16 mx-auto mt-1" />
+                    ) : (
+                      <p className="font-display text-sm sm:text-base md:text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                        ₨{(stats?.totalPaid ?? 0).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  {/* PENDING */}
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-2 sm:p-3 text-center">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">
+                      Pending
+                    </p>
+                    {isLoading ? (
+                      <Skeleton className="h-6 w-16 mx-auto mt-1" />
+                    ) : (
+                      <p className="font-display text-sm sm:text-base md:text-lg font-bold text-red-600 dark:text-red-400">
+                        ₨{(stats?.pending ?? 0).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {/* ERROR STATE */}
+                {isError && (
+                  <p className="text-sm text-destructive text-center py-2">
+                    Failed to load delivery data. Please try again.
+                  </p>
                 )}
+                {/* ADD PAYMENT SECTION */}
+                <div className="mt-2 space-y-1.5">
+                  {/* INPUT ROW */}
+                  <div className="flex gap-2">
+                    {/* PAYMENT AMOUNT INPUT — NO SPINNER, NO NEGATIVE */}
+                    <div className="flex-1">
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        placeholder="Enter payment amount (₨)"
+                        value={paymentAmount}
+                        onChange={(e) =>
+                          handlePaymentAmountChange(e.target.value)
+                        }
+                        className={cn(
+                          "w-full",
+                          NO_SPINNER,
+                          paymentError &&
+                            "border-destructive focus-visible:ring-destructive",
+                        )}
+                        disabled={addPayment.isPending}
+                      />
+                    </div>
+                    {/* SUBMIT PAYMENT BUTTON */}
+                    <Button
+                      onClick={handleAddPayment}
+                      disabled={addPayment.isPending || !paymentAmount}
+                      className="shrink-0"
+                    >
+                      <DollarSign className="w-4 h-4 mr-1" />
+                      {addPayment.isPending ? "Adding..." : "Add Payment"}
+                    </Button>
+                  </div>
+                  {/* INLINE PAYMENT VALIDATION ERROR */}
+                  {paymentError && (
+                    <p className="text-destructive text-xs">{paymentError}</p>
+                  )}
+                </div>
+              </div>
+              {/* FIXED FOOTER */}
+              <div className="shrink-0 px-4 sm:px-6 py-3 sm:py-3.5 border-t border-border/50 bg-muted/20 flex items-center justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onClose}
+                  className="h-9 px-4"
+                >
+                  Close
+                </Button>
               </div>
             </>
           )}
