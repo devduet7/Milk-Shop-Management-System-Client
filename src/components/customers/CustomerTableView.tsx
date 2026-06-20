@@ -32,8 +32,8 @@ interface CustomerTableViewProps {
   onView: (customer: Customer) => void;
   // <== EDIT CUSTOMER HANDLER ==>
   onEdit: (customer: Customer) => void;
-  // <== DELETE CUSTOMER HANDLER ==>
-  onDelete: (id: string) => void;
+  // <== ON DELETE HANDLER ==>
+  onDelete: (record: Customer) => void;
 }
 
 // <== CUSTOMER TABLE VIEW COMPONENT ==>
@@ -63,33 +63,33 @@ const CustomerTableView = memo(
         {/* SCROLLABLE TABLE CONTAINER */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[520px]">
-            {/* TABLE HEAD */}
-            <thead>
-              <tr className="border-b border-border text-left bg-muted/30">
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+            {/* STICKY TABLE HEADER */}
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-border text-left bg-muted/50 backdrop-blur-sm">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Customer
                 </th>
                 {/* HIDDEN ON SMALL SCREENS */}
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden md:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden md:table-cell">
                   Contact
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                   Daily Milk
                 </th>
                 {/* HIDDEN ON SMALL SCREENS */}
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden lg:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden lg:table-cell">
                   Rate
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                   Monthly Due
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide hidden md:table-cell">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden md:table-cell">
                   Paid
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Pending
                 </th>
-                <th className="px-3 py-2.5 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Actions
                 </th>
               </tr>
@@ -124,9 +124,9 @@ const CustomerTableView = memo(
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex gap-1">
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                        <Skeleton className="h-8 w-8 rounded-md" />
-                        <Skeleton className="h-8 w-8 rounded-md" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
                       </div>
                     </td>
                   </tr>
@@ -148,7 +148,7 @@ const CustomerTableView = memo(
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.03 }}
-                      className="border-b border-border/50 hover:bg-muted/40 transition-colors"
+                      className="border-b border-border/50 hover:bg-muted/30 transition-colors"
                     >
                       {/* CUSTOMER NAME + ADDRESS */}
                       <td className="px-3 py-3">
@@ -195,7 +195,7 @@ const CustomerTableView = memo(
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-7 w-7 rounded-lg"
                             onClick={() => onView(c)}
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -204,7 +204,7 @@ const CustomerTableView = memo(
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-7 w-7 rounded-lg"
                             onClick={() => onEdit(c)}
                           >
                             <Edit className="w-3.5 h-3.5" />
@@ -213,8 +213,8 @@ const CustomerTableView = memo(
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => onDelete(c._id)}
+                            className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => onDelete(c)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -228,8 +228,8 @@ const CustomerTableView = memo(
           {/* EMPTY STATE WITH ICON */}
           {!isLoading && customers.length === 0 && (
             <div className="flex flex-col items-center justify-center py-14 sm:py-20 gap-3 text-center">
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                <Users className="w-6 h-6 text-muted-foreground/40" />
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <Users className="w-5 h-5 text-muted-foreground/40" />
               </div>
               <div>
                 <p className="font-medium text-muted-foreground text-sm">
