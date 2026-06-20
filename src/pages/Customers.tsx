@@ -17,8 +17,8 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Customer, ViewMode } from "@/types/customer-types";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
@@ -28,6 +28,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import CustomerTableView from "@/components/customers/CustomerTableView";
 import CustomerStatsCards from "@/components/customers/CustomerStatsCards";
 import CustomerFormDialog from "@/components/customers/CustomerFormDialog";
+import CustomerDeleteDialog from "@/components/customers/CustomerDeleteDialog";
 import CustomerDetailDialog from "@/components/customers/CustomerDetailDialog";
 
 // <== VIEW MODE TYPE GUARD ==>
@@ -79,7 +80,7 @@ const TableSkeleton = () => (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[520px]">
         <thead>
-          <tr className="border-b border-border bg-muted/30">
+          <tr className="border-b border-border bg-muted/50">
             {/* HEADER CELLS */}
             {[140, 100, 70, 80, 90, 80, 70, 80].map((w, i) => (
               <th key={i} className="px-3 py-2.5">
@@ -118,9 +119,9 @@ const TableSkeleton = () => (
               </td>
               <td className="px-3 py-3">
                 <div className="flex gap-1">
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
                 </div>
               </td>
             </tr>
@@ -149,7 +150,7 @@ const ListSkeleton = () => (
     <div className="divide-y divide-border/50">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="p-3 sm:p-4 flex items-center gap-3">
-          <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+          <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2">
               <Skeleton className="h-4 w-28" />
@@ -162,9 +163,9 @@ const ListSkeleton = () => (
             <Skeleton className="h-3 w-16 ml-auto" />
           </div>
           <div className="flex gap-0.5 shrink-0">
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
-            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-lg" />
+            <Skeleton className="h-7 w-7 rounded-lg" />
+            <Skeleton className="h-7 w-7 rounded-lg" />
           </div>
         </div>
       ))}
@@ -189,32 +190,35 @@ const GridSkeleton = () => (
   <div>
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="glass-card p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-11 h-11 rounded-full" />
-              <div className="space-y-1.5">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-3 w-20" />
+        <div key={i} className="glass-card overflow-hidden">
+          <div className="h-[3px] bg-muted/60" />
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-11 h-11 rounded-xl" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
               </div>
+              <Skeleton className="h-5 w-10 rounded-full" />
             </div>
-            <Skeleton className="h-5 w-10 rounded-full" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Skeleton className="h-16 rounded-lg" />
-            <Skeleton className="h-16 rounded-lg" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-3.5 w-full" />
-            <Skeleton className="h-3.5 w-full" />
-            <Skeleton className="h-3.5 w-full" />
-          </div>
-          <div className="flex items-center justify-between pt-1 border-t border-border/50">
-            <Skeleton className="h-3 w-28" />
-            <div className="flex gap-0.5">
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
+            <div className="grid grid-cols-2 gap-2">
+              <Skeleton className="h-16 rounded-lg" />
+              <Skeleton className="h-16 rounded-lg" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-3.5 w-full" />
+              <Skeleton className="h-3.5 w-full" />
+              <Skeleton className="h-3.5 w-full" />
+            </div>
+            <div className="flex items-center justify-between pt-1 border-t border-border/50">
+              <Skeleton className="h-3 w-28" />
+              <div className="flex gap-0.5">
+                <Skeleton className="h-7 w-7 rounded-lg" />
+                <Skeleton className="h-7 w-7 rounded-lg" />
+                <Skeleton className="h-7 w-7 rounded-lg" />
+              </div>
             </div>
           </div>
         </div>
@@ -245,7 +249,7 @@ const CustomersPageSkeleton = ({ view }: { view: ViewMode }) => (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
       {/* LEFT: ICON + TITLE + DESCRIPTION */}
       <div className="flex items-center gap-3">
-        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
         <div className="space-y-2">
           <Skeleton className="h-6 w-28 sm:w-32" />
           <Skeleton className="h-3 w-52 sm:w-64 hidden sm:block" />
@@ -263,13 +267,14 @@ const CustomersPageSkeleton = ({ view }: { view: ViewMode }) => (
     {/* STATS CARDS SKELETON — 1 COL MOBILE, 2 COLS SM, 4 COLS DESKTOP */}
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 md:gap-4 mb-5 sm:mb-6">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="glass-card p-3 sm:p-4 md:p-5">
-          <div className="flex items-start justify-between mb-2 sm:mb-3">
-            <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg" />
-            <Skeleton className="h-5 w-7 rounded-full" />
-          </div>
-          <Skeleton className="h-3 w-20 mb-1.5" />
-          <Skeleton className="h-5 sm:h-6 md:h-7 w-20 sm:w-24" />
+        <div
+          key={i}
+          className="glass-card p-3 sm:p-4 md:p-5 relative overflow-hidden"
+        >
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-muted/60 rounded-t-xl" />
+          <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl mb-2 sm:mb-3" />
+          <Skeleton className="h-3 w-20 mb-1" />
+          <Skeleton className="h-5 sm:h-6 md:h-7 w-20 sm:w-24 mt-0.5" />
         </div>
       ))}
     </div>
@@ -298,6 +303,10 @@ const Customers = memo(() => {
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null);
   // CUSTOMER SELECTED FOR DETAIL VIEW (NULL = DIALOG CLOSED)
   const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
+  // DELETE DIALOG OPEN STATE
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  // CUSTOMER RECORD STAGED FOR DELETION (NULL = NO PENDING DELETE)
+  const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
   // DEBOUNCE SEARCH INPUT (300MS) TO AVOID EXCESSIVE API CALLS
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
@@ -377,14 +386,38 @@ const Customers = memo(() => {
     // SET DETAIL CUSTOMER TO NULL
     setDetailCustomer(null);
   }, []);
-  // DELETE CUSTOMER BY ID
-  const handleDelete = useCallback(
-    (id: string): void => {
-      // CALL DELETE MUTATION
-      deleteMutation.mutate(id);
-    },
-    [deleteMutation],
-  );
+  // CONFIRM DELETE — CALLED FROM DELETE DIALOG ON CONFIRM
+  const handleDeleteConfirm = useCallback((): void => {
+    // GUARD: ENSURE A TARGET IS STAGED
+    if (!deleteTarget) return;
+    // CALL DELETE MUTATION
+    deleteMutation.mutate(deleteTarget._id, {
+      // ON SUCCESS
+      onSuccess: () => {
+        // CLOSE DIALOG AND CLEAR TARGET
+        setDeleteDialogOpen(false);
+        // DELAY CLEARING TARGET UNTIL AFTER PENDING STATE IS FALSE
+        setDeleteTarget(null);
+      },
+    });
+  }, [deleteTarget, deleteMutation]);
+
+  // CLOSE DELETE DIALOG — BLOCKED WHILE MUTATION IS PENDING
+  const handleDeleteClose = useCallback((): void => {
+    // BLOCK CLOSE WHILE PENDING
+    if (deleteMutation.isPending) return;
+    // CLOSE DIALOG AND CLEAR STAGED TARGET
+    setDeleteDialogOpen(false);
+    // DELAY CLEARING TARGET UNTIL AFTER PENDING STATE IS FALSE
+    setDeleteTarget(null);
+  }, [deleteMutation.isPending]);
+  // STAGE CUSTOMER FOR DELETE — OPENS CONFIRMATION DIALOG
+  const handleDelete = useCallback((record: Customer): void => {
+    // STAGE THE RECORD FOR DELETION
+    setDeleteTarget(record);
+    // OPEN CONFIRMATION DIALOG
+    setDeleteDialogOpen(true);
+  }, []);
   // SHARED PROPS OBJECT PASSED TO ALL THREE VIEW COMPONENTS
   const viewProps = {
     // SERVER ALREADY PAGINATED — PASS DIRECTLY WITHOUT CLIENT-SIDE SLICE
@@ -412,11 +445,11 @@ const Customers = memo(() => {
     <PageTransition className="page-container">
       {/* PAGE HEADER ROW */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {/* LEFT: ICON + TITLE + DESCRIPTION */}
+        {/* LEFT: ICON BADGE + TITLE + DESCRIPTION */}
         <div className="flex items-center gap-3 min-w-0">
-          {/* PAGE ICON */}
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Users className="w-5 h-5 text-primary" />
+          {/* PAGE ICON BADGE WITH GRADIENT */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+            <Users className="w-[18px] h-[18px] text-primary-foreground stroke-[2.5]" />
           </div>
           {/* TITLE AND DESCRIPTION */}
           <div className="min-w-0">
@@ -501,6 +534,14 @@ const Customers = memo(() => {
       <CustomerDetailDialog
         customer={detailCustomer}
         onClose={handleDetailClose}
+      />
+      {/* CUSTOMER DELETE CONFIRMATION DIALOG */}
+      <CustomerDeleteDialog
+        open={deleteDialogOpen}
+        record={deleteTarget}
+        isPending={deleteMutation.isPending}
+        onClose={handleDeleteClose}
+        onConfirm={handleDeleteConfirm}
       />
     </PageTransition>
   );
