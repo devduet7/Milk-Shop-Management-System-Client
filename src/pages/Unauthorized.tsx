@@ -2,15 +2,37 @@
 import { memo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
-import { ShieldX, ArrowLeft } from "lucide-react";
+import { Moon, Sun, ShieldX, ArrowLeft } from "lucide-react";
 
 // <== UNAUTHORIZED PAGE COMPONENT ==>
 const Unauthorized = () => {
+  // THEME HOOK
+  const { theme, toggleTheme } = useTheme();
   // RETURNING UNAUTHORIZED PAGE COMPONENT
   return (
     // MAIN CONTAINER
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* THEME TOGGLE — FIXED TO CORNER ON ALL SCREEN SIZES */}
+      <div className="fixed top-4 right-4 z-50">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="h-8 w-8 sm:h-10 sm:w-10"
+        >
+          {theme === "light" ? (
+            <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          ) : (
+            <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          )}
+        </Button>
+      </div>
+      {/* BACKGROUND CIRCLE TOP LEFT */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
+      {/* BACKGROUND CIRCLE BOTTOM RIGHT */}
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-secondary/10 blur-3xl" />
       {/* CONTENT CONTAINER */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -42,7 +64,7 @@ const Unauthorized = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="text-muted-foreground mb-8"
+          className="text-sm text-muted-foreground mb-6 sm:mb-8"
         >
           You need to sign in to access this page. Please log in to continue.
         </motion.p>
@@ -61,6 +83,9 @@ const Unauthorized = () => {
     </div>
   );
 };
+
+// <== DISPLAY NAME FOR DEVTOOLS ==>
+Unauthorized.displayName = "Unauthorized";
 
 // <== MEMOIZED EXPORT TO PREVENT UNNECESSARY RE-RENDERS ==>
 export default memo(Unauthorized);
