@@ -1,5 +1,4 @@
 // <== IMPORTS ==>
-import { BarChart2, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -16,6 +15,15 @@ import RecoverySummaryChart from "@/components/analytics/RecoverySummaryChart";
 import RevenueVsExpensesChart from "@/components/analytics/RevenueVsExpensesChart";
 import ExpendituresDonutChart from "@/components/analytics/ExpendituresDonutChart";
 import DeliveryPerformanceChart from "@/components/analytics/DeliveryPerformanceChart";
+import {
+  BarChart2,
+  DollarSign,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  TrendingDown,
+  type LucideIcon,
+} from "lucide-react";
 
 // <== FINANCIAL SUMMARY KPI CARD PROPS ==>
 interface KpiCardProps {
@@ -25,43 +33,66 @@ interface KpiCardProps {
   value: string;
   // <== SUBTEXT ==>
   sub: string;
-  // <== IS POSITIVE ==>
-  isPositive?: boolean;
-  // <== IS NEUTRAL ==>
-  isNeutral?: boolean;
+  // <== LUCIDE ICON ==>
+  icon: LucideIcon;
+  // <== ICON COLOR CLASS ==>
+  iconClass: string;
+  // <== TOP BAR COLOR CLASS ==>
+  topBar: string;
+  // <== OPTIONAL VALUE COLOR CLASS ==>
+  valueClass?: string;
   // <== DELAY ==>
   delay: number;
 }
 
 // <== FINANCIAL SUMMARY KPI CARD ==>
 const KpiCard = memo(
-  ({ label, value, sub, isPositive, isNeutral, delay }: KpiCardProps) => (
+  ({
+    label,
+    value,
+    sub,
+    icon: Icon,
+    iconClass,
+    topBar,
+    valueClass,
+    delay,
+  }: KpiCardProps) => (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.2 }}
-      className={cn(
-        "glass-card p-3 sm:p-4 text-center",
-        !isNeutral && isPositive !== undefined && "border-l-2",
-        !isNeutral &&
-          isPositive !== undefined &&
-          (isPositive ? "border-l-emerald-500" : "border-l-red-500"),
-      )}
+      className="glass-card p-3 sm:p-4 relative overflow-hidden group hover:shadow-md transition-shadow"
     >
-      <p className="text-[10px] sm:text-xs text-muted-foreground">{label}</p>
+      {/* COLORED TOP BAR — UNIQUE IDENTITY PER CARD */}
+      <div
+        className={cn("absolute inset-x-0 top-0 h-[3px] rounded-t-xl", topBar)}
+      />
+      {/* ICON */}
+      <div
+        className={cn(
+          "w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3",
+          iconClass,
+        )}
+      >
+        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+      </div>
+      {/* LABEL */}
+      <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight">
+        {label}
+      </p>
+      {/* VALUE */}
       <p
         className={cn(
-          "text-sm sm:text-base font-bold font-display mt-0.5",
-          !isNeutral &&
-            isPositive !== undefined &&
-            (isPositive
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-red-600 dark:text-red-400"),
+          "text-base sm:text-lg md:text-xl font-bold font-display mt-0.5 truncate",
+          valueClass,
         )}
       >
         {value}
       </p>
+      {/* SUB */}
       <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>
+      {/* DECORATIVE CIRCLE */}
+      <div className="absolute -bottom-4 -right-4 w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors pointer-events-none" />
     </motion.div>
   ),
 );
@@ -75,25 +106,28 @@ const AnalyticsPageSkeleton = () => (
     {/* HEADER */}
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
       <div className="flex items-center gap-3">
-        <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+        <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
         <div className="space-y-2">
           <Skeleton className="h-6 w-24" />
           <Skeleton className="h-3 w-52 hidden sm:block" />
         </div>
       </div>
-      <div className="flex items-center gap-1">
-        <Skeleton className="h-8 w-8 rounded-md" />
-        <Skeleton className="h-5 w-24" />
-        <Skeleton className="h-8 w-8 rounded-md" />
+      {/* MONTH NAV PILL SKELETON */}
+      <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1">
+        <Skeleton className="h-7 w-7 rounded-lg" />
+        <Skeleton className="h-4 w-28 mx-1" />
+        <Skeleton className="h-7 w-7 rounded-lg" />
       </div>
     </div>
     {/* KPI STRIP */}
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 sm:mb-6">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="glass-card p-3 sm:p-4 text-center space-y-1.5">
-          <Skeleton className="h-3 w-20 mx-auto" />
-          <Skeleton className="h-5 w-24 mx-auto" />
-          <Skeleton className="h-3 w-16 mx-auto" />
+        <div key={i} className="glass-card p-3 sm:p-4 relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-muted/60 rounded-t-xl" />
+          <Skeleton className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl mb-2 sm:mb-3" />
+          <Skeleton className="h-3 w-20 mb-1" />
+          <Skeleton className="h-5 sm:h-6 w-24 mt-0.5" />
+          <Skeleton className="h-3 w-16 mt-1" />
         </div>
       ))}
     </div>
@@ -101,7 +135,7 @@ const AnalyticsPageSkeleton = () => (
     <div className="space-y-4">
       <div className="glass-card p-4 sm:p-5">
         <div className="flex items-center gap-3 mb-3">
-          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shrink-0" />
           <div className="space-y-1">
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-3 w-56" />
@@ -114,7 +148,7 @@ const AnalyticsPageSkeleton = () => (
           {[0, 1].map((col) => (
             <div key={col} className="glass-card p-4 sm:p-5">
               <div className="flex items-center gap-3 mb-3">
-                <Skeleton className="w-8 h-8 rounded-lg" />
+                <Skeleton className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shrink-0" />
                 <Skeleton className="h-4 w-32" />
               </div>
               <Skeleton className="w-full h-[240px] rounded-xl" />
@@ -156,6 +190,8 @@ const Analytics = memo(() => {
   const fs = data?.financialSummary;
   // IS NET POSITION POSITIVE
   const netPositive = (fs?.netPosition ?? 0) >= 0;
+  // IS GROSS PROFIT POSITIVE
+  const grossPositive = (fs?.grossProfit ?? 0) >= 0;
   // SHOW FULL PAGE SKELETON ON INITIAL LOAD
   if (isLoading && !data) return <AnalyticsPageSkeleton />;
   // RETURNING ANALYTICS PAGE
@@ -163,10 +199,11 @@ const Analytics = memo(() => {
     <PageTransition className="page-container">
       {/* PAGE HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {/* LEFT: ICON + TITLE + DESCRIPTION */}
+        {/* LEFT: ICON BADGE + TITLE + DESCRIPTION */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <BarChart2 className="w-5 h-5 text-primary" />
+          {/* PAGE ICON BADGE WITH GRADIENT */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+            <BarChart2 className="w-[18px] h-[18px] text-primary-foreground stroke-[2.5]" />
           </div>
           <div className="min-w-0">
             <h1 className="font-display text-xl sm:text-2xl font-bold">
@@ -177,23 +214,26 @@ const Analytics = memo(() => {
             </p>
           </div>
         </div>
-        {/* RIGHT: MONTH NAVIGATION */}
-        <div className="flex items-center gap-1">
+        {/* RIGHT: MONTH NAVIGATION PILL */}
+        <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1 self-start sm:self-auto">
+          {/* PREV MONTH BUTTON */}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 rounded-lg"
             onClick={handlePrevMonth}
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm font-medium whitespace-nowrap min-w-[100px] text-center">
+          {/* CURRENT MONTH LABEL */}
+          <span className="text-sm font-semibold whitespace-nowrap min-w-[100px] text-center px-1">
             {format(selectedMonth, "MMMM yyyy")}
           </span>
+          {/* NEXT MONTH BUTTON */}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 rounded-lg"
             disabled={isNextMonthDisabled}
             onClick={handleNextMonth}
           >
@@ -202,33 +242,63 @@ const Analytics = memo(() => {
         </div>
       </div>
       {/* KPI STRIP — FOUR TOP-LEVEL FINANCIAL METRICS */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 sm:mb-6">
+        {/* TOTAL REVENUE */}
         <KpiCard
           label="Total Revenue"
           value={`₨${(fs?.totalRevenue ?? 0).toLocaleString()}`}
-          sub={`Sales + Quick Sales`}
-          isPositive={true}
+          sub="Sales + Quick Sales"
+          icon={TrendingUp}
+          iconClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          topBar="bg-emerald-500"
           delay={0.05}
         />
+        {/* TOTAL EXPENSES */}
         <KpiCard
           label="Total Expenses"
           value={`₨${(fs?.totalExpenses ?? 0).toLocaleString()}`}
-          sub={`Purchases + Exp + Staff`}
-          isPositive={false}
+          sub="Purchases + Exp + Staff"
+          icon={TrendingDown}
+          iconClass="bg-red-500/10 text-red-600 dark:text-red-400"
+          topBar="bg-red-500"
           delay={0.08}
         />
+        {/* NET POSITION — DYNAMIC COLOR BASED ON PROFITABILITY */}
         <KpiCard
           label="Net Position"
           value={`${netPositive ? "+" : ""}₨${(fs?.netPosition ?? 0).toLocaleString()}`}
           sub={netPositive ? "Profitable month" : "Loss this month"}
-          isPositive={netPositive}
+          icon={netPositive ? TrendingUp : TrendingDown}
+          iconClass={
+            netPositive
+              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              : "bg-red-500/10 text-red-600 dark:text-red-400"
+          }
+          topBar={netPositive ? "bg-emerald-500" : "bg-red-500"}
+          valueClass={
+            netPositive
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-red-600 dark:text-red-400"
+          }
           delay={0.11}
         />
+        {/* GROSS PROFIT — DYNAMIC COLOR BASED ON VALUE */}
         <KpiCard
           label="Gross Profit"
           value={`₨${(fs?.grossProfit ?? 0).toLocaleString()}`}
-          sub={`Revenue minus purchases`}
-          isPositive={(fs?.grossProfit ?? 0) >= 0}
+          sub="Revenue minus purchases"
+          icon={DollarSign}
+          iconClass={
+            grossPositive
+              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          }
+          topBar={grossPositive ? "bg-emerald-500" : "bg-amber-500"}
+          valueClass={
+            grossPositive
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-amber-600 dark:text-amber-400"
+          }
           delay={0.14}
         />
       </div>
@@ -292,5 +362,5 @@ const Analytics = memo(() => {
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 Analytics.displayName = "Analytics";
 
-// <== MEMOIZED EXPORT ==>
+// <== MEMOIZED EXPORT TO PREVENT UNNECESSARY RE-RENDERS ==>
 export default Analytics;

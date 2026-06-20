@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import AnalyticsChartCard from "./AnalyticsChartCard";
+import { Pie, Cell, Tooltip, PieChart } from "recharts";
 import { CHART_COLORS, TOOLTIP_STYLE } from "@/lib/chartUtils";
 import type { AnalyticsRecovery } from "@/types/analytics-types";
-import { Pie, Cell, Tooltip, PieChart, ResponsiveContainer } from "recharts";
 
 // <== RECOVERY SUMMARY CHART PROPS ==>
 interface RecoverySummaryChartProps {

@@ -53,14 +53,16 @@ const AnalyticsChartCard = memo(
       <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-3 flex items-start justify-between gap-3">
         {/* LEFT: ICON + TITLE + SUBTITLE */}
         <div className="flex items-center gap-3 min-w-0">
+          {/* ICON BADGE */}
           <div
             className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+              "w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0",
               iconClass,
             )}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
+          {/* TITLE AND SUBTITLE */}
           <div className="min-w-0">
             <h3 className="font-display font-semibold text-sm sm:text-base leading-tight">
               {title}
