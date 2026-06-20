@@ -1,5 +1,4 @@
 // <== IMPORTS ==>
-import { memo } from "react";
 import {
   Bar,
   Cell,
@@ -11,6 +10,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import { memo } from "react";
 import { Users } from "lucide-react";
 import AnalyticsChartCard from "./AnalyticsChartCard";
 import type { StaffPayrollDatum } from "@/types/analytics-types";
