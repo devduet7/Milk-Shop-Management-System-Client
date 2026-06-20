@@ -14,23 +14,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const SettingsPageSkeleton = () => (
   <div className="page-container">
     {/* HEADER SKELETON */}
-    <div className="mb-8 flex items-center gap-3">
-      <Skeleton className="w-10 h-10 rounded-full" />
+    <div className="mb-6 sm:mb-8 flex items-center gap-3">
+      <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
       <div className="space-y-2">
         <Skeleton className="h-6 w-24" />
-        <Skeleton className="h-3 w-56" />
+        <Skeleton className="h-3 w-56 hidden sm:block" />
       </div>
     </div>
     {/* STATS SKELETON */}
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-5 sm:mb-6">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="glass-card p-4 md:p-5">
-          <div className="flex items-start justify-between mb-3">
-            <Skeleton className="w-10 h-10 rounded-xl" />
-            <Skeleton className="h-5 w-14 rounded-full" />
-          </div>
-          <Skeleton className="h-3 w-20 mb-2" />
-          <Skeleton className="h-7 w-28" />
+        <div key={i} className="glass-card p-4 md:p-5 relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-muted/60 rounded-t-xl" />
+          <Skeleton className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl mb-2 sm:mb-3" />
+          <Skeleton className="h-3 w-20 mb-1" />
+          <Skeleton className="h-6 sm:h-7 w-28 mt-0.5" />
         </div>
       ))}
     </div>
@@ -79,15 +77,15 @@ const SettingsPage = memo(() => {
   return (
     <PageTransition className="page-container">
       {/* PAGE HEADER */}
-      <div className="mb-8 flex items-center gap-3">
-        {/* ICON */}
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-          <Settings className="w-5 h-5 text-primary" />
+      <div className="mb-6 sm:mb-8 flex items-center gap-3">
+        {/* PAGE ICON BADGE WITH GRADIENT */}
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20">
+          <Settings className="w-[18px] h-[18px] text-primary-foreground stroke-[2.5]" />
         </div>
         {/* TITLE AND DESCRIPTION */}
         <div>
           <h1 className="font-display text-2xl font-bold">Settings</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">
             Manage your account, pricing, and preferences
           </p>
         </div>
