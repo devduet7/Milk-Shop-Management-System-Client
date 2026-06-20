@@ -38,5 +38,6 @@ const ThemeProvider = memo(({ children }: ThemeProviderProps) => {
 });
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 ThemeProvider.displayName = "ThemeProvider";
+
 // <== EXPORT ==>
 export { ThemeProvider };

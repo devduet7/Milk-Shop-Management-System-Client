@@ -150,6 +150,7 @@ const Login = () => {
                   id="password"
                   type={showPw ? "text" : "password"}
                   placeholder="••••••••"
+                  className="pr-10"
                   {...register("password")}
                 />
                 {/* PASSWORD VISIBILITY TOGGLE */}
@@ -172,7 +173,7 @@ const Login = () => {
                 </p>
               )}
               {/* FORGOT PASSWORD LINK */}
-              <div className="flex justify-end">
+              <div className="flex justify-end mt-1.5">
                 <Link
                   to="/forgot-password"
                   className="text-xs text-primary hover:underline transition-colors"
@@ -205,6 +206,9 @@ const Login = () => {
     </div>
   );
 };
+
+// <== DISPLAY NAME FOR DEVTOOLS ==>
+Login.displayName = "Login";
 
 // <== MEMOIZED EXPORT TO PREVENT UNNECESSARY RE-RENDERS ==>
 export default memo(Login);
