@@ -2,10 +2,42 @@
 import { create } from "zustand";
 import { persist, PersistOptions } from "zustand/middleware";
 
+// <== USER ROLE TYPE ==>
+export type UserRole = "superadmin" | "admin" | "user";
+
+// <== PERMISSION LEVEL TYPE (ORDINAL — EACH LEVEL IMPLIES EVERYTHING BELOW IT) ==>
+export type PermissionLevel = "none" | "read" | "write" | "update";
+
+// <== MODULE PERMISSIONS TYPE ==>
+export type ModulePermissions = {
+  // <== SALES MODULE PERMISSION ==>
+  sales: PermissionLevel;
+  // <== PURCHASES MODULE PERMISSION ==>
+  purchases: PermissionLevel;
+  // <== CUSTOMERS MODULE PERMISSION ==>
+  customers: PermissionLevel;
+  // <== EXPENDITURES MODULE PERMISSION ==>
+  expenditures: PermissionLevel;
+  // <== RECOVERIES MODULE PERMISSION ==>
+  recoveries: PermissionLevel;
+  // <== QUICK SALES MODULE PERMISSION ==>
+  quickSales: PermissionLevel;
+  // <== DASHBOARD MODULE PERMISSION ==>
+  dashboard: PermissionLevel;
+  // <== ANALYTICS MODULE PERMISSION ==>
+  analytics: PermissionLevel;
+};
+
 // <== USER TYPE ==>
 export type User = {
   // <== USER ID ==>
   id: string;
+  // <== ACCOUNT ID THIS USER BELONGS TO ==>
+  accountId: string;
+  // <== USER ROLE ==>
+  role: UserRole;
+  // <== PER-MODULE PERMISSIONS MATRIX ==>
+  permissions: ModulePermissions | null;
   // <== FULL NAME ==>
   fullName: string;
   // <== EMAIL ==>
@@ -25,6 +57,7 @@ export type User = {
   // <== MONTHLY REPORTS ENABLED FLAG ==>
   monthlyReportsEnabled?: boolean;
 };
+
 // <== AUTH STATE INTERFACE ==>
 interface AuthState {
   // <== USER STATE ==>
@@ -50,6 +83,7 @@ interface AuthState {
   // <== SET CHECKING AUTH FLAG ACTION ==>
   setCheckingAuth: (checking: boolean) => void;
 }
+
 // <== PERSISTED STATE TYPE (ONLY WHAT GETS STORED) ==>
 type PersistedAuthState = Pick<AuthState, "user" | "isAuthenticated">;
 

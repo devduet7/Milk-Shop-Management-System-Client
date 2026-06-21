@@ -1,11 +1,8 @@
 // <== IMPORTS ==>
-import {
-  type LoginFormValues,
-  type RegisterFormValues,
-} from "../validators/authSchemas";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
 import { useNavigate } from "react-router-dom";
+import { type LoginFormValues } from "../validators/authSchemas";
 import { useAuthStore, type User } from "../stores/useAuthStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -35,46 +32,6 @@ type ForgotPasswordResponse = {
   success: boolean;
   // <== SERVER MESSAGE ==>
   message: string;
-};
-
-// <== USE REGISTER HOOK ==>
-export const useRegister = () => {
-  // NAVIGATE HOOK
-  const navigate = useNavigate();
-  // AUTH STORE
-  const { login } = useAuthStore();
-  // REGISTER MUTATION
-  return useMutation<
-    AuthResponse,
-    AxiosError<ApiErrorResponse>,
-    RegisterFormValues
-  >({
-    // <== MUTATION FN ==>
-    mutationFn: async (userData: RegisterFormValues): Promise<AuthResponse> => {
-      // CALL REGISTER API
-      const response = await apiClient.post<AuthResponse>(
-        "/user/register",
-        userData,
-      );
-      // RETURN RESPONSE DATA
-      return response.data;
-    },
-    // <== ON SUCCESS ==>
-    onSuccess: (data: AuthResponse): void => {
-      // SET USER IN STORE
-      login(data.data);
-      // NAVIGATE TO HOME / DASHBOARD
-      navigate("/", { replace: true });
-    },
-    // <== ON ERROR ==>
-    onError: (error: AxiosError<ApiErrorResponse>): void => {
-      // ERROR MESSAGE IS HANDLED IN THE COMPONENT
-      console.error(
-        error.response?.data?.message ||
-          "Registration failed. Please try again.",
-      );
-    },
-  });
 };
 
 // <== USE LOGIN HOOK ==>
@@ -189,6 +146,7 @@ export const useInitiateForgotPassword = () =>
 // <== USE VERIFY FORGOT PASSWORD OTP HOOK ==>
 export const useVerifyForgotPasswordOtp = () =>
   useMutation<
+    ApiErrorResponse,
     ForgotPasswordResponse,
     AxiosError<ApiErrorResponse>,
     { email: string; code: string }
