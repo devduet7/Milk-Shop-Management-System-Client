@@ -1,11 +1,13 @@
 // <== IMPORTS ==>
 import {
+  type ApiErrorResponse,
   useResetForgotPassword,
   useCancelForgotPassword,
   useInitiateForgotPassword,
   useVerifyForgotPasswordOtp,
 } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { type AxiosError } from "axios";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { useNavigate } from "react-router-dom";
@@ -59,8 +61,8 @@ const ForgotPassword = memo(() => {
             // ADVANCE TO OTP STAGE
             setStage("otp");
           },
-          // ON ERROR
-          onError: (error) => {
+          // ON ERROR — EXPLICIT TYPE ANNOTATION REQUIRED FOR CORRECT TANSTACK QUERY GENERIC RESOLUTION
+          onError: (error: AxiosError<ApiErrorResponse>) => {
             // SHOW INLINE ERROR
             setEmailError(
               error.response?.data?.message ||
@@ -86,8 +88,8 @@ const ForgotPassword = memo(() => {
             // OTP VERIFIED — ADVANCE TO PASSWORD RESET STAGE
             setStage("password");
           },
-          // ON ERROR
-          onError: (error) => {
+          // ON ERROR — EXPLICIT TYPE ANNOTATION REQUIRED FOR CORRECT TANSTACK QUERY GENERIC RESOLUTION
+          onError: (error: AxiosError<ApiErrorResponse>) => {
             // SHOW INLINE ERROR WITH ATTEMPT REMAINING INFO FROM SERVER
             setOtpError(
               error.response?.data?.message ||
@@ -117,8 +119,8 @@ const ForgotPassword = memo(() => {
             // NAVIGATE TO LOGIN PAGE
             navigate("/login", { replace: true });
           },
-          // ON ERROR
-          onError: (error) => {
+          // ON ERROR — EXPLICIT TYPE ANNOTATION REQUIRED FOR CORRECT TANSTACK QUERY GENERIC RESOLUTION
+          onError: (error: AxiosError<ApiErrorResponse>) => {
             // SHOW INLINE ERROR
             setResetError(
               error.response?.data?.message ||
