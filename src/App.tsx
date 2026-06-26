@@ -10,6 +10,7 @@ import Customers from "@/pages/Customers";
 import QuickSales from "@/pages/QuickSales";
 import Recoveries from "@/pages/Recoveries";
 import SettingsPage from "@/pages/Settings";
+import AccountSetup from "@/pages/AccountSetup";
 import { queryClient } from "@/lib/queryClient";
 import { AnimatePresence } from "framer-motion";
 import Expenditures from "@/pages/Expenditures";
@@ -61,6 +62,15 @@ const App = () => (
                 element={
                   <PublicRoute>
                     <ForgotPassword />
+                  </PublicRoute>
+                }
+              />
+              {/* ACCOUNT SETUP ROUTE — INVITED USERS COMPLETE THEIR ACCOUNT HERE */}
+              <Route
+                path="/setup"
+                element={
+                  <PublicRoute>
+                    <AccountSetup />
                   </PublicRoute>
                 }
               />

@@ -26,8 +26,8 @@ export type ApiErrorResponse = {
   success?: boolean;
 };
 
-// <== FORGOT PASSWORD SIMPLE RESPONSE TYPE ==>
-type ForgotPasswordResponse = {
+// <== SIMPLE SUCCESS RESPONSE TYPE ==>
+type SimpleResponse = {
   // <== SUCCESS FLAG ==>
   success: boolean;
   // <== SERVER MESSAGE ==>
@@ -81,7 +81,6 @@ export const useLogout = () => {
   const { clearUser, setLoggingOut } = useAuthStore();
   // QUERY CLIENT (FOR CLEARING CACHE ON LOGOUT)
   const queryClient = useQueryClient();
-
   // <== SHARED CLEANUP LOGIC ==>
   const cleanup = (): void => {
     // SET LOGGING OUT FLAG (PREVENTS ACTIVE QUERIES FROM RUNNING)
@@ -95,7 +94,6 @@ export const useLogout = () => {
     // NAVIGATE TO LOGIN
     navigate("/login", { replace: true });
   };
-
   // LOGOUT MUTATION
   return useMutation<void, AxiosError<ApiErrorResponse>, void>({
     // <== MUTATION FN ==>
@@ -122,15 +120,11 @@ export const useLogout = () => {
  */
 // <== USE INITIATE FORGOT PASSWORD HOOK ==>
 export const useInitiateForgotPassword = () =>
-  useMutation<
-    ForgotPasswordResponse,
-    AxiosError<ApiErrorResponse>,
-    { email: string }
-  >({
+  useMutation<SimpleResponse, AxiosError<ApiErrorResponse>, { email: string }>({
     // <== MUTATION FUNCTION ==>
-    mutationFn: async (data): Promise<ForgotPasswordResponse> => {
+    mutationFn: async (data): Promise<SimpleResponse> => {
       // CALLING INITIATE FORGOT PASSWORD API
-      const response = await apiClient.post<ForgotPasswordResponse>(
+      const response = await apiClient.post<SimpleResponse>(
         "/settings/forgot-password/initiate",
         data,
       );
@@ -146,15 +140,14 @@ export const useInitiateForgotPassword = () =>
 // <== USE VERIFY FORGOT PASSWORD OTP HOOK ==>
 export const useVerifyForgotPasswordOtp = () =>
   useMutation<
-    ApiErrorResponse,
-    ForgotPasswordResponse,
+    SimpleResponse,
     AxiosError<ApiErrorResponse>,
     { email: string; code: string }
   >({
     // <== MUTATION FUNCTION ==>
-    mutationFn: async (data): Promise<ForgotPasswordResponse> => {
+    mutationFn: async (data): Promise<SimpleResponse> => {
       // CALLING VERIFY FORGOT PASSWORD OTP API
-      const response = await apiClient.post<ForgotPasswordResponse>(
+      const response = await apiClient.post<SimpleResponse>(
         "/settings/forgot-password/verify",
         data,
       );
@@ -170,14 +163,14 @@ export const useVerifyForgotPasswordOtp = () =>
 // <== USE RESET FORGOT PASSWORD HOOK ==>
 export const useResetForgotPassword = () =>
   useMutation<
-    ForgotPasswordResponse,
+    SimpleResponse,
     AxiosError<ApiErrorResponse>,
     { email: string; newPassword: string }
   >({
     // <== MUTATION FUNCTION ==>
-    mutationFn: async (data): Promise<ForgotPasswordResponse> => {
+    mutationFn: async (data): Promise<SimpleResponse> => {
       // CALLING RESET FORGOT PASSWORD API
-      const response = await apiClient.post<ForgotPasswordResponse>(
+      const response = await apiClient.post<SimpleResponse>(
         "/settings/forgot-password/reset",
         data,
       );
@@ -192,15 +185,11 @@ export const useResetForgotPassword = () =>
  */
 // <== USE CANCEL FORGOT PASSWORD HOOK ==>
 export const useCancelForgotPassword = () =>
-  useMutation<
-    ForgotPasswordResponse,
-    AxiosError<ApiErrorResponse>,
-    { email: string }
-  >({
+  useMutation<SimpleResponse, AxiosError<ApiErrorResponse>, { email: string }>({
     // <== MUTATION FUNCTION ==>
-    mutationFn: async (data): Promise<ForgotPasswordResponse> => {
+    mutationFn: async (data): Promise<SimpleResponse> => {
       // CALLING CANCEL FORGOT PASSWORD API
-      const response = await apiClient.post<ForgotPasswordResponse>(
+      const response = await apiClient.post<SimpleResponse>(
         "/settings/forgot-password/cancel",
         data,
       );
@@ -209,4 +198,28 @@ export const useCancelForgotPassword = () =>
     },
     // <== SILENT FAILURE — CANCELLATION IS BEST-EFFORT ==>
     onError: () => {},
+  });
+
+/**
+ * COMPLETE ACCOUNT SETUP — INVITED USER VERIFIES INVITE OTP AND SETS THEIR PASSWORD
+ * ALL THREE PIECES (EMAIL, CODE, NEW PASSWORD) ARE SUBMITTED TOGETHER IN ONE CALL
+ * ERRORS ARE HANDLED IN THE COMPONENT — CODE ERRORS SEND THE USER BACK TO THE OTP STEP
+ */
+// <== USE COMPLETE ACCOUNT SETUP HOOK ==>
+export const useCompleteAccountSetup = () =>
+  useMutation<
+    SimpleResponse,
+    AxiosError<ApiErrorResponse>,
+    { email: string; code: string; newPassword: string }
+  >({
+    // <== MUTATION FUNCTION ==>
+    mutationFn: async (data): Promise<SimpleResponse> => {
+      // CALLING COMPLETE ACCOUNT SETUP API
+      const response = await apiClient.post<SimpleResponse>(
+        "/users/setup",
+        data,
+      );
+      // RETURNING RESPONSE DATA
+      return response.data;
+    },
   });
