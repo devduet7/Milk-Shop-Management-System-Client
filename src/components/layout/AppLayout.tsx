@@ -34,6 +34,7 @@ const ROUTE_META: Record<string, { title: string }> = {
   "/staff": { title: "Staff" },
   "/customers": { title: "Customers" },
   "/analytics": { title: "Analytics" },
+  "/team": { title: "Team" },
   "/settings": { title: "Settings" },
 };
 
