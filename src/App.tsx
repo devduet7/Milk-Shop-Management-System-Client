@@ -1,4 +1,5 @@
 // <== IMPORTS ==>
+import Team from "@/pages/Team";
 import Login from "@/pages/Login";
 import Sales from "@/pages/Sales";
 import Staff from "@/pages/Staff";
@@ -21,6 +22,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { AdminRoute } from "@/components/common/AdminRoute";
 import { PublicRoute } from "@/components/common/PublicRoute";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
@@ -92,6 +94,15 @@ const App = () => (
                 <Route path="/recoveries" element={<Recoveries />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/expenditures" element={<Expenditures />} />
+                {/* TEAM MANAGEMENT — ADMIN-AND-ABOVE ONLY */}
+                <Route
+                  path="/team"
+                  element={
+                    <AdminRoute>
+                      <Team />
+                    </AdminRoute>
+                  }
+                />
               </Route>
               {/* FALLBACK ROUTE - 404 */}
               <Route path="*" element={<NotFound />} />
