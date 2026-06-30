@@ -9,10 +9,16 @@ import {
   Settings,
   RefreshCw,
   BarChart3,
+  UsersRound,
   ShoppingCart,
   LayoutDashboard,
   type LucideIcon,
 } from "lucide-react";
+import {
+  useAuthStore,
+  type UserRole,
+  type ModulePermissions,
+} from "@/stores/useAuthStore";
 import {
   Tooltip,
   TooltipContent,
@@ -31,19 +37,64 @@ interface NavItem {
   url: string;
   // <== NAV ITEM ICON ==>
   icon: LucideIcon;
+  // <== REQUIRED ROLES ==>
+  requiredRoles?: UserRole[];
+  // <== MODULE KEY ==>
+  moduleKey?: keyof ModulePermissions;
 }
 
 // <== NAV ITEMS LIST ==>
 const NAV_ITEMS: NavItem[] = [
-  { title: "Quick Sales", url: "/", icon: Zap },
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Sales", url: "/sales", icon: ShoppingCart },
-  { title: "Purchases", url: "/purchases", icon: Package },
-  { title: "Expenditures", url: "/expenditures", icon: Wallet },
-  { title: "Recoveries", url: "/recoveries", icon: RefreshCw },
-  { title: "Staff", url: "/staff", icon: UserCog },
-  { title: "Customers", url: "/customers", icon: Users },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
+  { title: "Quick Sales", url: "/", icon: Zap, moduleKey: "quickSales" },
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: LayoutDashboard,
+    moduleKey: "dashboard",
+  },
+  { title: "Sales", url: "/sales", icon: ShoppingCart, moduleKey: "sales" },
+  {
+    title: "Purchases",
+    url: "/purchases",
+    icon: Package,
+    moduleKey: "purchases",
+  },
+  {
+    title: "Expenditures",
+    url: "/expenditures",
+    icon: Wallet,
+    moduleKey: "expenditures",
+  },
+  {
+    title: "Recoveries",
+    url: "/recoveries",
+    icon: RefreshCw,
+    moduleKey: "recoveries",
+  },
+  {
+    title: "Staff",
+    url: "/staff",
+    icon: UserCog,
+    requiredRoles: ["superadmin", "admin"],
+  },
+  {
+    title: "Customers",
+    url: "/customers",
+    icon: Users,
+    moduleKey: "customers",
+  },
+  {
+    title: "Analytics",
+    url: "/analytics",
+    icon: BarChart3,
+    moduleKey: "analytics",
+  },
+  {
+    title: "Team",
+    url: "/team",
+    icon: UsersRound,
+    requiredRoles: ["superadmin", "admin"],
+  },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
@@ -88,7 +139,7 @@ const NavLinkItem = memo(
           !active && "hover:bg-sidebar-accent",
         )}
       >
-        {/* ICON — PLAIN IN COLLAPSED MODE, ELEVATED CONTAINER IN EXPANDED MODE */}
+        {/* ICON */}
         {collapsed ? (
           <item.icon
             className={cn(
@@ -144,6 +195,7 @@ const NavLinkItem = memo(
     return <>{linkEl}</>;
   },
 );
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 NavLinkItem.displayName = "NavLinkItem";
 
@@ -152,11 +204,35 @@ const AppSidebar = memo(
   ({ onNavigate, collapsed = false }: AppSidebarProps) => {
     // GETTING CURRENT LOCATION FOR ACTIVE NAV STATE
     const location = useLocation();
+    // GETTING USER ROLE AND PERMISSIONS FROM AUTH STORE
+    const userRole = useAuthStore((state) => state.user?.role);
+    // GETTING USER PERMISSIONS FROM AUTH STORE (NULL FOR ADMIN AND SUPERADMIN)
+    const userPermissions = useAuthStore((state) => state.user?.permissions);
     // CHECK IF A GIVEN URL MATCHES CURRENT PATHNAME
     const isActive = useCallback(
       (url: string): boolean => location.pathname === url,
       [location.pathname],
     );
+    // FILTERING NAV ITEMS BASED ON ROLE AND MODULE PERMISSIONS
+    const visibleNavItems = NAV_ITEMS.filter((item) => {
+      // ROLE CHECK — ITEM REQUIRES SPECIFIC ROLE(S)
+      if (
+        item.requiredRoles &&
+        (!userRole || !item.requiredRoles.includes(userRole))
+      ) {
+        // HIDING THE NAV ITEM
+        return false;
+      }
+      // MODULE PERMISSION CHECK — ONLY EVALUATED FOR USER TIER
+      if (item.moduleKey && userRole === "user") {
+        // GETTING THE USER'S PERMISSION LEVEL FOR THIS MODULE
+        const level = userPermissions?.[item.moduleKey];
+        // HIDING THE NAV ITEM IF PERMISSION IS "none" OR NOT SET
+        if (!level || level === "none") return false;
+      }
+      // SHOWING THE NAV ITEM
+      return true;
+    });
     // RENDERING THE SIDEBAR CONTENT
     return (
       <div className="flex flex-col h-full">
@@ -168,7 +244,7 @@ const AppSidebar = memo(
               collapsed ? "justify-center px-2" : "px-3.5 gap-3",
             )}
           >
-            {/* BRAND LOGO MARK WITH RING GLOW */}
+            {/* BRAND LOGO MARK */}
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-md shadow-primary/20 ring-2 ring-primary/15 ring-offset-2 ring-offset-sidebar">
               <Milk className="w-4 h-4 text-primary-foreground stroke-[2.5]" />
             </div>
@@ -201,7 +277,7 @@ const AppSidebar = memo(
           )}
         >
           <div className="space-y-1">
-            {NAV_ITEMS.map((item) => (
+            {visibleNavItems.map((item) => (
               <NavLinkItem
                 key={item.url}
                 item={item}
