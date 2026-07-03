@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/usePermission";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { usePurchases, useDeletePurchase } from "@/hooks/usePurchases";
 import PurchaseGridView from "@/components/purchases/PurchaseGridView";
@@ -319,6 +320,8 @@ const Purchases = memo(() => {
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
   const monthStr = format(selectedMonth, "yyyy-MM");
+  // DERIVING PERMISSION FLAGS FOR THE "purchases" MODULE
+  const { canCreate, canEdit, canDelete } = usePermission("purchases");
   // FETCH PURCHASES FROM SERVER WITH ALL ACTIVE FILTERS
   const { data, isLoading, isError } = usePurchases(
     filter,
@@ -387,18 +390,25 @@ const Purchases = memo(() => {
   }, []);
   // OPEN ADD PURCHASE DIALOG
   const handleAddOpen = useCallback((): void => {
+    // GUARD: BLOCK IF USER LACKS CREATE PERMISSION
+    if (!canCreate) return;
     // CLEAR ANY EDIT STATE
     setEditPurchase(null);
     // OPEN DIALOG
     setFormOpen(true);
-  }, []);
+  }, [canCreate]);
   // OPEN EDIT PURCHASE DIALOG
-  const handleEdit = useCallback((purchase: Purchase): void => {
-    // SET PURCHASE TO EDIT
-    setEditPurchase(purchase);
-    // OPEN DIALOG
-    setFormOpen(true);
-  }, []);
+  const handleEdit = useCallback(
+    (purchase: Purchase): void => {
+      // GUARD: BLOCK IF USER LACKS EDIT PERMISSION
+      if (!canEdit) return;
+      // SET PURCHASE TO EDIT
+      setEditPurchase(purchase);
+      // OPEN DIALOG
+      setFormOpen(true);
+    },
+    [canEdit],
+  );
   // CLOSE FORM DIALOG
   const handleFormClose = useCallback((): void => {
     // CLOSE DIALOG
@@ -432,12 +442,17 @@ const Purchases = memo(() => {
     setDeleteTarget(null);
   }, [deleteMutation.isPending]);
   // STAGE PURCHASE FOR DELETE — OPENS CONFIRMATION DIALOG
-  const handleDelete = useCallback((record: Purchase): void => {
-    // STAGE THE RECORD FOR DELETION
-    setDeleteTarget(record);
-    // OPEN CONFIRMATION DIALOG
-    setDeleteDialogOpen(true);
-  }, []);
+  const handleDelete = useCallback(
+    (record: Purchase): void => {
+      // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
+      if (!canDelete) return;
+      // STAGE THE RECORD FOR DELETION
+      setDeleteTarget(record);
+      // OPEN CONFIRMATION DIALOG
+      setDeleteDialogOpen(true);
+    },
+    [canDelete],
+  );
   // IS NEXT MONTH DISABLED (CANNOT NAVIGATE PAST CURRENT MONTH)
   const isNextMonthDisabled =
     selectedMonth.getMonth() >= new Date().getMonth() &&
@@ -456,9 +471,11 @@ const Purchases = memo(() => {
     onRowsPerPageChange: handleRowsPerPageChange,
     onEdit: handleEdit,
     onDelete: handleDelete,
+    canEdit,
+    canDelete,
   };
-  // SHOW FULL PAGE SKELETON ON INITIAL LOAD (NO CACHED DATA)
-  if (isLoading) {
+  // SHOW FULL PAGE SKELETON ONLY ON INITIAL LOAD
+  if (isLoading && !data) {
     // RETURNING FULL PAGE SKELETON
     return <PurchasesPageSkeleton view={view} />;
   }
@@ -567,14 +584,16 @@ const Purchases = memo(() => {
                   </Tooltip>
                 ))}
               </div>
-              {/* ADD PURCHASE BUTTON */}
-              <Button
-                onClick={handleAddOpen}
-                className="shrink-0 h-9 ml-auto sm:ml-0"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                <span>Add</span>
-              </Button>
+              {/* ADD PURCHASE BUTTON — HIDDEN WHEN USER LACKS CREATE PERMISSION */}
+              {canCreate && (
+                <Button
+                  onClick={handleAddOpen}
+                  className="shrink-0 h-9 ml-auto sm:ml-0"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  <span>Add</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -589,7 +608,7 @@ const Purchases = memo(() => {
         </div>
       )}
       {/* STATS CARDS */}
-      <PurchaseStatsCards stats={stats} isLoading={false} />
+      <PurchaseStatsCards stats={stats} isLoading={isLoading} />
       {/* TABLE VIEW */}
       {view === "table" && <PurchaseTableView {...viewProps} />}
       {/* LIST VIEW */}
