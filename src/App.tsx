@@ -97,7 +97,15 @@ const App = () => (
                   }
                 />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/purchases" element={<Purchases />} />
+                {/* PURCHASES — REQUIRES READ-OR-ABOVE ON THE "PURCHASES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                <Route
+                  path="/purchases"
+                  element={
+                    <PermissionRoute moduleKey="purchases">
+                      <Purchases />
+                    </PermissionRoute>
+                  }
+                />
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/recoveries" element={<Recoveries />} />
