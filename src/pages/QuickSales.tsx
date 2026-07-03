@@ -681,5 +681,5 @@ const QuickSales = memo(() => {
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 QuickSales.displayName = "QuickSales";
 
-// <== EXPORT ==>
+// <== MEMOIZED EXPORT TO PREVENT UNNECESSARY RE-RENDERS ==>
 export default QuickSales;
