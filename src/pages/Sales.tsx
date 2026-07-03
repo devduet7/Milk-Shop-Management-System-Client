@@ -32,8 +32,9 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/usePermission";
 import SaleStatsCards from "@/components/sales/SaleStatsCards";
 import SaleDeleteDialog from "@/components/sales/SaleDeleteDialog";
 import ShopSaleListView from "@/components/sales/ShopSaleListView";
@@ -532,6 +533,8 @@ const Sales = memo(() => {
   } = useShopSales(filter, activeMonth, shopProductFilter, shopPage, shopRows);
   // DELETE SALE MUTATION (SHARED FOR BOTH SALE TYPES)
   const deleteMutation = useDeleteSale();
+  // DERIVING PERMISSION FLAGS FOR THE "SALES" MODULE — GOVERNS BOTH CUSTOMER AND SHOP TABS
+  const { canCreate, canEdit, canDelete } = usePermission("sales");
   // RESET CUSTOMER PAGE TO 1 WHEN CUSTOMER-SPECIFIC FILTERS CHANGE
   useEffect(() => {
     // RESET CUSTOMER PAGE TO 1
@@ -643,18 +646,25 @@ const Sales = memo(() => {
   }, []);
   // OPEN ADD CUSTOMER SALE DIALOG
   const handleCustomerAddOpen = useCallback((): void => {
+    // GUARD: BLOCK IF USER LACKS CREATE PERMISSION
+    if (!canCreate) return;
     // CLEAR ANY EDIT STATE
     setEditCustomerSale(null);
     // OPEN DIALOG
     setCustomerFormOpen(true);
-  }, []);
+  }, [canCreate]);
   // OPEN EDIT CUSTOMER SALE DIALOG
-  const handleCustomerEdit = useCallback((sale: Sale): void => {
-    // SET SALE TO EDIT
-    setEditCustomerSale(sale);
-    // OPEN DIALOG
-    setCustomerFormOpen(true);
-  }, []);
+  const handleCustomerEdit = useCallback(
+    (sale: Sale): void => {
+      // GUARD: BLOCK IF USER LACKS EDIT PERMISSION
+      if (!canEdit) return;
+      // SET SALE TO EDIT
+      setEditCustomerSale(sale);
+      // OPEN DIALOG
+      setCustomerFormOpen(true);
+    },
+    [canEdit],
+  );
   // CLOSE CUSTOMER SALE FORM DIALOG
   const handleCustomerFormClose = useCallback((): void => {
     // CLOSE DIALOG
@@ -664,18 +674,25 @@ const Sales = memo(() => {
   }, []);
   // OPEN ADD SHOP SALE DIALOG
   const handleShopAddOpen = useCallback((): void => {
+    // GUARD: BLOCK IF USER LACKS CREATE PERMISSION
+    if (!canCreate) return;
     // CLEAR ANY EDIT STATE
     setEditShopSale(null);
     // OPEN DIALOG
     setShopFormOpen(true);
-  }, []);
+  }, [canCreate]);
   // OPEN EDIT SHOP SALE DIALOG
-  const handleShopEdit = useCallback((sale: Sale): void => {
-    // SET SALE TO EDIT
-    setEditShopSale(sale);
-    // OPEN DIALOG
-    setShopFormOpen(true);
-  }, []);
+  const handleShopEdit = useCallback(
+    (sale: Sale): void => {
+      // GUARD: BLOCK IF USER LACKS EDIT PERMISSION
+      if (!canEdit) return;
+      // SET SALE TO EDIT
+      setEditShopSale(sale);
+      // OPEN DIALOG
+      setShopFormOpen(true);
+    },
+    [canEdit],
+  );
   // CLOSE SHOP SALE FORM DIALOG
   const handleShopFormClose = useCallback((): void => {
     // CLOSE DIALOG
@@ -709,12 +726,17 @@ const Sales = memo(() => {
     setDeleteTarget(null);
   }, [deleteMutation.isPending]);
   // STAGE SALE FOR DELETE — OPENS CONFIRMATION DIALOG
-  const handleDelete = useCallback((record: Sale): void => {
-    // STAGE THE RECORD FOR DELETION
-    setDeleteTarget(record);
-    // OPEN CONFIRMATION DIALOG
-    setDeleteDialogOpen(true);
-  }, []);
+  const handleDelete = useCallback(
+    (record: Sale): void => {
+      // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
+      if (!canDelete) return;
+      // STAGE THE RECORD FOR DELETION
+      setDeleteTarget(record);
+      // OPEN CONFIRMATION DIALOG
+      setDeleteDialogOpen(true);
+    },
+    [canDelete],
+  );
   // SHARED CUSTOMER VIEW PROPS
   const customerViewProps = {
     sales: customerSales,
@@ -728,6 +750,8 @@ const Sales = memo(() => {
     onRowsPerPageChange: handleCustomerRowsChange,
     onEdit: handleCustomerEdit,
     onDelete: handleDelete,
+    canEdit,
+    canDelete,
   };
   // SHARED SHOP VIEW PROPS
   const shopViewProps = {
@@ -742,6 +766,8 @@ const Sales = memo(() => {
     onRowsPerPageChange: handleShopRowsChange,
     onEdit: handleShopEdit,
     onDelete: handleDelete,
+    canEdit,
+    canDelete,
   };
   // SHOW FULL PAGE SKELETON ON INITIAL LOAD (NO CACHED DATA)
   if (customerLoading && shopLoading) {
@@ -901,13 +927,15 @@ const Sales = memo(() => {
                   ))}
                 </div>
                 {/* ADD CUSTOMER SALE BUTTON */}
-                <Button
-                  onClick={handleCustomerAddOpen}
-                  className="shrink-0 h-9 ml-auto sm:ml-0"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  <span>Add</span>
-                </Button>
+                {canCreate && (
+                  <Button
+                    onClick={handleCustomerAddOpen}
+                    className="shrink-0 h-9 ml-auto sm:ml-0"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    <span>Add</span>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -982,13 +1010,15 @@ const Sales = memo(() => {
                   ))}
                 </div>
                 {/* ADD SHOP SALE BUTTON */}
-                <Button
-                  onClick={handleShopAddOpen}
-                  className="shrink-0 h-9 ml-auto sm:ml-0"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  <span>Add</span>
-                </Button>
+                {canCreate && (
+                  <Button
+                    onClick={handleShopAddOpen}
+                    className="shrink-0 h-9 ml-auto sm:ml-0"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    <span>Add</span>
+                  </Button>
+                )}
               </div>
             </div>
           </div>

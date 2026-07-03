@@ -26,6 +26,7 @@ import { AdminRoute } from "@/components/common/AdminRoute";
 import { PublicRoute } from "@/components/common/PublicRoute";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
+import { PermissionRoute } from "@/components/common/PermissionRoute";
 import NetworkStatusWatcher from "@/components/common/NetworkStatusWatcher";
 
 // <== APP COMPONENT ==>
@@ -86,7 +87,15 @@ const App = () => (
               >
                 <Route path="/staff" element={<Staff />} />
                 <Route path="/" element={<QuickSales />} />
-                <Route path="/sales" element={<Sales />} />
+                {/* SALES — REQUIRES READ-OR-ABOVE ON THE "SALES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                <Route
+                  path="/sales"
+                  element={
+                    <PermissionRoute moduleKey="sales">
+                      <Sales />
+                    </PermissionRoute>
+                  }
+                />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/purchases" element={<Purchases />} />
                 <Route path="/customers" element={<Customers />} />
