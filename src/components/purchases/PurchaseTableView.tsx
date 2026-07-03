@@ -31,6 +31,10 @@ interface PurchaseTableViewProps {
   onEdit: (purchase: Purchase) => void;
   // <== ON DELETE HANDLER ==>
   onDelete: (record: Purchase) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT RECORDS ==>
+  canEdit: boolean;
+  // <== WHETHER THE CURRENT USER CAN DELETE RECORDS ==>
+  canDelete: boolean;
 }
 
 // <== PURCHASE TABLE VIEW COMPONENT ==>
@@ -47,7 +51,11 @@ const PurchaseTableView = memo(
     onRowsPerPageChange,
     onEdit,
     onDelete,
+    canEdit,
+    canDelete,
   }: PurchaseTableViewProps) => {
+    // WHETHER THE ACTIONS COLUMN SHOULD RENDER AT ALL
+    const hasActions = canEdit || canDelete;
     // RETURNING TABLE VIEW
     return (
       // TABLE CARD WRAPPER
@@ -80,9 +88,12 @@ const PurchaseTableView = memo(
                 <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden md:table-cell">
                   Note
                 </th>
-                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                  Actions
-                </th>
+                {/* ACTIONS HEADER — OMITTED ENTIRELY WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                {hasActions && (
+                  <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             {/* TABLE BODY */}
@@ -109,12 +120,15 @@ const PurchaseTableView = memo(
                     <td className="px-3 py-3 hidden md:table-cell">
                       <Skeleton className="h-4 w-28" />
                     </td>
-                    <td className="px-3 py-3">
-                      <div className="flex gap-1">
-                        <Skeleton className="h-7 w-7 rounded-lg" />
-                        <Skeleton className="h-7 w-7 rounded-lg" />
-                      </div>
-                    </td>
+                    {/* ACTIONS SKELETON — OMITTED WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                    {hasActions && (
+                      <td className="px-3 py-3">
+                        <div className="flex gap-1">
+                          <Skeleton className="h-7 w-7 rounded-lg" />
+                          <Skeleton className="h-7 w-7 rounded-lg" />
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               {/* DATA ROWS */}
@@ -153,29 +167,35 @@ const PurchaseTableView = memo(
                     <td className="px-3 py-3 text-xs text-muted-foreground hidden md:table-cell max-w-[180px] truncate">
                       {r.note ?? "—"}
                     </td>
-                    {/* ACTION BUTTONS */}
-                    <td className="px-3 py-3">
-                      <div className="flex gap-0.5">
-                        {/* EDIT */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-lg"
-                          onClick={() => onEdit(r)}
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        {/* DELETE */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onDelete(r)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </td>
+                    {/* ACTION BUTTONS — CELL OMITTED ENTIRELY WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                    {hasActions && (
+                      <td className="px-3 py-3">
+                        <div className="flex gap-0.5">
+                          {/* EDIT — HIDDEN WHEN USER LACKS EDIT PERMISSION */}
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-lg"
+                              onClick={() => onEdit(r)}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          {/* DELETE — ADMIN-TIER ONLY, NEVER PART OF THE PERMISSION MATRIX */}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => onDelete(r)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </motion.tr>
                 ))}
             </tbody>
