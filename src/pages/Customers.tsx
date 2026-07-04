@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/usePermission";
 import type { Customer, ViewMode } from "@/types/customer-types";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
@@ -311,6 +312,8 @@ const Customers = memo(() => {
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
   const monthStr = format(selectedMonth, "yyyy-MM");
+  // DERIVING PERMISSION FLAGS FOR THE "customers" MODULE
+  const { canCreate, canEdit, canDelete } = usePermission("customers");
   // FETCH CURRENT PAGE FROM SERVER — PAGE AND LIMIT ARE SENT AS QUERY PARAMS
   const { data, isLoading, isError } = useCustomers(
     monthStr,
@@ -357,18 +360,25 @@ const Customers = memo(() => {
   }, []);
   // OPEN ADD CUSTOMER DIALOG
   const handleAddOpen = useCallback((): void => {
+    // GUARD: BLOCK IF USER LACKS CREATE PERMISSION
+    if (!canCreate) return;
     // CLEAR ANY EDIT STATE
     setEditCustomer(null);
     // OPEN DIALOG
     setFormOpen(true);
-  }, []);
+  }, [canCreate]);
   // OPEN EDIT CUSTOMER DIALOG
-  const handleEdit = useCallback((customer: Customer): void => {
-    // SET CUSTOMER TO EDIT
-    setEditCustomer(customer);
-    // OPEN DIALOG
-    setFormOpen(true);
-  }, []);
+  const handleEdit = useCallback(
+    (customer: Customer): void => {
+      // GUARD: BLOCK IF USER LACKS EDIT PERMISSION
+      if (!canEdit) return;
+      // SET CUSTOMER TO EDIT
+      setEditCustomer(customer);
+      // OPEN DIALOG
+      setFormOpen(true);
+    },
+    [canEdit],
+  );
   // CLOSE FORM DIALOG
   const handleFormClose = useCallback((): void => {
     // CLOSE DIALOG
@@ -412,15 +422,19 @@ const Customers = memo(() => {
     setDeleteTarget(null);
   }, [deleteMutation.isPending]);
   // STAGE CUSTOMER FOR DELETE — OPENS CONFIRMATION DIALOG
-  const handleDelete = useCallback((record: Customer): void => {
-    // STAGE THE RECORD FOR DELETION
-    setDeleteTarget(record);
-    // OPEN CONFIRMATION DIALOG
-    setDeleteDialogOpen(true);
-  }, []);
+  const handleDelete = useCallback(
+    (record: Customer): void => {
+      // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
+      if (!canDelete) return;
+      // STAGE THE RECORD FOR DELETION
+      setDeleteTarget(record);
+      // OPEN CONFIRMATION DIALOG
+      setDeleteDialogOpen(true);
+    },
+    [canDelete],
+  );
   // SHARED PROPS OBJECT PASSED TO ALL THREE VIEW COMPONENTS
   const viewProps = {
-    // SERVER ALREADY PAGINATED — PASS DIRECTLY WITHOUT CLIENT-SIDE SLICE
     customers: customers,
     totalFiltered,
     isLoading,
@@ -433,9 +447,11 @@ const Customers = memo(() => {
     onView: handleView,
     onEdit: handleEdit,
     onDelete: handleDelete,
+    canEdit,
+    canDelete,
   };
-  // SHOW FULL PAGE SKELETON ON INITIAL LOAD
-  if (isLoading) {
+  // SHOW FULL PAGE SKELETON ONLY ON INITIAL LOAD
+  if (isLoading && !data) {
     // RETURNING FULL PAGE SKELETON
     return <CustomersPageSkeleton view={view} />;
   }
@@ -496,14 +512,16 @@ const Customers = memo(() => {
                 </Tooltip>
               ))}
             </div>
-            {/* ADD CUSTOMER BUTTON — PUSHED TO RIGHT ON MOBILE VIA ml-auto */}
-            <Button
-              onClick={handleAddOpen}
-              className="shrink-0 h-9 ml-auto sm:ml-0"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Add</span>
-            </Button>
+            {/* ADD CUSTOMER BUTTON — HIDDEN WHEN USER LACKS CREATE PERMISSION */}
+            {canCreate && (
+              <Button
+                onClick={handleAddOpen}
+                className="shrink-0 h-9 ml-auto sm:ml-0"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                <span>Add</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -517,7 +535,7 @@ const Customers = memo(() => {
         </div>
       )}
       {/* STATS CARDS */}
-      <CustomerStatsCards summary={summary} isLoading={false} />
+      <CustomerStatsCards summary={summary} isLoading={isLoading} />
       {/* TABLE VIEW */}
       {view === "table" && <CustomerTableView {...viewProps} />}
       {/* LIST VIEW */}
