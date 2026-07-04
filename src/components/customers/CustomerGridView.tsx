@@ -35,6 +35,10 @@ interface CustomerGridViewProps {
   onEdit: (customer: Customer) => void;
   // <== ON DELETE HANDLER ==>
   onDelete: (record: Customer) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT RECORDS ==>
+  canEdit: boolean;
+  // <== WHETHER THE CURRENT USER CAN DELETE RECORDS ==>
+  canDelete: boolean;
 }
 
 // <== CUSTOMER GRID VIEW COMPONENT ==>
@@ -52,6 +56,8 @@ const CustomerGridView = memo(
     onView,
     onEdit,
     onDelete,
+    canEdit,
+    canDelete,
   }: CustomerGridViewProps) => {
     // RETURNING GRID VIEW
     return (
@@ -217,9 +223,9 @@ const CustomerGridView = memo(
                       ) : (
                         <span />
                       )}
-                      {/* ACTION BUTTONS — ALWAYS VISIBLE ON MOBILE, HOVER ON DESKTOP */}
+                      {/* ACTION BUTTONS — VIEW IS ALWAYS AVAILABLE; EDIT/DELETE ARE PERMISSION-GATED */}
                       <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                        {/* VIEW */}
+                        {/* VIEW — NEVER GATED */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -228,24 +234,28 @@ const CustomerGridView = memo(
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </Button>
-                        {/* EDIT */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-lg"
-                          onClick={() => onEdit(c)}
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        {/* DELETE */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onDelete(c)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {/* EDIT — HIDDEN WHEN USER LACKS EDIT PERMISSION */}
+                        {canEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-lg"
+                            onClick={() => onEdit(c)}
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                        {/* DELETE — ADMIN-TIER ONLY, NEVER PART OF THE PERMISSION MATRIX */}
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => onDelete(c)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
