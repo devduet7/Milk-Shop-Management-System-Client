@@ -34,6 +34,10 @@ interface CustomerTableViewProps {
   onEdit: (customer: Customer) => void;
   // <== ON DELETE HANDLER ==>
   onDelete: (record: Customer) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT RECORDS ==>
+  canEdit: boolean;
+  // <== WHETHER THE CURRENT USER CAN DELETE RECORDS ==>
+  canDelete: boolean;
 }
 
 // <== CUSTOMER TABLE VIEW COMPONENT ==>
@@ -51,6 +55,8 @@ const CustomerTableView = memo(
     onView,
     onEdit,
     onDelete,
+    canEdit,
+    canDelete,
   }: CustomerTableViewProps) => {
     // RETURNING TABLE VIEW
     return (
@@ -89,6 +95,7 @@ const CustomerTableView = memo(
                 <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Pending
                 </th>
+                {/* ACTIONS HEADER — ALWAYS RENDERED SINCE VIEW IS ALWAYS AVAILABLE */}
                 <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
                   Actions
                 </th>
@@ -188,10 +195,10 @@ const CustomerTableView = memo(
                           ₨{pending.toLocaleString()}
                         </Badge>
                       </td>
-                      {/* ACTION BUTTONS */}
+                      {/* ACTION BUTTONS — VIEW IS ALWAYS AVAILABLE; EDIT/DELETE ARE PERMISSION-GATED */}
                       <td className="px-3 py-3">
                         <div className="flex gap-0.5">
-                          {/* VIEW DETAILS */}
+                          {/* VIEW DETAILS — NEVER GATED, ANYONE WITH PAGE ACCESS CAN VIEW */}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -200,24 +207,28 @@ const CustomerTableView = memo(
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </Button>
-                          {/* EDIT */}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 rounded-lg"
-                            onClick={() => onEdit(c)}
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                          </Button>
-                          {/* DELETE */}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => onDelete(c)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                          {/* EDIT — HIDDEN WHEN USER LACKS EDIT PERMISSION */}
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-lg"
+                              onClick={() => onEdit(c)}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          {/* DELETE — ADMIN-TIER ONLY, NEVER PART OF THE PERMISSION MATRIX */}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => onDelete(c)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </motion.tr>
