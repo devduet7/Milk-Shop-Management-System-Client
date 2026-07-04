@@ -106,7 +106,15 @@ const App = () => (
                     </PermissionRoute>
                   }
                 />
-                <Route path="/customers" element={<Customers />} />
+                {/* CUSTOMERS — REQUIRES READ-OR-ABOVE ON THE "CUSTOMERS" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                <Route
+                  path="/customers"
+                  element={
+                    <PermissionRoute moduleKey="customers">
+                      <Customers />
+                    </PermissionRoute>
+                  }
+                />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/recoveries" element={<Recoveries />} />
                 <Route path="/settings" element={<SettingsPage />} />
