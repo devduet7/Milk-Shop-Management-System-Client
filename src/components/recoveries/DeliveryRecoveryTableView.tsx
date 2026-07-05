@@ -32,6 +32,8 @@ interface DeliveryRecoveryTableViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== RECORD PAYMENT HANDLER ==>
   onRecordPayment: (record: DeliveryRecovery) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT ==>
+  canEdit: boolean;
 }
 
 // <== DELIVERY RECOVERY TABLE VIEW COMPONENT ==>
@@ -47,6 +49,7 @@ const DeliveryRecoveryTableView = memo(
     onPageChange,
     onRowsPerPageChange,
     onRecordPayment,
+    canEdit,
   }: DeliveryRecoveryTableViewProps) => {
     // RETURNING TABLE VIEW
     return (
@@ -80,9 +83,12 @@ const DeliveryRecoveryTableView = memo(
                 <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                   Progress
                 </th>
-                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                  Action
-                </th>
+                {/* ACTION HEADER — OMITTED ENTIRELY WHEN USER CANNOT EDIT */}
+                {canEdit && (
+                  <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Action
+                  </th>
+                )}
               </tr>
             </thead>
             {/* TABLE BODY */}
@@ -110,9 +116,12 @@ const DeliveryRecoveryTableView = memo(
                     <td className="px-3 py-3 hidden sm:table-cell">
                       <Skeleton className="h-2 w-20 rounded-full" />
                     </td>
-                    <td className="px-3 py-3">
-                      <Skeleton className="h-8 w-28 rounded-md" />
-                    </td>
+                    {/* ACTION SKELETON — OMITTED WHEN USER CANNOT EDIT */}
+                    {canEdit && (
+                      <td className="px-3 py-3">
+                        <Skeleton className="h-8 w-28 rounded-md" />
+                      </td>
+                    )}
                   </tr>
                 ))}
               {/* DATA ROWS */}
@@ -194,18 +203,20 @@ const DeliveryRecoveryTableView = memo(
                           </span>
                         </div>
                       </td>
-                      {/* ACTION BUTTON */}
-                      <td className="px-3 py-3">
-                        <Button
-                          variant={isCleared ? "outline" : "default"}
-                          size="sm"
-                          className="h-8 text-xs gap-1.5"
-                          onClick={() => onRecordPayment(r)}
-                        >
-                          <Edit className="w-3 h-3" />
-                          {isCleared ? "Payment" : "Record"}
-                        </Button>
-                      </td>
+                      {/* ACTION BUTTON — OMITTED ENTIRELY WHEN USER CANNOT EDIT */}
+                      {canEdit && (
+                        <td className="px-3 py-3">
+                          <Button
+                            variant={isCleared ? "outline" : "default"}
+                            size="sm"
+                            className="h-8 text-xs gap-1.5"
+                            onClick={() => onRecordPayment(r)}
+                          >
+                            <Edit className="w-3 h-3" />
+                            {isCleared ? "Payment" : "Record"}
+                          </Button>
+                        </td>
+                      )}
                     </motion.tr>
                   );
                 })}
