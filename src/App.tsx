@@ -116,7 +116,15 @@ const App = () => (
                   }
                 />
                 <Route path="/analytics" element={<Analytics />} />
-                <Route path="/recoveries" element={<Recoveries />} />
+                {/* RECOVERIES — REQUIRES READ-OR-ABOVE ON THE "RECOVERIES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                <Route
+                  path="/recoveries"
+                  element={
+                    <PermissionRoute moduleKey="recoveries">
+                      <Recoveries />
+                    </PermissionRoute>
+                  }
+                />
                 <Route path="/settings" element={<SettingsPage />} />
                 {/* EXPENDITURES — REQUIRES READ-OR-ABOVE ON THE "EXPENDITURES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
                 <Route
