@@ -50,6 +50,8 @@ interface SaleRecoveryTableViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== UPDATE PAYMENT HANDLER ==>
   onUpdatePayment: (record: SaleRecovery) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT ==>
+  canEdit: boolean;
 }
 
 // <== SALE RECOVERY TABLE VIEW COMPONENT ==>
@@ -65,6 +67,7 @@ const SaleRecoveryTableView = memo(
     onPageChange,
     onRowsPerPageChange,
     onUpdatePayment,
+    canEdit,
   }: SaleRecoveryTableViewProps) => {
     // RETURNING THE TABLE VIEW
     return (
@@ -100,9 +103,12 @@ const SaleRecoveryTableView = memo(
                 <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:table-cell">
                   Date
                 </th>
-                <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
-                  Action
-                </th>
+                {/* ACTION HEADER — OMITTED ENTIRELY WHEN USER CANNOT EDIT */}
+                {canEdit && (
+                  <th className="px-3 py-2.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                    Action
+                  </th>
+                )}
               </tr>
             </thead>
             {/* TABLE BODY */}
@@ -132,9 +138,12 @@ const SaleRecoveryTableView = memo(
                     <td className="px-3 py-3 hidden sm:table-cell">
                       <Skeleton className="h-4 w-20" />
                     </td>
-                    <td className="px-3 py-3">
-                      <Skeleton className="h-8 w-20 rounded-md" />
-                    </td>
+                    {/* ACTION SKELETON — OMITTED WHEN USER CANNOT EDIT */}
+                    {canEdit && (
+                      <td className="px-3 py-3">
+                        <Skeleton className="h-8 w-20 rounded-md" />
+                      </td>
+                    )}
                   </tr>
                 ))}
               {/* DATA ROWS */}
@@ -203,18 +212,20 @@ const SaleRecoveryTableView = memo(
                       <td className="px-3 py-3 text-sm text-muted-foreground hidden sm:table-cell">
                         {r.date}
                       </td>
-                      {/* ACTION BUTTON */}
-                      <td className="px-3 py-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-xs gap-1.5"
-                          onClick={() => onUpdatePayment(r)}
-                        >
-                          <Edit className="w-3 h-3" />
-                          Update
-                        </Button>
-                      </td>
+                      {/* ACTION BUTTON — OMITTED ENTIRELY WHEN USER CANNOT EDIT */}
+                      {canEdit && (
+                        <td className="px-3 py-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs gap-1.5"
+                            onClick={() => onUpdatePayment(r)}
+                          >
+                            <Edit className="w-3 h-3" />
+                            Update
+                          </Button>
+                        </td>
+                      )}
                     </motion.tr>
                   );
                 })}
