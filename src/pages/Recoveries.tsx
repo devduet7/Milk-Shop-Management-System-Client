@@ -41,6 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/usePermission";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import RecoveryStatsCards from "@/components/recoveries/RecoveryStatsCards";
@@ -430,6 +431,8 @@ const Recoveries = memo(() => {
   const monthStr = format(selectedMonth, "yyyy-MM");
   // MONTH PARAM — ONLY PASS WHEN FILTER IS MONTH
   const activeMonth = filter === "month" ? monthStr : "";
+  // THERE IS NO "ADD" ACTION ANYWHERE ON THIS PAGE
+  const { canEdit, canDelete } = usePermission("recoveries");
   // FETCH DELIVERY RECOVERIES
   const {
     data: deliveryData,
@@ -569,12 +572,17 @@ const Recoveries = memo(() => {
     localStorage.setItem("recoveries_sale_rows", String(safe));
   }, []);
   // OPEN DELIVERY PAYMENT DIALOG
-  const handleRecordPayment = useCallback((record: DeliveryRecovery): void => {
-    // SET SELECTED DELIVERY RECORD TO SHOW IN DIALOG
-    setSelectedDelivery(record);
-    // OPEN DELIVERY PAYMENT DIALOG
-    setDeliveryDialogOpen(true);
-  }, []);
+  const handleRecordPayment = useCallback(
+    (record: DeliveryRecovery): void => {
+      // GUARD: BLOCK IF USER LACKS EDIT PERMISSION
+      if (!canEdit) return;
+      // SET SELECTED DELIVERY RECORD TO SHOW IN DIALOG
+      setSelectedDelivery(record);
+      // OPEN DELIVERY PAYMENT DIALOG
+      setDeliveryDialogOpen(true);
+    },
+    [canEdit],
+  );
   // CLOSE DELIVERY PAYMENT DIALOG
   const handleDeliveryDialogClose = useCallback((): void => {
     // CLOSE DELIVERY PAYMENT DIALOG
@@ -583,12 +591,17 @@ const Recoveries = memo(() => {
     setSelectedDelivery(null);
   }, []);
   // OPEN SALE PAYMENT UPDATE DIALOG
-  const handleUpdatePayment = useCallback((record: SaleRecovery): void => {
-    // SET SELECTED SALE RECORD TO SHOW IN DIALOG
-    setSelectedSale(record);
-    // OPEN SALE PAYMENT UPDATE DIALOG
-    setSaleDialogOpen(true);
-  }, []);
+  const handleUpdatePayment = useCallback(
+    (record: SaleRecovery): void => {
+      // GUARD: BLOCK IF USER LACKS EDIT PERMISSION
+      if (!canEdit) return;
+      // SET SELECTED SALE RECORD TO SHOW IN DIALOG
+      setSelectedSale(record);
+      // OPEN SALE PAYMENT UPDATE DIALOG
+      setSaleDialogOpen(true);
+    },
+    [canEdit],
+  );
   // CLOSE SALE PAYMENT UPDATE DIALOG
   const handleSaleDialogClose = useCallback((): void => {
     // CLOSE SALE PAYMENT UPDATE DIALOG
@@ -608,6 +621,7 @@ const Recoveries = memo(() => {
     onPageChange: setDeliveryPage,
     onRowsPerPageChange: handleDeliveryRowsChange,
     onRecordPayment: handleRecordPayment,
+    canEdit,
   };
   // SHARED SALE VIEW PROPS
   const saleViewProps = {
@@ -621,9 +635,10 @@ const Recoveries = memo(() => {
     onPageChange: setSalePage,
     onRowsPerPageChange: handleSaleRowsChange,
     onUpdatePayment: handleUpdatePayment,
+    canEdit,
   };
-  // SHOW FULL PAGE SKELETON ON INITIAL LOAD
-  if (deliveryLoading && saleLoading) {
+  // SHOW FULL PAGE SKELETON ONLY ON TRUE INITIAL LOAD
+  if (deliveryLoading && saleLoading && !deliveryData && !saleData) {
     // RETURN FULL PAGE SKELETON WITH CURRENT ACTIVE TAB AND VIEW MODES
     return (
       <RecoveriesPageSkeleton
@@ -880,6 +895,7 @@ const Recoveries = memo(() => {
         open={saleDialogOpen}
         sale={selectedSale}
         onClose={handleSaleDialogClose}
+        canDelete={canDelete}
       />
     </PageTransition>
   );
