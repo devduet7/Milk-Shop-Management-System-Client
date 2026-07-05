@@ -32,6 +32,8 @@ interface DeliveryRecoveryGridViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== RECORD PAYMENT HANDLER ==>
   onRecordPayment: (record: DeliveryRecovery) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT ==>
+  canEdit: boolean;
 }
 
 // <== DELIVERY RECOVERY GRID VIEW COMPONENT ==>
@@ -47,6 +49,7 @@ const DeliveryRecoveryGridView = memo(
     onPageChange,
     onRowsPerPageChange,
     onRecordPayment,
+    canEdit,
   }: DeliveryRecoveryGridViewProps) => {
     // RETURNING GRID VIEW
     return (
@@ -77,7 +80,8 @@ const DeliveryRecoveryGridView = memo(
                     <Skeleton className="h-2 w-full rounded-full" />
                     <Skeleton className="h-3 w-10 ml-auto" />
                   </div>
-                  <Skeleton className="h-9 w-full rounded-md" />
+                  {/* ACTION SKELETON — OMITTED WHEN USER CANNOT EDIT */}
+                  {canEdit && <Skeleton className="h-9 w-full rounded-md" />}
                 </div>
               </div>
             ))}
@@ -197,18 +201,20 @@ const DeliveryRecoveryGridView = memo(
                         </span>
                       </p>
                     )}
-                    {/* ACTION BUTTON */}
-                    <Button
-                      variant={isCleared ? "outline" : "default"}
-                      size="sm"
-                      className="w-full h-9 text-xs gap-1.5"
-                      onClick={() => onRecordPayment(r)}
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                      {isCleared
-                        ? "Record Additional Payment"
-                        : "Record Payment"}
-                    </Button>
+                    {/* ACTION BUTTON — OMITTED ENTIRELY WHEN USER CANNOT EDIT */}
+                    {canEdit && (
+                      <Button
+                        variant={isCleared ? "outline" : "default"}
+                        size="sm"
+                        className="w-full h-9 text-xs gap-1.5"
+                        onClick={() => onRecordPayment(r)}
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                        {isCleared
+                          ? "Record Additional Payment"
+                          : "Record Payment"}
+                      </Button>
+                    )}
                   </div>
                 </motion.div>
               );

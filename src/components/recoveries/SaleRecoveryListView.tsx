@@ -50,6 +50,8 @@ interface SaleRecoveryListViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== UPDATE PAYMENT HANDLER ==>
   onUpdatePayment: (record: SaleRecovery) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT ==>
+  canEdit: boolean;
 }
 
 // <== SALE RECOVERY LIST VIEW COMPONENT ==>
@@ -65,6 +67,7 @@ const SaleRecoveryListView = memo(
     onPageChange,
     onRowsPerPageChange,
     onUpdatePayment,
+    canEdit,
   }: SaleRecoveryListViewProps) => {
     // RETURNING THE LIST VIEW
     return (
@@ -94,7 +97,10 @@ const SaleRecoveryListView = memo(
                   <Skeleton className="h-5 w-20 ml-auto" />
                   <Skeleton className="h-5 w-16 ml-auto rounded-full" />
                 </div>
-                <Skeleton className="h-8 w-20 rounded-md shrink-0" />
+                {/* ACTION SKELETON — OMITTED WHEN USER CANNOT EDIT */}
+                {canEdit && (
+                  <Skeleton className="h-8 w-20 rounded-md shrink-0" />
+                )}
               </div>
             ))}
           {/* DATA ROWS */}
@@ -169,16 +175,18 @@ const SaleRecoveryListView = memo(
                         : `₨${r.pendingAmount.toLocaleString()} DUE`}
                     </Badge>
                   </div>
-                  {/* ACTION BUTTON */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs gap-1.5 shrink-0"
-                    onClick={() => onUpdatePayment(r)}
-                  >
-                    <Edit className="w-3 h-3" />
-                    <span className="hidden sm:inline">Update</span>
-                  </Button>
+                  {/* ACTION BUTTON — OMITTED ENTIRELY WHEN USER CANNOT EDIT */}
+                  {canEdit && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs gap-1.5 shrink-0"
+                      onClick={() => onUpdatePayment(r)}
+                    >
+                      <Edit className="w-3 h-3" />
+                      <span className="hidden sm:inline">Update</span>
+                    </Button>
+                  )}
                 </motion.div>
               );
             })}
