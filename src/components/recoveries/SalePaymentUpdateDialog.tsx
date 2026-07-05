@@ -31,6 +31,8 @@ interface SalePaymentUpdateDialogProps {
   sale: SaleRecovery | null;
   // <== CLOSE HANDLER ==>
   onClose: () => void;
+  // <== WHETHER THE CURRENT USER CAN DELETE ==>
+  canDelete: boolean;
 }
 
 // <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
@@ -39,7 +41,7 @@ const NO_SPINNER =
 
 // <== SALE PAYMENT UPDATE DIALOG COMPONENT ==>
 const SalePaymentUpdateDialog = memo(
-  ({ open, sale, onClose }: SalePaymentUpdateDialogProps) => {
+  ({ open, sale, onClose, canDelete }: SalePaymentUpdateDialogProps) => {
     // UPDATE SALE PAYMENT MUTATION
     const updateMutation = useUpdateSalePayment();
     // DELETE SALE RECORD MUTATION
@@ -99,6 +101,8 @@ const SalePaymentUpdateDialog = memo(
     };
     // HANDLE DELETE SALE RECORD
     const handleDelete = (): void => {
+      // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
+      if (!canDelete) return;
       // GUARD: NO SALE
       if (!sale) return;
       // CALL DELETE SALE RECORD MUTATION
@@ -229,26 +233,31 @@ const SalePaymentUpdateDialog = memo(
                     </span>
                   </div>
                 </div>
-                {/* FIXED FOOTER — DELETE LEFT, CANCEL + UPDATE RIGHT */}
+                {/* FIXED FOOTER — DELETE LEFT (IF PERMITTED), CANCEL + UPDATE RIGHT */}
                 <div className="shrink-0 px-5 py-3.5 border-t border-border/50 bg-muted/20 flex items-center justify-between gap-2">
-                  {/* DELETE BUTTON */}
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    disabled={isPending}
-                    onClick={handleDelete}
-                    className="h-9 px-4 gap-1.5"
-                  >
-                    {deleteMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      "Delete"
-                    )}
-                  </Button>
+                  {/* DELETE BUTTON — HIDDEN WHEN USER LACKS DELETE PERMISSION (ADMIN-TIER ONLY) */}
+                  {canDelete ? (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      disabled={isPending}
+                      onClick={handleDelete}
+                      className="h-9 px-4 gap-1.5"
+                    >
+                      {deleteMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        "Delete"
+                      )}
+                    </Button>
+                  ) : (
+                    // EMPTY SPACER TO PRESERVE justify-between LAYOUT WHEN DELETE IS HIDDEN
+                    <span />
+                  )}
                   {/* CANCEL + UPDATE */}
                   <div className="flex items-center gap-2">
                     <Button
