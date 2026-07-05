@@ -90,6 +90,10 @@ interface ExpenditureListViewProps {
   onEdit: (expenditure: Expenditure) => void;
   // <== ON DELETE HANDLER ==>
   onDelete: (record: Expenditure) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT RECORDS ==>
+  canEdit: boolean;
+  // <== WHETHER THE CURRENT USER CAN DELETE RECORDS ==>
+  canDelete: boolean;
 }
 
 // <== EXPENDITURE LIST VIEW COMPONENT ==>
@@ -106,7 +110,11 @@ const ExpenditureListView = memo(
     onRowsPerPageChange,
     onEdit,
     onDelete,
+    canEdit,
+    canDelete,
   }: ExpenditureListViewProps) => {
+    // WHETHER THE ACTIONS AREA SHOULD RENDER AT ALL
+    const hasActions = canEdit || canDelete;
     // RETURNING LIST VIEW
     return (
       // LIST CARD WRAPPER
@@ -133,10 +141,13 @@ const ExpenditureListView = memo(
                   <Skeleton className="h-3 w-28" />
                 </div>
                 <Skeleton className="h-5 w-20 shrink-0" />
-                <div className="flex gap-0.5 shrink-0">
-                  <Skeleton className="h-7 w-7 rounded-lg" />
-                  <Skeleton className="h-7 w-7 rounded-lg" />
-                </div>
+                {/* ACTIONS SKELETON — OMITTED WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                {hasActions && (
+                  <div className="flex gap-0.5 shrink-0">
+                    <Skeleton className="h-7 w-7 rounded-lg" />
+                    <Skeleton className="h-7 w-7 rounded-lg" />
+                  </div>
+                )}
               </div>
             ))}
           {/* DATA ROWS */}
@@ -199,27 +210,33 @@ const ExpenditureListView = memo(
                       ₨{r.amount.toLocaleString()}
                     </p>
                   </div>
-                  {/* ACTION BUTTONS — ALWAYS VISIBLE ON MOBILE, HOVER ON DESKTOP */}
-                  <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                    {/* EDIT */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 rounded-lg"
-                      onClick={() => onEdit(r)}
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </Button>
-                    {/* DELETE */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => onDelete(r)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
+                  {/* ACTION BUTTONS — OMITTED ENTIRELY WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                  {hasActions && (
+                    <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+                      {/* EDIT — HIDDEN WHEN USER LACKS EDIT PERMISSION */}
+                      {canEdit && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-lg"
+                          onClick={() => onEdit(r)}
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                      {/* DELETE — ADMIN-TIER ONLY, NEVER PART OF THE PERMISSION MATRIX */}
+                      {canDelete && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => onDelete(r)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               );
             })}

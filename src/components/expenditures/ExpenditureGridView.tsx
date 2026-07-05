@@ -96,6 +96,10 @@ interface ExpenditureGridViewProps {
   onEdit: (expenditure: Expenditure) => void;
   // <== ON DELETE HANDLER ==>
   onDelete: (record: Expenditure) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT RECORDS ==>
+  canEdit: boolean;
+  // <== WHETHER THE CURRENT USER CAN DELETE RECORDS ==>
+  canDelete: boolean;
 }
 
 // <== EXPENDITURE GRID VIEW COMPONENT ==>
@@ -112,7 +116,11 @@ const ExpenditureGridView = memo(
     onRowsPerPageChange,
     onEdit,
     onDelete,
+    canEdit,
+    canDelete,
   }: ExpenditureGridViewProps) => {
+    // WHETHER THE ACTIONS AREA SHOULD RENDER AT ALL
+    const hasActions = canEdit || canDelete;
     // RETURNING GRID VIEW
     return (
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
@@ -140,10 +148,13 @@ const ExpenditureGridView = memo(
                   {/* SKELETON FOOTER */}
                   <div className="flex items-center justify-between pt-1 border-t border-border/50">
                     <Skeleton className="h-6 w-20" />
-                    <div className="flex gap-0.5">
-                      <Skeleton className="h-7 w-7 rounded-lg" />
-                      <Skeleton className="h-7 w-7 rounded-lg" />
-                    </div>
+                    {/* ACTIONS SKELETON — OMITTED WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                    {hasActions && (
+                      <div className="flex gap-0.5">
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                        <Skeleton className="h-7 w-7 rounded-lg" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -216,27 +227,33 @@ const ExpenditureGridView = memo(
                       <span className="font-display text-lg sm:text-xl font-bold">
                         ₨{r.amount.toLocaleString()}
                       </span>
-                      {/* ACTION BUTTONS — ALWAYS VISIBLE ON MOBILE, HOVER ON DESKTOP */}
-                      <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                        {/* EDIT */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-lg"
-                          onClick={() => onEdit(r)}
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        {/* DELETE */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onDelete(r)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
+                      {/* ACTION BUTTONS — OMITTED ENTIRELY WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                      {hasActions && (
+                        <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+                          {/* EDIT — HIDDEN WHEN USER LACKS EDIT PERMISSION */}
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-lg"
+                              onClick={() => onEdit(r)}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          {/* DELETE — ADMIN-TIER ONLY, NEVER PART OF THE PERMISSION MATRIX */}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => onDelete(r)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>

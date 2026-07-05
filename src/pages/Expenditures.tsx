@@ -31,8 +31,9 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/usePermission";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useExpenditures, useDeleteExpenditure } from "@/hooks/useExpenditures";
@@ -327,6 +328,8 @@ const Expenditures = memo(() => {
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
   const monthStr = format(selectedMonth, "yyyy-MM");
+  // DERIVING PERMISSION FLAGS FOR THE "expenditures" MODULE
+  const { canCreate, canEdit, canDelete } = usePermission("expenditures");
   // FETCH EXPENDITURES FROM SERVER WITH ALL ACTIVE FILTERS
   const { data, isLoading, isError } = useExpenditures(
     filter,
@@ -400,18 +403,25 @@ const Expenditures = memo(() => {
   }, []);
   // OPEN ADD EXPENDITURE DIALOG
   const handleAddOpen = useCallback((): void => {
+    // GUARD: BLOCK IF USER LACKS CREATE PERMISSION
+    if (!canCreate) return;
     // CLEAR ANY EDIT STATE
     setEditExpenditure(null);
     // OPEN DIALOG
     setFormOpen(true);
-  }, []);
+  }, [canCreate]);
   // OPEN EDIT EXPENDITURE DIALOG
-  const handleEdit = useCallback((expenditure: Expenditure): void => {
-    // SET EXPENDITURE TO EDIT
-    setEditExpenditure(expenditure);
-    // OPEN DIALOG
-    setFormOpen(true);
-  }, []);
+  const handleEdit = useCallback(
+    (expenditure: Expenditure): void => {
+      // GUARD: BLOCK IF USER LACKS EDIT PERMISSION
+      if (!canEdit) return;
+      // SET EXPENDITURE TO EDIT
+      setEditExpenditure(expenditure);
+      // OPEN DIALOG
+      setFormOpen(true);
+    },
+    [canEdit],
+  );
   // CLOSE FORM DIALOG
   const handleFormClose = useCallback((): void => {
     // CLOSE DIALOG
@@ -445,19 +455,23 @@ const Expenditures = memo(() => {
     setDeleteTarget(null);
   }, [deleteMutation.isPending]);
   // STAGE EXPENDITURE FOR DELETE — OPENS CONFIRMATION DIALOG
-  const handleDelete = useCallback((record: Expenditure): void => {
-    // STAGE THE RECORD FOR DELETION
-    setDeleteTarget(record);
-    // OPEN CONFIRMATION DIALOG
-    setDeleteDialogOpen(true);
-  }, []);
+  const handleDelete = useCallback(
+    (record: Expenditure): void => {
+      // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
+      if (!canDelete) return;
+      // STAGE THE RECORD FOR DELETION
+      setDeleteTarget(record);
+      // OPEN CONFIRMATION DIALOG
+      setDeleteDialogOpen(true);
+    },
+    [canDelete],
+  );
   // IS NEXT MONTH DISABLED (CANNOT NAVIGATE PAST CURRENT MONTH)
   const isNextMonthDisabled =
     selectedMonth.getMonth() >= new Date().getMonth() &&
     selectedMonth.getFullYear() >= new Date().getFullYear();
   // SHARED PROPS OBJECT PASSED TO ALL THREE VIEW COMPONENTS
   const viewProps = {
-    // SERVER ALREADY PAGINATED — PASS DIRECTLY WITHOUT CLIENT-SIDE SLICE
     expenditures,
     totalFiltered,
     isLoading,
@@ -469,9 +483,11 @@ const Expenditures = memo(() => {
     onRowsPerPageChange: handleRowsPerPageChange,
     onEdit: handleEdit,
     onDelete: handleDelete,
+    canEdit,
+    canDelete,
   };
-  // SHOW FULL PAGE SKELETON ON INITIAL LOAD (NO CACHED DATA)
-  if (isLoading) {
+  // SHOW FULL PAGE SKELETON ONLY ON INITIAL LOAD
+  if (isLoading && !data) {
     // RETURNING FULL PAGE SKELETON
     return <ExpendituresPageSkeleton view={view} />;
   }
@@ -598,14 +614,16 @@ const Expenditures = memo(() => {
                   </Tooltip>
                 ))}
               </div>
-              {/* ADD EXPENDITURE BUTTON */}
-              <Button
-                onClick={handleAddOpen}
-                className="shrink-0 h-9 ml-auto sm:ml-0"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                <span>Add</span>
-              </Button>
+              {/* ADD EXPENDITURE BUTTON — HIDDEN WHEN USER LACKS CREATE PERMISSION */}
+              {canCreate && (
+                <Button
+                  onClick={handleAddOpen}
+                  className="shrink-0 h-9 ml-auto sm:ml-0"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  <span>Add</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -620,7 +638,7 @@ const Expenditures = memo(() => {
         </div>
       )}
       {/* STATS CARDS */}
-      <ExpenditureStatsCards stats={stats} isLoading={false} />
+      <ExpenditureStatsCards stats={stats} isLoading={isLoading} />
       {/* TABLE VIEW */}
       {view === "table" && <ExpenditureTableView {...viewProps} />}
       {/* LIST VIEW */}
