@@ -32,6 +32,8 @@ interface DeliveryRecoveryListViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== RECORD PAYMENT HANDLER ==>
   onRecordPayment: (record: DeliveryRecovery) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT ==>
+  canEdit: boolean;
 }
 
 // <== DELIVERY RECOVERY LIST VIEW COMPONENT ==>
@@ -47,6 +49,7 @@ const DeliveryRecoveryListView = memo(
     onPageChange,
     onRowsPerPageChange,
     onRecordPayment,
+    canEdit,
   }: DeliveryRecoveryListViewProps) => {
     // RETURNING LIST VIEW
     return (
@@ -77,7 +80,10 @@ const DeliveryRecoveryListView = memo(
                   <Skeleton className="h-2 w-20 rounded-full" />
                   <Skeleton className="h-3 w-14 ml-auto" />
                 </div>
-                <Skeleton className="h-8 w-24 rounded-md shrink-0" />
+                {/* ACTION SKELETON — OMITTED WHEN USER CANNOT EDIT */}
+                {canEdit && (
+                  <Skeleton className="h-8 w-24 rounded-md shrink-0" />
+                )}
               </div>
             ))}
           {/* DATA ROWS */}
@@ -150,18 +156,20 @@ const DeliveryRecoveryListView = memo(
                       {pct.toFixed(0)}%
                     </p>
                   </div>
-                  {/* ACTION BUTTON */}
-                  <Button
-                    variant={isCleared ? "outline" : "default"}
-                    size="sm"
-                    className="h-8 text-xs gap-1.5 shrink-0"
-                    onClick={() => onRecordPayment(r)}
-                  >
-                    <Edit className="w-3 h-3" />
-                    <span className="hidden sm:inline">
-                      {isCleared ? "Payment" : "Record"}
-                    </span>
-                  </Button>
+                  {/* ACTION BUTTON — OMITTED ENTIRELY WHEN USER CANNOT EDIT */}
+                  {canEdit && (
+                    <Button
+                      variant={isCleared ? "outline" : "default"}
+                      size="sm"
+                      className="h-8 text-xs gap-1.5 shrink-0"
+                      onClick={() => onRecordPayment(r)}
+                    >
+                      <Edit className="w-3 h-3" />
+                      <span className="hidden sm:inline">
+                        {isCleared ? "Payment" : "Record"}
+                      </span>
+                    </Button>
+                  )}
                 </motion.div>
               );
             })}
