@@ -52,6 +52,8 @@ interface SaleRecoveryGridViewProps {
   onRowsPerPageChange: (value: string) => void;
   // <== UPDATE PAYMENT HANDLER ==>
   onUpdatePayment: (record: SaleRecovery) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT (RECORD/UPDATE PAYMENT IS AN EDIT ACTION) ==>
+  canEdit: boolean;
 }
 
 // <== SALE RECOVERY GRID VIEW COMPONENT ==>
@@ -67,6 +69,7 @@ const SaleRecoveryGridView = memo(
     onPageChange,
     onRowsPerPageChange,
     onUpdatePayment,
+    canEdit,
   }: SaleRecoveryGridViewProps) => {
     // RETURNING THE GRID VIEW
     return (
@@ -97,7 +100,8 @@ const SaleRecoveryGridView = memo(
                     <Skeleton className="h-3.5 w-full" />
                     <Skeleton className="h-3.5 w-full" />
                   </div>
-                  <Skeleton className="h-9 w-full rounded-md" />
+                  {/* ACTION SKELETON — OMITTED WHEN USER CANNOT EDIT */}
+                  {canEdit && <Skeleton className="h-9 w-full rounded-md" />}
                 </div>
               </div>
             ))}
@@ -209,16 +213,18 @@ const SaleRecoveryGridView = memo(
                           ? "FULLY CLEARED"
                           : `₨${r.pendingAmount.toLocaleString()} PENDING`}
                       </Badge>
-                      {/* ACTION BUTTON */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full h-9 text-xs gap-1.5"
-                        onClick={() => onUpdatePayment(r)}
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                        Update Payment
-                      </Button>
+                      {/* ACTION BUTTON — OMITTED ENTIRELY WHEN USER CANNOT EDIT */}
+                      {canEdit && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full h-9 text-xs gap-1.5"
+                          onClick={() => onUpdatePayment(r)}
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          Update Payment
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </motion.div>
