@@ -96,7 +96,15 @@ const App = () => (
                     </PermissionRoute>
                   }
                 />
-                <Route path="/dashboard" element={<Dashboard />} />
+                {/* DASHBOARD — REQUIRES READ-OR-ABOVE ON THE "DASHBOARD" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <PermissionRoute moduleKey="dashboard">
+                      <Dashboard />
+                    </PermissionRoute>
+                  }
+                />
                 {/* PURCHASES — REQUIRES READ-OR-ABOVE ON THE "PURCHASES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
                 <Route
                   path="/purchases"
@@ -115,7 +123,15 @@ const App = () => (
                     </PermissionRoute>
                   }
                 />
-                <Route path="/analytics" element={<Analytics />} />
+                {/* ANALYTICS — REQUIRES READ-OR-ABOVE ON THE "ANALYTICS" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                <Route
+                  path="/analytics"
+                  element={
+                    <PermissionRoute moduleKey="analytics">
+                      <Analytics />
+                    </PermissionRoute>
+                  }
+                />
                 {/* RECOVERIES — REQUIRES READ-OR-ABOVE ON THE "RECOVERIES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
                 <Route
                   path="/recoveries"
