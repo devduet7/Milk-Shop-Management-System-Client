@@ -33,6 +33,10 @@ interface QuickSaleListViewProps {
   onDelete: (record: QuickSale) => void;
   // <== EDIT HANDLER ==>
   onEdit: (record: QuickSale) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT RECORDS ==>
+  canEdit: boolean;
+  // <== WHETHER THE CURRENT USER CAN DELETE RECORDS ==>
+  canDelete: boolean;
 }
 
 // <== QUICK SALE LIST VIEW COMPONENT ==>
@@ -49,7 +53,11 @@ const QuickSaleListView = memo(
     onRowsPerPageChange,
     onDelete,
     onEdit,
+    canEdit,
+    canDelete,
   }: QuickSaleListViewProps) => {
+    // WHETHER THE ACTIONS AREA SHOULD RENDER AT ALL
+    const hasActions = canEdit || canDelete;
     // RETURNING LIST VIEW
     return (
       <motion.div
@@ -78,10 +86,13 @@ const QuickSaleListView = memo(
                   <Skeleton className="h-5 w-16 ml-auto" />
                   <Skeleton className="h-3 w-12 ml-auto" />
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Skeleton className="h-7 w-7 rounded-lg" />
-                  <Skeleton className="h-7 w-7 rounded-lg" />
-                </div>
+                {/* ACTIONS SKELETON — OMITTED WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                {hasActions && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Skeleton className="h-7 w-7 rounded-lg" />
+                    <Skeleton className="h-7 w-7 rounded-lg" />
+                  </div>
+                )}
               </div>
             ))}
           {/* DATA ROWS */}
@@ -147,27 +158,33 @@ const QuickSaleListView = memo(
                     ₨{r.total.toLocaleString()}
                   </p>
                 </div>
-                {/* ACTION BUTTONS */}
-                <div className="flex items-center gap-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                  {/* EDIT BUTTON */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 rounded-lg"
-                    onClick={() => onEdit(r)}
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                  </Button>
-                  {/* DELETE BUTTON — TRIGGERS CONFIRMATION DIALOG */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => onDelete(r)}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
+                {/* ACTION BUTTONS — OMITTED ENTIRELY WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                {hasActions && (
+                  <div className="flex items-center gap-1 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    {/* EDIT BUTTON — HIDDEN WHEN USER LACKS EDIT PERMISSION */}
+                    {canEdit && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-lg"
+                        onClick={() => onEdit(r)}
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                    {/* DELETE BUTTON — ADMIN-TIER ONLY, NEVER PART OF THE PERMISSION MATRIX */}
+                    {canDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => onDelete(r)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </motion.div>
             ))}
         </div>
