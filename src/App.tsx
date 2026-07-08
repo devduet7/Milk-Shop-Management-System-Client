@@ -27,6 +27,7 @@ import { PublicRoute } from "@/components/common/PublicRoute";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { PermissionRoute } from "@/components/common/PermissionRoute";
+import { LandingRedirect } from "./components/common/LandingRedirect";
 import NetworkStatusWatcher from "@/components/common/NetworkStatusWatcher";
 
 // <== APP COMPONENT ==>
@@ -86,7 +87,8 @@ const App = () => (
                 }
               >
                 <Route path="/staff" element={<Staff />} />
-                <Route path="/" element={<QuickSales />} />
+                {/* LANDING ROUTE — RESOLVES TO THE RIGHT DESTINATION FOR THE CURRENT USER */}
+                <Route path="/" element={<LandingRedirect />} />
                 {/* SALES — REQUIRES READ-OR-ABOVE ON THE "SALES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
                 <Route
                   path="/sales"

@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/usePermission";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuickSales, useDeleteQuickSale } from "@/hooks/useQuickSales";
@@ -358,6 +359,8 @@ const QuickSales = memo(() => {
   const monthStr = format(selectedMonth, "yyyy-MM");
   // DERIVED DATE STRING FOR DATE FILTER
   const dateStr = specificDate ?? "";
+  // DERIVING PERMISSION FLAGS FOR THE QUICK SALES MODULE
+  const { canCreate, canEdit, canDelete } = usePermission("quickSales");
   // IS NEXT MONTH DISABLED — BLOCK NAVIGATION INTO FUTURE MONTHS
   const isNextMonthDisabled =
     selectedMonth.getMonth() >= new Date().getMonth() &&
@@ -440,12 +443,17 @@ const QuickSales = memo(() => {
     localStorage.setItem(ROWS_KEY, String(safe));
   }, []);
   // HANDLE DELETE — STAGES RECORD FOR CONFIRMATION INSTEAD OF DELETING DIRECTLY
-  const handleDelete = useCallback((record: QuickSale): void => {
-    // STAGE RECORD AS DELETE TARGET
-    setDeleteTarget(record);
-    // OPEN DELETE CONFIRMATION DIALOG
-    setDeleteDialogOpen(true);
-  }, []);
+  const handleDelete = useCallback(
+    (record: QuickSale): void => {
+      // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
+      if (!canDelete) return;
+      // STAGE RECORD AS DELETE TARGET
+      setDeleteTarget(record);
+      // OPEN DELETE CONFIRMATION DIALOG
+      setDeleteDialogOpen(true);
+    },
+    [canDelete],
+  );
   // HANDLE DELETE CONFIRM — PERFORMS ACTUAL DELETION AFTER USER CONFIRMS
   const handleDeleteConfirm = useCallback((): void => {
     // GUARD: NO TARGET STAGED
@@ -470,12 +478,17 @@ const QuickSales = memo(() => {
     setDeleteTarget(null);
   }, [deleteMutation.isPending]);
   // HANDLE OPEN EDIT DIALOG
-  const handleEdit = useCallback((record: QuickSale): void => {
-    // SET SELECTED RECORD FOR EDITING
-    setSelectedForEdit(record);
-    // OPEN EDIT DIALOG
-    setEditDialogOpen(true);
-  }, []);
+  const handleEdit = useCallback(
+    (record: QuickSale): void => {
+      // GUARD: BLOCK IF USER LACKS EDIT PERMISSION
+      if (!canEdit) return;
+      // SET SELECTED RECORD FOR EDITING
+      setSelectedForEdit(record);
+      // OPEN EDIT DIALOG
+      setEditDialogOpen(true);
+    },
+    [canEdit],
+  );
   // HANDLE CLOSE EDIT DIALOG
   const handleEditClose = useCallback((): void => {
     // CLOSE EDIT DIALOG
@@ -510,6 +523,8 @@ const QuickSales = memo(() => {
     onRowsPerPageChange: handleRowsChange,
     onDelete: handleDelete,
     onEdit: handleEdit,
+    canEdit,
+    canDelete,
   };
   // SHOW FULL PAGE SKELETON ON INITIAL LOAD
   if (isLoading && !data) {
@@ -589,7 +604,7 @@ const QuickSales = memo(() => {
       {/* STATS CARDS — ALWAYS REFLECT THE FULL FILTERED DATASET */}
       <QuickSaleStatsCards stats={data?.stats} isLoading={isLoading} />
       {/* SALE ENTRY PANEL — MILK AND YOGHURT FORMS WITH LOCKED RATES */}
-      <QuickSaleEntryPanel />
+      {canCreate && <QuickSaleEntryPanel />}
       {/* RECORDS SECTION HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         {/* SECTION HEADING */}

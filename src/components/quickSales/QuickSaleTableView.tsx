@@ -48,6 +48,10 @@ interface QuickSaleTableViewProps {
   onDelete: (record: QuickSale) => void;
   // <== EDIT HANDLER ==>
   onEdit: (record: QuickSale) => void;
+  // <== WHETHER THE CURRENT USER CAN EDIT RECORDS ==>
+  canEdit: boolean;
+  // <== WHETHER THE CURRENT USER CAN DELETE RECORDS ==>
+  canDelete: boolean;
 }
 
 // <== QUICK SALE TABLE VIEW COMPONENT ==>
@@ -64,7 +68,11 @@ const QuickSaleTableView = memo(
     onRowsPerPageChange,
     onDelete,
     onEdit,
+    canEdit,
+    canDelete,
   }: QuickSaleTableViewProps) => {
+    // WHETHER THE ACTIONS COLUMN SHOULD RENDER AT ALL
+    const hasActions = canEdit || canDelete;
     // RETURNING TABLE VIEW
     return (
       <motion.div
@@ -93,9 +101,12 @@ const QuickSaleTableView = memo(
                 <th className="px-3 py-3 font-semibold text-muted-foreground text-[10px] uppercase tracking-widest text-left hidden sm:table-cell">
                   Date
                 </th>
-                <th className="px-3 py-3 font-semibold text-muted-foreground text-[10px] uppercase tracking-widest text-left">
-                  Actions
-                </th>
+                {/* ACTIONS HEADER — OMITTED ENTIRELY WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                {hasActions && (
+                  <th className="px-3 py-3 font-semibold text-muted-foreground text-[10px] uppercase tracking-widest text-left">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
             {/* TABLE BODY */}
@@ -119,12 +130,15 @@ const QuickSaleTableView = memo(
                     <td className="px-3 py-3 hidden sm:table-cell">
                       <Skeleton className="h-4 w-20" />
                     </td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-1">
-                        <Skeleton className="h-7 w-7 rounded-lg" />
-                        <Skeleton className="h-7 w-7 rounded-lg" />
-                      </div>
-                    </td>
+                    {/* ACTIONS SKELETON — OMITTED WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                    {hasActions && (
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1">
+                          <Skeleton className="h-7 w-7 rounded-lg" />
+                          <Skeleton className="h-7 w-7 rounded-lg" />
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               {/* DATA ROWS */}
@@ -160,29 +174,35 @@ const QuickSaleTableView = memo(
                     <td className="px-3 py-3 text-sm text-muted-foreground hidden sm:table-cell">
                       {r.date}
                     </td>
-                    {/* ACTION BUTTONS — ALWAYS VISIBLE */}
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-1">
-                        {/* EDIT BUTTON */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-lg"
-                          onClick={() => onEdit(r)}
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        {/* DELETE BUTTON — TRIGGERS CONFIRMATION DIALOG */}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => onDelete(r)}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </td>
+                    {/* ACTION BUTTONS — CELL OMITTED ENTIRELY WHEN NO ROW ACTIONS ARE AVAILABLE */}
+                    {hasActions && (
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-1">
+                          {/* EDIT BUTTON — HIDDEN WHEN USER LACKS EDIT PERMISSION */}
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-lg"
+                              onClick={() => onEdit(r)}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          {/* DELETE BUTTON — ADMIN-TIER ONLY, NEVER PART OF THE PERMISSION MATRIX */}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-lg text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => onDelete(r)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </motion.tr>
                 ))}
             </tbody>
