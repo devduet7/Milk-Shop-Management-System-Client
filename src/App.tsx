@@ -86,7 +86,15 @@ const App = () => (
                   </ProtectedRoute>
                 }
               >
-                <Route path="/staff" element={<Staff />} />
+                {/* STAFF — ADMIN-AND-ABOVE ONLY */}
+                <Route
+                  path="/staff"
+                  element={
+                    <AdminRoute>
+                      <Staff />
+                    </AdminRoute>
+                  }
+                />
                 {/* LANDING ROUTE — RESOLVES TO THE RIGHT DESTINATION FOR THE CURRENT USER */}
                 <Route path="/" element={<LandingRedirect />} />
                 {/* SALES — REQUIRES READ-OR-ABOVE ON THE "SALES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
