@@ -3,6 +3,7 @@ import { memo } from "react";
 import { Settings } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetProfile } from "@/hooks/useSettings";
+import { useAuthStore } from "@/stores/useAuthStore";
 import PricingTab from "@/components/settings/PricingTab";
 import AccountTab from "@/components/settings/AccountTab";
 import PreferencesTab from "@/components/settings/PreferencesTab";
@@ -68,6 +69,10 @@ const SettingsPageSkeleton = () => (
 const SettingsPage = memo(() => {
   // FETCH PROFILE
   const { data: profile, isLoading } = useGetProfile();
+  // GETTING CURRENT USER'S ROLE FROM AUTH STORE
+  const role = useAuthStore((state) => state.user?.role);
+  // WHETHER THE CURRENT USER CAN SEE BUSINESS-CONFIG TABS
+  const isAdminTier = role === "superadmin" || role === "admin";
   // SHOW SKELETON ON INITIAL LOAD
   if (isLoading && !profile) {
     // RETURNING SKELETON
@@ -86,31 +91,46 @@ const SettingsPage = memo(() => {
         <div>
           <h1 className="font-display text-2xl font-bold">Settings</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 hidden sm:block">
-            Manage your account, pricing, and preferences
+            {isAdminTier
+              ? "Manage your account, pricing, and preferences"
+              : "Manage your account details"}
           </p>
         </div>
       </div>
       {/* STATS CARDS */}
-      <SettingsStatsCards profile={profile} isLoading={isLoading} />
-      {/* TABS */}
+      <SettingsStatsCards
+        profile={profile}
+        isLoading={isLoading}
+        isAdminTier={isAdminTier}
+        role={role}
+      />
+      {/* TABS — PRICING AND PREFERENCES ONLY RENDERED FOR ADMIN-TIER */}
       <Tabs defaultValue="account" className="space-y-6">
         <TabsList className="bg-muted">
           <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          {/* PRICING TAB TRIGGER */}
+          {isAdminTier && <TabsTrigger value="pricing">Pricing</TabsTrigger>}
+          {/* PREFERENCES TAB TRIGGER */}
+          {isAdminTier && (
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          )}
         </TabsList>
         {/* ACCOUNT TAB */}
         <TabsContent value="account" className="mt-0">
           <AccountTab />
         </TabsContent>
-        {/* PRICING TAB */}
-        <TabsContent value="pricing" className="mt-0">
-          <PricingTab />
-        </TabsContent>
-        {/* PREFERENCES TAB */}
-        <TabsContent value="preferences" className="mt-0">
-          <PreferencesTab />
-        </TabsContent>
+        {/* PRICING TAB CONTENT */}
+        {isAdminTier && (
+          <TabsContent value="pricing" className="mt-0">
+            <PricingTab />
+          </TabsContent>
+        )}
+        {/* PREFERENCES TAB CONTENT */}
+        {isAdminTier && (
+          <TabsContent value="preferences" className="mt-0">
+            <PreferencesTab />
+          </TabsContent>
+        )}
       </Tabs>
     </PageTransition>
   );
