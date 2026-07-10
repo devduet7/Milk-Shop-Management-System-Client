@@ -1,32 +1,36 @@
 // <== IMPORTS ==>
 import {
-  type ApiErrorResponse,
   useCompleteAccountSetup,
+  type ApiErrorResponse,
 } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { type AxiosError } from "axios";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { memo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import OtpVerifyStep from "@/components/auth/OtpVerifyStep";
-import EmailInputStep from "@/components/auth/EmailInputStep";
-import NewPasswordStep from "@/components/auth/NewPasswordStep";
+import SetupOtpStep from "@/components/auth/SetupOtpStep";
+import SetupEmailStep from "@/components/auth/SetupEmailStep";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import SetupNewPasswordStep from "@/components/auth/SetupNewPasswordStep";
 
 // <== ACCOUNT SETUP STAGE TYPE ==>
 type AccountSetupStage = "email" | "otp" | "password";
 
 // <== ACCOUNT SETUP PAGE COMPONENT ==>
 const AccountSetup = memo(() => {
+  // SEARCH PARAMS HOOK — USED TO RETRIEVE THE EMAIL FROM THE INVITE LINK
+  const [searchParams] = useSearchParams();
+  // EXTRACTING AND DECODING THE EMAIL QUERY PARAM, IF PRESENT
+  const emailFromLink = searchParams.get("email") ?? "";
   // CURRENT STAGE OF THE SETUP FLOW
   const [stage, setStage] = useState<AccountSetupStage>("email");
-  // EMAIL ENTERED IN STEP 1 — RETAINED FOR THE FINAL API CALL
+  // EMAIL CONFIRMED IN STEP 1 — RETAINED FOR THE FINAL API CALL
   const [submittedEmail, setSubmittedEmail] = useState<string>("");
   // INVITE OTP CODE ENTERED IN STEP 2 — RETAINED FOR THE FINAL API CALL
   const [submittedCode, setSubmittedCode] = useState<string>("");
-  // INLINE ERROR FOR THE OTP STEP (SET WHEN THE API REJECTS THE CODE)
+  // INLINE ERROR FOR THE OTP STEP
   const [otpError, setOtpError] = useState<string | null>(null);
   // INLINE ERROR FOR THE PASSWORD STEP
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -70,7 +74,7 @@ const AccountSetup = memo(() => {
             // NAVIGATE TO LOGIN — USER MUST LOG IN WITH THEIR NEW PASSWORD
             navigate("/login", { replace: true });
           },
-          // ON ERROR — EXPLICIT TYPE ANNOTATION REQUIRED FOR CORRECT TANSTACK QUERY GENERIC RESOLUTION
+          // ON ERROR
           onError: (error: AxiosError<ApiErrorResponse>) => {
             // GETTING ERROR CODE FROM SERVER RESPONSE
             const errorCode = error.response?.data?.code;
@@ -134,34 +138,30 @@ const AccountSetup = memo(() => {
         <div className="glass-card p-6 sm:p-8">
           {/* ANIMATED STAGE CONTENT — SWAPS BETWEEN STEPS */}
           <AnimatePresence mode="wait">
-            {/* EMAIL INPUT STEP — USER ENTERS THEIR INVITE EMAIL */}
+            {/* EMAIL STEP */}
             {stage === "email" && (
-              <EmailInputStep
+              <SetupEmailStep
                 key="email"
-                isLoading={false}
-                error={null}
+                initialEmail={emailFromLink}
                 onSubmit={handleEmailSubmit}
               />
             )}
-            {/* OTP VERIFY STEP — USER ENTERS THE CODE FROM THEIR INVITE EMAIL */}
+            {/* OTP STEP */}
             {stage === "otp" && (
-              <OtpVerifyStep
+              <SetupOtpStep
                 key="otp"
                 sentToEmail={submittedEmail}
-                isLoading={false}
                 error={otpError}
-                isCancelling={false}
                 onSubmit={handleOtpSubmit}
                 onCancel={handleCancel}
               />
             )}
-            {/* NEW PASSWORD STEP — USER SETS THEIR PASSWORD AND THE API CALL IS MADE */}
+            {/* PASSWORD STEP */}
             {stage === "password" && (
-              <NewPasswordStep
+              <SetupNewPasswordStep
                 key="password"
                 isLoading={setupMutation.isPending}
                 error={passwordError}
-                isCancelling={false}
                 onSubmit={handlePasswordSubmit}
                 onCancel={handleCancel}
               />
