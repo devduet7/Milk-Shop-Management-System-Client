@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, ShieldX, ArrowLeft } from "lucide-react";
+import { Moon, Sun, ShieldX, Home } from "lucide-react";
 
 // <== UNAUTHORIZED PAGE COMPONENT ==>
 const Unauthorized = () => {
@@ -57,25 +57,27 @@ const Unauthorized = () => {
           transition={{ delay: 0.4 }}
           className="font-display text-3xl font-bold mb-3"
         >
-          Access Denied
+          Access Restricted
         </motion.h1>
-        {/* DESCRIPTION */}
+        {/* DESCRIPTION — REFLECTS THE ACTUAL CASE: LOGGED IN, BUT LACKING PERMISSION */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="text-sm text-muted-foreground mb-6 sm:mb-8"
         >
-          You need to sign in to access this page. Please log in to continue.
+          You don't have permission to access this page. If you believe this is
+          a mistake, contact your account administrator.
         </motion.p>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
         >
+          {/* LINK BACK TO THE ROOT PAGE */}
           <Button asChild>
-            <Link to="/login">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Go to Login
+            <Link to="/">
+              <Home className="w-4 h-4 mr-2" /> Back to Dashboard
             </Link>
           </Button>
         </motion.div>
