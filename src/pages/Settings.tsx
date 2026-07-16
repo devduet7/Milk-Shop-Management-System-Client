@@ -6,6 +6,7 @@ import { useGetProfile } from "@/hooks/useSettings";
 import { useAuthStore } from "@/stores/useAuthStore";
 import PricingTab from "@/components/settings/PricingTab";
 import AccountTab from "@/components/settings/AccountTab";
+import SessionsTab from "@/components/settings/SessionsTab";
 import PreferencesTab from "@/components/settings/PreferencesTab";
 import { PageTransition } from "@/components/layout/PageTransition";
 import SettingsStatsCards from "@/components/settings/SettingsStatsCards";
@@ -35,6 +36,7 @@ const SettingsPageSkeleton = () => (
     </div>
     {/* TABS SKELETON */}
     <div className="flex gap-2 mb-6">
+      <Skeleton className="h-9 w-24 rounded-md" />
       <Skeleton className="h-9 w-24 rounded-md" />
       <Skeleton className="h-9 w-20 rounded-md" />
       <Skeleton className="h-9 w-28 rounded-md" />
@@ -107,7 +109,10 @@ const SettingsPage = memo(() => {
       {/* TABS — PRICING AND PREFERENCES ONLY RENDERED FOR ADMIN-TIER */}
       <Tabs defaultValue="account" className="space-y-6">
         <TabsList className="bg-muted">
+          {/* ACCOUNT TAB TRIGGER */}
           <TabsTrigger value="account">Account</TabsTrigger>
+          {/* SESSIONS TAB — OPEN TO EVERY AUTHENTICATED USER */}
+          <TabsTrigger value="sessions">Sessions</TabsTrigger>
           {/* PRICING TAB TRIGGER */}
           {isAdminTier && <TabsTrigger value="pricing">Pricing</TabsTrigger>}
           {/* PREFERENCES TAB TRIGGER */}
@@ -118,6 +123,10 @@ const SettingsPage = memo(() => {
         {/* ACCOUNT TAB */}
         <TabsContent value="account" className="mt-0">
           <AccountTab />
+        </TabsContent>
+        {/* SESSIONS TAB */}
+        <TabsContent value="sessions" className="mt-0">
+          <SessionsTab />
         </TabsContent>
         {/* PRICING TAB CONTENT */}
         {isAdminTier && (
@@ -139,5 +148,5 @@ const SettingsPage = memo(() => {
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SettingsPage.displayName = "SettingsPage";
 
-// <== MEMOIZED EXPORT ==>
+// <== MEMOIZED EXPORT TO PREVENT UNNECESSARY RE-RENDERS ==>
 export default SettingsPage;
