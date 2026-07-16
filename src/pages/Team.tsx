@@ -36,12 +36,13 @@ import TeamListView from "@/components/team/TeamListView";
 import TeamGridView from "@/components/team/TeamGridView";
 import TeamTableView from "@/components/team/TeamTableView";
 import TeamStatsCards from "@/components/team/TeamStatsCards";
+import SessionsDialog from "@/components/team/SessionsDialog";
 import type { TeamMember, TeamViewMode } from "@/types/team-types";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { InviteUserDialog } from "@/components/team/InviteUserDialog";
 import { TeamDeleteDialog } from "@/components/team/TeamDeleteDialog";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { PermissionsDialog } from "@/components/team/PermissionsDialog";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 // <== LOCAL STORAGE KEY FOR PERSISTED VIEW MODE ==>
 const VIEW_KEY = "team_view";
@@ -130,6 +131,7 @@ const TableSkeleton = () => (
                   <Skeleton className="h-7 w-7 rounded-lg" />
                   <Skeleton className="h-7 w-7 rounded-lg" />
                   <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-7 w-7 rounded-lg" />
                 </div>
               </td>
             </tr>
@@ -167,6 +169,8 @@ const ListSkeleton = () => (
           </div>
           <Skeleton className="h-5 w-14 rounded-full hidden sm:block" />
           <div className="flex items-center gap-1 shrink-0">
+            <Skeleton className="h-7 w-7 rounded-lg" />
+            <Skeleton className="h-7 w-7 rounded-lg" />
             <Skeleton className="h-7 w-7 rounded-lg" />
             <Skeleton className="h-7 w-7 rounded-lg" />
           </div>
@@ -210,6 +214,7 @@ const GridSkeleton = () => (
             <div className="pt-3 border-t border-border/50 flex items-center justify-between">
               <Skeleton className="h-3 w-24" />
               <div className="flex items-center gap-1">
+                <Skeleton className="h-7 w-7 rounded-lg" />
                 <Skeleton className="h-7 w-7 rounded-lg" />
                 <Skeleton className="h-7 w-7 rounded-lg" />
                 <Skeleton className="h-7 w-7 rounded-lg" />
@@ -300,6 +305,8 @@ const Team = memo(() => {
   const [permissionsOpen, setPermissionsOpen] = useState<boolean>(false);
   // DELETE DIALOG OPEN STATE
   const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
+  // SESSIONS DIALOG OPEN STATE
+  const [sessionsOpen, setSessionsOpen] = useState<boolean>(false);
   // SELECTED MEMBER FOR DIALOGS
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   // DEBOUNCED SEARCH — 300MS DELAY BEFORE HITTING THE API
@@ -353,6 +360,7 @@ const Team = memo(() => {
     (member: TeamMember): void => {
       // FIRE RESEND MUTATION
       resendMutation.mutate(member._id, {
+        // ON SUCCESS
         onSuccess: (res) => {
           // SHOW SUCCESS TOAST WITH SERVER MESSAGE
           toast.success(res.message || `Invite resent to ${member.email}.`);
@@ -368,6 +376,7 @@ const Team = memo(() => {
       statusMutation.mutate(
         { id: member._id, isActive: !member.isActive },
         {
+          // ON SUCCESS
           onSuccess: (res) => {
             // SHOW SUCCESS TOAST WITH SERVER MESSAGE
             toast.success(res.message || "Status updated.");
@@ -391,6 +400,13 @@ const Team = memo(() => {
     // OPEN DIALOG
     setDeleteOpen(true);
   }, []);
+  // HANDLE OPEN SESSIONS DIALOG
+  const handleViewSessions = useCallback((member: TeamMember): void => {
+    // SET SELECTED MEMBER
+    setSelectedMember(member);
+    // OPEN DIALOG
+    setSessionsOpen(true);
+  }, []);
   // HANDLE CLOSE PERMISSIONS DIALOG
   const handlePermissionsClose = useCallback((): void => {
     // CLOSE DIALOG
@@ -402,6 +418,13 @@ const Team = memo(() => {
   const handleDeleteClose = useCallback((): void => {
     // CLOSE DIALOG
     setDeleteOpen(false);
+    // CLEAR SELECTED MEMBER
+    setSelectedMember(null);
+  }, []);
+  // HANDLE CLOSE SESSIONS DIALOG
+  const handleSessionsClose = useCallback((): void => {
+    // CLOSE DIALOG
+    setSessionsOpen(false);
     // CLEAR SELECTED MEMBER
     setSelectedMember(null);
   }, []);
@@ -433,6 +456,7 @@ const Team = memo(() => {
     onStatusToggle: handleStatusToggle,
     onEditPermissions: handleEditPermissions,
     onDelete: handleDeleteOpen,
+    onViewSessions: handleViewSessions,
     resendPending: resendMutation.isPending,
     statusPending: statusMutation.isPending,
   };
@@ -565,6 +589,12 @@ const Team = memo(() => {
         open={deleteOpen}
         member={selectedMember}
         onClose={handleDeleteClose}
+      />
+      {/* SESSIONS DIALOG */}
+      <SessionsDialog
+        open={sessionsOpen}
+        member={selectedMember}
+        onClose={handleSessionsClose}
       />
     </PageTransition>
   );

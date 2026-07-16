@@ -8,7 +8,6 @@ import Dashboard from "@/pages/Dashboard";
 import Purchases from "@/pages/Purchases";
 import Analytics from "@/pages/Analytics";
 import Customers from "@/pages/Customers";
-import QuickSales from "@/pages/QuickSales";
 import Recoveries from "@/pages/Recoveries";
 import SettingsPage from "@/pages/Settings";
 import AccountSetup from "@/pages/AccountSetup";
@@ -17,17 +16,18 @@ import { AnimatePresence } from "framer-motion";
 import Expenditures from "@/pages/Expenditures";
 import Unauthorized from "@/pages/Unauthorized";
 import ForgotPassword from "@/pages/ForgotPassword";
-import { ThemeProvider } from "./contexts/ThemeProvider";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { SocketProvider } from "@/contexts/SocketProvider";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { AdminRoute } from "@/components/common/AdminRoute";
 import { PublicRoute } from "@/components/common/PublicRoute";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { PermissionRoute } from "@/components/common/PermissionRoute";
-import { LandingRedirect } from "./components/common/LandingRedirect";
+import { LandingRedirect } from "@/components/common/LandingRedirect";
 import NetworkStatusWatcher from "@/components/common/NetworkStatusWatcher";
 
 // <== APP COMPONENT ==>
@@ -46,135 +46,138 @@ const App = () => (
         <BrowserRouter
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >
-          {/* ANIMATED ROUTES */}
-          <AnimatePresence mode="wait">
-            <Routes>
-              {/* UNAUTHORIZED ROUTE */}
-              <Route path="/unauthorized" element={<Unauthorized />} />
-              {/* PUBLIC ROUTES - NOT AUTHENTICATED */}
-              <Route
-                path="/login"
-                element={
-                  <PublicRoute>
-                    <Login />
-                  </PublicRoute>
-                }
-              />
-              {/* PUBLIC ROUTES - NOT AUTHENTICATED */}
-              <Route
-                path="/forgot-password"
-                element={
-                  <PublicRoute>
-                    <ForgotPassword />
-                  </PublicRoute>
-                }
-              />
-              {/* ACCOUNT SETUP ROUTE — INVITED USERS COMPLETE THEIR ACCOUNT HERE */}
-              <Route
-                path="/setup"
-                element={
-                  <PublicRoute>
-                    <AccountSetup />
-                  </PublicRoute>
-                }
-              />
-              {/* PROTECTED ROUTES - AUTHENTICATED */}
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <AppLayout />
-                  </ProtectedRoute>
-                }
-              >
-                {/* STAFF — ADMIN-AND-ABOVE ONLY */}
+          {/* SOCKET PROVIDER */}
+          <SocketProvider>
+            {/* ANIMATED ROUTES */}
+            <AnimatePresence mode="wait">
+              <Routes>
+                {/* UNAUTHORIZED ROUTE */}
+                <Route path="/unauthorized" element={<Unauthorized />} />
+                {/* PUBLIC ROUTES - NOT AUTHENTICATED */}
                 <Route
-                  path="/staff"
+                  path="/login"
                   element={
-                    <AdminRoute>
-                      <Staff />
-                    </AdminRoute>
+                    <PublicRoute>
+                      <Login />
+                    </PublicRoute>
                   }
                 />
-                {/* LANDING ROUTE — RESOLVES TO THE RIGHT DESTINATION FOR THE CURRENT USER */}
-                <Route path="/" element={<LandingRedirect />} />
-                {/* SALES — REQUIRES READ-OR-ABOVE ON THE "SALES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                {/* PUBLIC ROUTES - NOT AUTHENTICATED */}
                 <Route
-                  path="/sales"
+                  path="/forgot-password"
                   element={
-                    <PermissionRoute moduleKey="sales">
-                      <Sales />
-                    </PermissionRoute>
+                    <PublicRoute>
+                      <ForgotPassword />
+                    </PublicRoute>
                   }
                 />
-                {/* DASHBOARD — REQUIRES READ-OR-ABOVE ON THE "DASHBOARD" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                {/* ACCOUNT SETUP ROUTE — INVITED USERS COMPLETE THEIR ACCOUNT HERE */}
                 <Route
-                  path="/dashboard"
+                  path="/setup"
                   element={
-                    <PermissionRoute moduleKey="dashboard">
-                      <Dashboard />
-                    </PermissionRoute>
+                    <PublicRoute>
+                      <AccountSetup />
+                    </PublicRoute>
                   }
                 />
-                {/* PURCHASES — REQUIRES READ-OR-ABOVE ON THE "PURCHASES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                {/* PROTECTED ROUTES - AUTHENTICATED */}
                 <Route
-                  path="/purchases"
                   element={
-                    <PermissionRoute moduleKey="purchases">
-                      <Purchases />
-                    </PermissionRoute>
+                    <ProtectedRoute>
+                      <AppLayout />
+                    </ProtectedRoute>
                   }
-                />
-                {/* CUSTOMERS — REQUIRES READ-OR-ABOVE ON THE "CUSTOMERS" MODULE (ADMIN-TIER ALWAYS PASSES) */}
-                <Route
-                  path="/customers"
-                  element={
-                    <PermissionRoute moduleKey="customers">
-                      <Customers />
-                    </PermissionRoute>
-                  }
-                />
-                {/* ANALYTICS — REQUIRES READ-OR-ABOVE ON THE "ANALYTICS" MODULE (ADMIN-TIER ALWAYS PASSES) */}
-                <Route
-                  path="/analytics"
-                  element={
-                    <PermissionRoute moduleKey="analytics">
-                      <Analytics />
-                    </PermissionRoute>
-                  }
-                />
-                {/* RECOVERIES — REQUIRES READ-OR-ABOVE ON THE "RECOVERIES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
-                <Route
-                  path="/recoveries"
-                  element={
-                    <PermissionRoute moduleKey="recoveries">
-                      <Recoveries />
-                    </PermissionRoute>
-                  }
-                />
-                <Route path="/settings" element={<SettingsPage />} />
-                {/* EXPENDITURES — REQUIRES READ-OR-ABOVE ON THE "EXPENDITURES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
-                <Route
-                  path="/expenditures"
-                  element={
-                    <PermissionRoute moduleKey="expenditures">
-                      <Expenditures />
-                    </PermissionRoute>
-                  }
-                />
-                {/* TEAM MANAGEMENT — ADMIN-AND-ABOVE ONLY */}
-                <Route
-                  path="/team"
-                  element={
-                    <AdminRoute>
-                      <Team />
-                    </AdminRoute>
-                  }
-                />
-              </Route>
-              {/* FALLBACK ROUTE - 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AnimatePresence>
+                >
+                  {/* STAFF — ADMIN-AND-ABOVE ONLY */}
+                  <Route
+                    path="/staff"
+                    element={
+                      <AdminRoute>
+                        <Staff />
+                      </AdminRoute>
+                    }
+                  />
+                  {/* LANDING ROUTE — RESOLVES TO THE RIGHT DESTINATION FOR THE CURRENT USER */}
+                  <Route path="/" element={<LandingRedirect />} />
+                  {/* SALES — REQUIRES READ-OR-ABOVE ON THE "SALES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                  <Route
+                    path="/sales"
+                    element={
+                      <PermissionRoute moduleKey="sales">
+                        <Sales />
+                      </PermissionRoute>
+                    }
+                  />
+                  {/* DASHBOARD — REQUIRES READ-OR-ABOVE ON THE "DASHBOARD" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <PermissionRoute moduleKey="dashboard">
+                        <Dashboard />
+                      </PermissionRoute>
+                    }
+                  />
+                  {/* PURCHASES — REQUIRES READ-OR-ABOVE ON THE "PURCHASES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                  <Route
+                    path="/purchases"
+                    element={
+                      <PermissionRoute moduleKey="purchases">
+                        <Purchases />
+                      </PermissionRoute>
+                    }
+                  />
+                  {/* CUSTOMERS — REQUIRES READ-OR-ABOVE ON THE "CUSTOMERS" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                  <Route
+                    path="/customers"
+                    element={
+                      <PermissionRoute moduleKey="customers">
+                        <Customers />
+                      </PermissionRoute>
+                    }
+                  />
+                  {/* ANALYTICS — REQUIRES READ-OR-ABOVE ON THE "ANALYTICS" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                  <Route
+                    path="/analytics"
+                    element={
+                      <PermissionRoute moduleKey="analytics">
+                        <Analytics />
+                      </PermissionRoute>
+                    }
+                  />
+                  {/* RECOVERIES — REQUIRES READ-OR-ABOVE ON THE "RECOVERIES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                  <Route
+                    path="/recoveries"
+                    element={
+                      <PermissionRoute moduleKey="recoveries">
+                        <Recoveries />
+                      </PermissionRoute>
+                    }
+                  />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  {/* EXPENDITURES — REQUIRES READ-OR-ABOVE ON THE "EXPENDITURES" MODULE (ADMIN-TIER ALWAYS PASSES) */}
+                  <Route
+                    path="/expenditures"
+                    element={
+                      <PermissionRoute moduleKey="expenditures">
+                        <Expenditures />
+                      </PermissionRoute>
+                    }
+                  />
+                  {/* TEAM MANAGEMENT — ADMIN-AND-ABOVE ONLY */}
+                  <Route
+                    path="/team"
+                    element={
+                      <AdminRoute>
+                        <Team />
+                      </AdminRoute>
+                    }
+                  />
+                </Route>
+                {/* FALLBACK ROUTE - 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AnimatePresence>
+          </SocketProvider>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

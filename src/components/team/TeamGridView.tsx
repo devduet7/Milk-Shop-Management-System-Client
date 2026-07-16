@@ -4,6 +4,7 @@ import {
   UserX,
   Users,
   Trash2,
+  Monitor,
   KeyRound,
   UserCheck,
   ShieldCheck,
@@ -55,6 +56,8 @@ interface TeamGridViewProps {
   onEditPermissions: (member: TeamMember) => void;
   // <== DELETE HANDLER ==>
   onDelete: (member: TeamMember) => void;
+  // <== VIEW SESSIONS HANDLER ==>
+  onViewSessions: (member: TeamMember) => void;
   // <== RESEND MUTATION PENDING ==>
   resendPending: boolean;
   // <== STATUS MUTATION PENDING ==>
@@ -109,6 +112,7 @@ const TeamGridView = memo(
     onStatusToggle,
     onEditPermissions,
     onDelete,
+    onViewSessions,
     resendPending,
     statusPending,
   }: TeamGridViewProps) => {
@@ -122,6 +126,19 @@ const TeamGridView = memo(
         // ADMIN CAN ONLY MANAGE USER-TIER
         if (actorRole === "admin" && member.role === "admin") return false;
         // ALL OTHERS CAN MANAGE
+        return true;
+      },
+      [actorId, actorRole],
+    );
+    // DETERMINE IF ACTOR CAN VIEW THIS MEMBER'S SESSIONS
+    const canViewSessions = useCallback(
+      (member: TeamMember): boolean => {
+        // CANNOT VIEW OWN SESSIONS HERE — USE THE SETTINGS PAGE
+        if (member._id === actorId) return false;
+        // SUPERADMIN'S SESSIONS ARE NEVER VISIBLE TO ADMIN-TIER ACTORS
+        if (member.role === "superadmin" && actorRole !== "superadmin")
+          return false;
+        // ALL OTHER COMBINATIONS ARE VIEWABLE BY ADMIN-AND-ABOVE ACTORS
         return true;
       },
       [actorId, actorRole],
@@ -331,6 +348,24 @@ const TeamGridView = memo(
                             </TooltipTrigger>
                             <TooltipContent side="top">
                               {member.isActive ? "Deactivate" : "Activate"}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {/* VIEW SESSIONS — VISIBLE PER THE SESSION RULES ABOVE */}
+                        {canViewSessions(member) && (
+                          <Tooltip delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+                                onClick={() => onViewSessions(member)}
+                              >
+                                <Monitor className="w-3.5 h-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              View Sessions
                             </TooltipContent>
                           </Tooltip>
                         )}
