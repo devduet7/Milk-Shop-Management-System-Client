@@ -1,6 +1,6 @@
 // <== IMPORTS ==>
-import apiClient from "@/lib/apiClient";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { attemptTokenRefresh } from "@/lib/apiClient";
 import { useEffect, useRef, type ReactNode } from "react";
 import { connectSocket, disconnectSocket, socket } from "@/lib/socket";
 
@@ -37,29 +37,21 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
       if (isVerifyingRef.current) return;
       // MARKING VERIFICATION AS IN PROGRESS
       isVerifyingRef.current = true;
-      // ATTEMPTING TO REFRESH THE SESSION
+      // ATTEMPTING TO SILENTLY REFRESH THE ACCESS TOKEN USING THE REFRESH TOKEN
       try {
         // ATTEMPTING TO REFRESH THE SESSION — IF THIS FAILS, THE SERVER WILL REJECT WITH 401
-        await apiClient.post("/user/refresh");
+        await attemptTokenRefresh();
         // SUCCESS — THIS TAB'S SESSION IS UNAFFECTED, NOTHING FURTHER TO DO
-      } catch (error) {
-        // GUARD: SERVER REJECTED THE REFRESH
-        const hasServerResponse =
-          typeof error === "object" &&
-          error !== null &&
-          "response" in error &&
-          (error as { response?: unknown }).response !== undefined;
-        // GUARD: IGNORE PURE NETWORK FAILURES
-        if (!hasServerResponse) return;
-        // THE SERVER EXPLICITLY REJECTED THE REFRESH — DISCONNECT THE SOCKET
+      } catch {
+        // FAILURE — THIS TAB'S SESSION IS NO LONGER VALID, DISCONNECTING THE SOCKET
         disconnectSocket();
-        // TRIGGERING A CUSTOM EVENT TO INFORM THE REST OF THE APP THAT THE SESSION HAS EXPIRED
-        window.dispatchEvent(new CustomEvent("session-expired"));
       } finally {
         // CLEARING THE IN-FLIGHT GUARD REGARDLESS OF OUTCOME
         isVerifyingRef.current = false;
       }
     };
+    // TRIGGERING SILENT VERIFICATION
+    void verifyStillAuthenticated();
     // HANDLER FOR A SINGLE SESSION BEING KILLED
     const handleSessionKilled = (): void => {
       // TRIGGERING SILENT VERIFICATION
