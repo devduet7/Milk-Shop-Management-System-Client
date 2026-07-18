@@ -9,6 +9,7 @@ import AccountTab from "@/components/settings/AccountTab";
 import SessionsTab from "@/components/settings/SessionsTab";
 import PreferencesTab from "@/components/settings/PreferencesTab";
 import { PageTransition } from "@/components/layout/PageTransition";
+import TrashSettingsTab from "@/components/settings/TrashSettingsTab";
 import SettingsStatsCards from "@/components/settings/SettingsStatsCards";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -119,6 +120,8 @@ const SettingsPage = memo(() => {
           {isAdminTier && (
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
           )}
+          {/* TRASH TAB TRIGGER */}
+          {isAdminTier && <TabsTrigger value="trash">Trash</TabsTrigger>}
         </TabsList>
         {/* ACCOUNT TAB */}
         <TabsContent value="account" className="mt-0">
@@ -138,6 +141,12 @@ const SettingsPage = memo(() => {
         {isAdminTier && (
           <TabsContent value="preferences" className="mt-0">
             <PreferencesTab />
+          </TabsContent>
+        )}
+        {/* TRASH TAB CONTENT */}
+        {isAdminTier && (
+          <TabsContent value="trash" className="mt-0">
+            <TrashSettingsTab />
           </TabsContent>
         )}
       </Tabs>
