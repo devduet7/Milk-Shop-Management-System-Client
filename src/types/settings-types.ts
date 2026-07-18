@@ -8,6 +8,12 @@ export type OtpPurpose =
 // <== EMAIL CHANGE STAGE TYPE ==>
 export type EmailChangeStage = "idle" | "current" | "new";
 
+// <== DELETION MODE TYPE ==>
+export type DeletionMode = "instant" | "trash";
+
+// <== TRASH RETENTION DAYS TYPE ==>
+export type TrashRetentionDays = 7 | 15 | 30;
+
 // <== USER PROFILE TYPE ==>
 export type UserProfile = {
   // <== MONGODB USER ID ==>
@@ -30,6 +36,10 @@ export type UserProfile = {
   dailyReportsEnabled: boolean;
   // <== MONTHLY REPORTS ENABLED FLAG ==>
   monthlyReportsEnabled: boolean;
+  // <== DELETION MODE (INSTANT OR TRASH) ==>
+  deletionMode: DeletionMode;
+  // <== TRASH RETENTION DAYS BEFORE AUTO-PURGE ==>
+  trashRetentionDays: TrashRetentionDays;
 };
 
 // <== GENERIC API RESPONSE WRAPPER ==>
