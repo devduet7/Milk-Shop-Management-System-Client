@@ -2,7 +2,9 @@
 import type {
   UserProfile,
   ApiResponse,
+  DeletionMode,
   ApiErrorResponse,
+  TrashRetentionDays,
 } from "../types/settings-types";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
@@ -70,6 +72,8 @@ const useSyncProfile = () => {
       yoghurtRate: profile.yoghurtRate,
       dailyReportsEnabled: profile.dailyReportsEnabled,
       monthlyReportsEnabled: profile.monthlyReportsEnabled,
+      deletionMode: profile.deletionMode,
+      trashRetentionDays: profile.trashRetentionDays,
     });
     // INVALIDATING PROFILE CACHE TO REFLECT CHANGES ON NEXT FETCH
     queryClient.invalidateQueries({ queryKey: settingsKeys.profile() });
@@ -504,6 +508,46 @@ export const useUpdateReportSettings = () => {
       // SHOW ERROR TOAST
       toast.error(
         error.response?.data?.message || "Failed to update report settings.",
+      );
+    },
+  });
+};
+
+/**
+ * UPDATE TRASH SETTINGS — DELETION MODE AND/OR RETENTION DAYS
+ */
+// <== USE UPDATE TRASH SETTINGS MUTATION HOOK ==>
+export const useUpdateTrashSettings = () => {
+  // GET SYNC FUNCTION TO UPDATE AUTH STORE
+  const syncProfile = useSyncProfile();
+  // RETURN MUTATION
+  return useMutation<
+    ApiResponse<UserProfile>,
+    AxiosError<ApiErrorResponse>,
+    { deletionMode?: DeletionMode; trashRetentionDays?: TrashRetentionDays }
+  >({
+    // <== MUTATION FUNCTION ==>
+    mutationFn: async (data) => {
+      // CALL UPDATE TRASH SETTINGS API
+      const response = await apiClient.patch<ApiResponse<UserProfile>>(
+        "/settings/trash",
+        data,
+      );
+      // RETURN RESPONSE DATA
+      return response.data;
+    },
+    // <== ON SUCCESS — UPDATE AUTH STORE AND SHOW SUCCESS TOAST
+    onSuccess: (data) => {
+      // UPDATE AUTH STORE
+      syncProfile(data.data);
+      // SHOW SUCCESS TOAST
+      toast.success(data.message || "Trash settings updated!");
+    },
+    // <== ON ERROR ==>
+    onError: (error) => {
+      // SHOW ERROR TOAST
+      toast.error(
+        error.response?.data?.message || "Failed to update trash settings.",
       );
     },
   });
