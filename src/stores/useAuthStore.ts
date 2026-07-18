@@ -1,6 +1,7 @@
 // <== IMPORTS ==>
 import { create } from "zustand";
 import { persist, PersistOptions } from "zustand/middleware";
+import { DeletionMode, TrashRetentionDays } from "@/types/settings-types";
 
 // <== USER ROLE TYPE ==>
 export type UserRole = "superadmin" | "admin" | "user";
@@ -56,6 +57,10 @@ export type User = {
   dailyReportsEnabled?: boolean;
   // <== MONTHLY REPORTS ENABLED FLAG ==>
   monthlyReportsEnabled?: boolean;
+  // <== DELETION MODE (INSTANT OR TRASH) ==>
+  deletionMode?: DeletionMode;
+  // <== TRASH RETENTION DAYS BEFORE AUTO-PURGE ==>
+  trashRetentionDays?: TrashRetentionDays;
 };
 
 // <== AUTH STATE INTERFACE ==>
