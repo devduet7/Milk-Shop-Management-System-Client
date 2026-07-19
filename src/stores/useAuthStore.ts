@@ -1,7 +1,7 @@
 // <== IMPORTS ==>
 import { create } from "zustand";
 import { persist, PersistOptions } from "zustand/middleware";
-import { DeletionMode, TrashRetentionDays } from "@/types/settings-types";
+import type { DeletionMode, TrashRetentionDays } from "@/types/settings-types";
 
 // <== USER ROLE TYPE ==>
 export type UserRole = "superadmin" | "admin" | "user";
