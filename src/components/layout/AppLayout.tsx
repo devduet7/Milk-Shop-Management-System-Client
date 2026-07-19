@@ -35,6 +35,7 @@ const ROUTE_META: Record<string, { title: string }> = {
   "/customers": { title: "Customers" },
   "/analytics": { title: "Analytics" },
   "/team": { title: "Team" },
+  "/trash": { title: "Trash" },
   "/settings": { title: "Settings" },
 };
 
@@ -258,6 +259,7 @@ const AppLayout = memo(() => {
     </div>
   );
 });
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 AppLayout.displayName = "AppLayout";
 
