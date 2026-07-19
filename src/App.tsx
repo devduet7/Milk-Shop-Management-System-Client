@@ -3,6 +3,7 @@ import Team from "@/pages/Team";
 import Login from "@/pages/Login";
 import Sales from "@/pages/Sales";
 import Staff from "@/pages/Staff";
+import Trash from "@/pages/Trash";
 import NotFound from "@/pages/NotFound";
 import Dashboard from "@/pages/Dashboard";
 import Purchases from "@/pages/Purchases";
@@ -169,6 +170,15 @@ const App = () => (
                     element={
                       <AdminRoute>
                         <Team />
+                      </AdminRoute>
+                    }
+                  />
+                  {/* TRASH ROUTE — ADMIN-AND-ABOVE ONLY */}
+                  <Route
+                    path="/trash"
+                    element={
+                      <AdminRoute>
+                        <Trash />
                       </AdminRoute>
                     }
                   />
