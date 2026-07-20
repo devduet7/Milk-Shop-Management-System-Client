@@ -12,6 +12,7 @@ import type {
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
+import { trashKeys } from "./useTrash";
 import apiClient from "../lib/apiClient";
 import { dashboardKeys } from "./useDashboard";
 import { analyticsKeys } from "./useAnalytics";
@@ -303,6 +304,8 @@ export const useDeleteStaff = () => {
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — STAFF PAYROLL CHART CHANGES)
       queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
+      // INVALIDATE TRASH QUERIES
+      queryClient.invalidateQueries({ queryKey: trashKeys.all });
       // SHOW SUCCESS TOAST
       toast.success(data.message || "Staff member deleted successfully!");
     },
