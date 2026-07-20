@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
+import { useDeletionMode } from "@/hooks/useSettings";
 import SaleStatsCards from "@/components/sales/SaleStatsCards";
 import SaleDeleteDialog from "@/components/sales/SaleDeleteDialog";
 import ShopSaleListView from "@/components/sales/ShopSaleListView";
@@ -533,8 +534,10 @@ const Sales = memo(() => {
   } = useShopSales(filter, activeMonth, shopProductFilter, shopPage, shopRows);
   // DELETE SALE MUTATION (SHARED FOR BOTH SALE TYPES)
   const deleteMutation = useDeleteSale();
-  // DERIVING PERMISSION FLAGS FOR THE "SALES" MODULE — GOVERNS BOTH CUSTOMER AND SHOP TABS
+  // DERIVING PERMISSION FLAGS FOR THE SALES MODULE — GOVERNS BOTH CUSTOMER AND SHOP TABS
   const { canCreate, canEdit, canDelete } = usePermission("sales");
+  // DERIVING DELETION MODE FOR USER ACCOUNT
+  const { isTrashMode } = useDeletionMode();
   // RESET CUSTOMER PAGE TO 1 WHEN CUSTOMER-SPECIFIC FILTERS CHANGE
   useEffect(() => {
     // RESET CUSTOMER PAGE TO 1
@@ -715,7 +718,6 @@ const Sales = memo(() => {
       },
     });
   }, [deleteTarget, deleteMutation]);
-
   // CLOSE DELETE DIALOG — BLOCKED WHILE MUTATION IS PENDING
   const handleDeleteClose = useCallback((): void => {
     // BLOCK CLOSE WHILE PENDING
@@ -725,17 +727,24 @@ const Sales = memo(() => {
     // DELAY CLEARING TARGET UNTIL AFTER PENDING STATE IS FALSE
     setDeleteTarget(null);
   }, [deleteMutation.isPending]);
-  // STAGE SALE FOR DELETE — OPENS CONFIRMATION DIALOG
+  // STAGE SALE FOR DELETE — TRIGGERS CONFIRMATION DIALOG OR IMMEDIATE DELETION
   const handleDelete = useCallback(
     (record: Sale): void => {
       // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
       if (!canDelete) return;
-      // STAGE THE RECORD FOR DELETION
+      // IF THE DELETION MODE IS TRASH
+      if (isTrashMode) {
+        // CALL DELETE MUTATION
+        deleteMutation.mutate(record._id);
+        // RETURN EARLY TO STOP FURTHER EXECUTION
+        return;
+      }
+      // STAGE RECORD FOR DELETION
       setDeleteTarget(record);
       // OPEN CONFIRMATION DIALOG
       setDeleteDialogOpen(true);
     },
-    [canDelete],
+    [canDelete, isTrashMode, deleteMutation],
   );
   // SHARED CUSTOMER VIEW PROPS
   const customerViewProps = {
