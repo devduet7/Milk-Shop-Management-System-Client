@@ -12,6 +12,7 @@ import type {
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
+import { trashKeys } from "./useTrash";
 import apiClient from "../lib/apiClient";
 import { dashboardKeys } from "./useDashboard";
 import { analyticsKeys } from "./useAnalytics";
@@ -507,7 +508,7 @@ export const useDeleteSale = () => {
       return response.data;
     },
     // <== ON SUCCESS ==>
-    onSuccess: (): void => {
+    onSuccess: (data): void => {
       // INVALIDATE ALL SALE LIST QUERIES
       queryClient.invalidateQueries({ queryKey: saleKeys.lists() });
       // INVALIDATE RECOVERY LIST QUERIES (CROSS-MODULE SYNC — DELETED SALE REMOVES OUTSTANDING BALANCE)
@@ -516,8 +517,10 @@ export const useDeleteSale = () => {
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DAILY SALES CHARTS CHANGE)
       queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
+      // INVALIDATE TRASH QUERIES
+      queryClient.invalidateQueries({ queryKey: trashKeys.all });
       // SHOW SUCCESS TOAST
-      toast.success("Sale deleted successfully!");
+      toast.success(data.message || "Sale deleted successfully!");
     },
     // <== ON ERROR ==>
     onError: (error: AxiosError<ApiErrorResponse>): void => {
