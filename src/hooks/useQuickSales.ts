@@ -11,6 +11,7 @@ import type {
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
+import { trashKeys } from "./useTrash";
 import apiClient from "../lib/apiClient";
 import { dashboardKeys } from "./useDashboard";
 import { analyticsKeys } from "./useAnalytics";
@@ -300,15 +301,17 @@ export const useDeleteQuickSale = () => {
       return response.data;
     },
     // <== ON SUCCESS ==>
-    onSuccess: (): void => {
+    onSuccess: (data): void => {
       // INVALIDATE ALL QUICK SALE LIST QUERIES
       queryClient.invalidateQueries({ queryKey: quickSaleKeys.lists() });
       // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — REVENUE AND QUICK SALES SECTION CHANGE)
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DAILY QUICK SALES CHARTS CHANGE)
       queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
+      // INVALIDATE TRASH QUERIES
+      queryClient.invalidateQueries({ queryKey: trashKeys.all });
       // SHOW SUCCESS TOAST
-      toast.success("Sale record deleted successfully!");
+      toast.success(data.message || "Sale deleted successfully!");
     },
     // <== ON ERROR ==>
     onError: (error: AxiosError<ApiErrorResponse>): void => {
