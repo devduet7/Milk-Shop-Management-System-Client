@@ -31,6 +31,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
+import { useDeletionMode } from "@/hooks/useSettings";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuickSales, useDeleteQuickSale } from "@/hooks/useQuickSales";
@@ -361,6 +362,8 @@ const QuickSales = memo(() => {
   const dateStr = specificDate ?? "";
   // DERIVING PERMISSION FLAGS FOR THE QUICK SALES MODULE
   const { canCreate, canEdit, canDelete } = usePermission("quickSales");
+  // DERIVING DELETION MODE FOR USER ACCOUNT
+  const { isTrashMode } = useDeletionMode();
   // IS NEXT MONTH DISABLED — BLOCK NAVIGATION INTO FUTURE MONTHS
   const isNextMonthDisabled =
     selectedMonth.getMonth() >= new Date().getMonth() &&
@@ -442,17 +445,24 @@ const QuickSales = memo(() => {
     // PERSIST TO LOCAL STORAGE
     localStorage.setItem(ROWS_KEY, String(safe));
   }, []);
-  // HANDLE DELETE — STAGES RECORD FOR CONFIRMATION INSTEAD OF DELETING DIRECTLY
+  // HANDLE DELETE — TRIGGERS CONFIRMATION DIALOG OR IMMEDIATE DELETION
   const handleDelete = useCallback(
     (record: QuickSale): void => {
       // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
       if (!canDelete) return;
-      // STAGE RECORD AS DELETE TARGET
+      // IF THE DELETION MODE IS TRASH
+      if (isTrashMode) {
+        // CALL DELETE MUTATION
+        deleteMutation.mutate(record._id);
+        // RETURN EARLY TO STOP FURTHER EXECUTION
+        return;
+      }
+      // STAGE RECORD FOR DELETION
       setDeleteTarget(record);
-      // OPEN DELETE CONFIRMATION DIALOG
+      // OPEN CONFIRMATION DIALOG
       setDeleteDialogOpen(true);
     },
-    [canDelete],
+    [canDelete, isTrashMode, deleteMutation],
   );
   // HANDLE DELETE CONFIRM — PERFORMS ACTUAL DELETION AFTER USER CONFIRMS
   const handleDeleteConfirm = useCallback((): void => {
