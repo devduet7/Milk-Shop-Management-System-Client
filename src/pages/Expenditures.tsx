@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
+import { useDeletionMode } from "@/hooks/useSettings";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useExpenditures, useDeleteExpenditure } from "@/hooks/useExpenditures";
@@ -328,8 +329,10 @@ const Expenditures = memo(() => {
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
   const monthStr = format(selectedMonth, "yyyy-MM");
-  // DERIVING PERMISSION FLAGS FOR THE "expenditures" MODULE
+  // DERIVING PERMISSION FLAGS FOR THE EXPENDITURES MODULE
   const { canCreate, canEdit, canDelete } = usePermission("expenditures");
+  // DERIVING DELETION MODE FOR USER ACCOUNT
+  const { isTrashMode } = useDeletionMode();
   // FETCH EXPENDITURES FROM SERVER WITH ALL ACTIVE FILTERS
   const { data, isLoading, isError } = useExpenditures(
     filter,
@@ -454,17 +457,24 @@ const Expenditures = memo(() => {
     // CLEAR STAGED TARGET
     setDeleteTarget(null);
   }, [deleteMutation.isPending]);
-  // STAGE EXPENDITURE FOR DELETE — OPENS CONFIRMATION DIALOG
+  // STAGE EXPENDITURE FOR DELETE — TRIGGERS CONFIRMATION DIALOG OR IMMEDIATE DELETION
   const handleDelete = useCallback(
     (record: Expenditure): void => {
       // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
       if (!canDelete) return;
-      // STAGE THE RECORD FOR DELETION
+      // IF THE DELETION MODE IS TRASH
+      if (isTrashMode) {
+        // CALL DELETE MUTATION
+        deleteMutation.mutate(record._id);
+        // RETURN EARLY TO STOP FURTHER EXECUTION
+        return;
+      }
+      // STAGE RECORD FOR DELETION
       setDeleteTarget(record);
       // OPEN CONFIRMATION DIALOG
       setDeleteDialogOpen(true);
     },
-    [canDelete],
+    [canDelete, isTrashMode, deleteMutation],
   );
   // IS NEXT MONTH DISABLED (CANNOT NAVIGATE PAST CURRENT MONTH)
   const isNextMonthDisabled =
