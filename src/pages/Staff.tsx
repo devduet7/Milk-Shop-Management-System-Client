@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useDeleteStaff } from "@/hooks/useStaff";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDeletionMode } from "@/hooks/useSettings";
 import StaffGridView from "@/components/staff/StaffGridView";
 import StaffListView from "@/components/staff/StaffListView";
 import StaffTableView from "@/components/staff/StaffTableView";
@@ -309,6 +310,8 @@ const Staff = memo(() => {
   const [deleteTarget, setDeleteTarget] = useState<StaffMember | null>(null);
   // DELETE STAFF MUTATION
   const deleteMutation = useDeleteStaff();
+  // DERIVING DELETION MODE FOR USER ACCOUNT
+  const { isTrashMode } = useDeletionMode();
   // DEBOUNCE SEARCH INPUT AT 300MS
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
@@ -392,13 +395,23 @@ const Staff = memo(() => {
     // CLEAR EDIT TARGET
     setEditStaff(null);
   }, []);
-  // STAGE STAFF FOR DELETE — OPENS CONFIRMATION DIALOG
-  const handleDelete = useCallback((record: StaffMember): void => {
-    // STAGE THE RECORD FOR DELETION
-    setDeleteTarget(record);
-    // OPEN CONFIRMATION DIALOG
-    setDeleteDialogOpen(true);
-  }, []);
+  // STAGE STAFF FOR DELETE — TRIGGERS CONFIRMATION DIALOG OR IMMEDIATE DELETION
+  const handleDelete = useCallback(
+    (record: StaffMember): void => {
+      // IF THE DELETION MODE IS TRASH
+      if (isTrashMode) {
+        // CALL DELETE MUTATION
+        deleteMutation.mutate(record._id);
+        // RETURN EARLY TO STOP FURTHER EXECUTION
+        return;
+      }
+      // STAGE RECORD FOR DELETION
+      setDeleteTarget(record);
+      // OPEN CONFIRMATION DIALOG
+      setDeleteDialogOpen(true);
+    },
+    [isTrashMode, deleteMutation],
+  );
   // HANDLE OPEN SALARY PAYMENT DIALOG
   const handlePaySalary = useCallback((record: StaffMember): void => {
     // SET SELECTED STAFF FOR SALARY PAYMENT
