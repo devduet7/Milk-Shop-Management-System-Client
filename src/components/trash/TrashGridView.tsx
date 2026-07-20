@@ -213,6 +213,7 @@ const TrashGridView = memo(
               startIndex={startIndex}
               onPageChange={onPageChange}
               onRowsPerPageChange={onRowsPerPageChange}
+              bordered={false}
             />
           </div>
         )}

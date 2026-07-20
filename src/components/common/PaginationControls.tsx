@@ -7,6 +7,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { memo } from "react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -26,6 +27,8 @@ interface PaginationControlsProps {
   onPageChange: (page: number) => void;
   // <== ON ROWS PER PAGE CHANGE HANDLER ==>
   onRowsPerPageChange: (value: string) => void;
+  // <== WHETHER TO RENDER THE TOP BORDER ==>
+  bordered?: boolean;
 }
 
 // <== PAGINATION CONTROLS COMPONENT ==>
@@ -38,11 +41,17 @@ const PaginationControls = memo(
     startIndex,
     onPageChange,
     onRowsPerPageChange,
+    bordered = true,
   }: PaginationControlsProps) => {
     // RETURNING PAGINATION CONTROLS
     return (
       // PAGINATION CONTAINER
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-border">
+      <div
+        className={cn(
+          "flex flex-wrap items-center justify-between gap-3 px-4 py-3",
+          bordered && "border-t border-border",
+        )}
+      >
         {/* ROWS PER PAGE SELECTOR */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground whitespace-nowrap">
