@@ -281,8 +281,11 @@ const Trash = memo(() => {
   // HANDLE RESTORE
   const handleRestore = useCallback(
     (record: TrashRecord): void => {
-      // FIRE RESTORE MUTATION
-      restoreMutation.mutate(record._id);
+      // CALL RESTORE MUTATION
+      restoreMutation.mutate({
+        trashId: record._id,
+        entityType: record.entityType,
+      });
     },
     [restoreMutation],
   );
