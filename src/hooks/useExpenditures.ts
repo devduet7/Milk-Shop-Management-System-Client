@@ -11,6 +11,7 @@ import type {
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
+import { trashKeys } from "./useTrash";
 import apiClient from "../lib/apiClient";
 import { dashboardKeys } from "./useDashboard";
 import { analyticsKeys } from "./useAnalytics";
@@ -302,15 +303,17 @@ export const useDeleteExpenditure = () => {
       return response.data;
     },
     // <== ON SUCCESS ==>
-    onSuccess: (): void => {
+    onSuccess: (data): void => {
       // INVALIDATE ALL LIST QUERIES
       queryClient.invalidateQueries({ queryKey: expenditureKeys.lists() });
       // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — EXPENSE TOTAL AND SECTION CHANGE)
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — EXPENDITURES DONUT CHART CHANGES)
       queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
+      // INVALIDATE TRASH QUERIES
+      queryClient.invalidateQueries({ queryKey: trashKeys.all });
       // SHOW SUCCESS TOAST
-      toast.success("Expenditure deleted successfully!");
+      toast.success(data.message || "Expenditure deleted successfully!");
     },
     // <== ON ERROR ==>
     onError: (error: AxiosError<ApiErrorResponse>): void => {

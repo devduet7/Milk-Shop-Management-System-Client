@@ -53,6 +53,20 @@ export const useGetProfile = () => {
   });
 };
 
+/**
+ * DERIVE WHETHER THE ACCOUNT IS CURRENTLY IN TRASH MODE FOR DELETIONS
+ * DEFAULTS TO TRASH MODE (THE SAFER ASSUMPTION) BEFORE THE PROFILE HAS LOADED
+ */
+// <== USE DELETION MODE HOOK ==>
+export const useDeletionMode = () => {
+  // FETCH PROFILE — ALREADY CACHED IF THE PAGE
+  const { data: profile } = useGetProfile();
+  // DERIVING WHETHER TRASH MODE IS ACTIVE
+  const isTrashMode = (profile?.deletionMode ?? "trash") === "trash";
+  // RETURNING BOTH THE RAW MODE AND THE DERIVED BOOLEAN
+  return { deletionMode: profile?.deletionMode ?? "trash", isTrashMode };
+};
+
 // <== HELPER: SYNC PROFILE TO AUTH STORE AND INVALIDATE PROFILE QUERY ==>
 const useSyncProfile = () => {
   // AUTH STORE UPDATE ACTION

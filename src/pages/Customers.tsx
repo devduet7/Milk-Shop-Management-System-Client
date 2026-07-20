@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
+import { useDeletionMode } from "@/hooks/useSettings";
 import type { Customer, ViewMode } from "@/types/customer-types";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
@@ -312,8 +313,10 @@ const Customers = memo(() => {
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
   const monthStr = format(selectedMonth, "yyyy-MM");
-  // DERIVING PERMISSION FLAGS FOR THE "customers" MODULE
+  // DERIVING PERMISSION FLAGS FOR THE CUSTOMERS MODULE
   const { canCreate, canEdit, canDelete } = usePermission("customers");
+  // DERIVING DELETION MODE FOR USER ACCOUNT
+  const { isTrashMode } = useDeletionMode();
   // FETCH CURRENT PAGE FROM SERVER — PAGE AND LIMIT ARE SENT AS QUERY PARAMS
   const { data, isLoading, isError } = useCustomers(
     monthStr,
@@ -421,17 +424,24 @@ const Customers = memo(() => {
     // DELAY CLEARING TARGET UNTIL AFTER PENDING STATE IS FALSE
     setDeleteTarget(null);
   }, [deleteMutation.isPending]);
-  // STAGE CUSTOMER FOR DELETE — OPENS CONFIRMATION DIALOG
+  // STAGE CUSTOMER FOR DELETE — TRIGGERS CONFIRMATION DIALOG OR IMMEDIATE DELETION
   const handleDelete = useCallback(
     (record: Customer): void => {
       // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
       if (!canDelete) return;
-      // STAGE THE RECORD FOR DELETION
+      // IF THE DELETION MODE IS TRASH
+      if (isTrashMode) {
+        // CALL DELETE MUTATION
+        deleteMutation.mutate(record._id);
+        // RETURN EARLY TO STOP FURTHER EXECUTION
+        return;
+      }
+      // STAGE RECORD FOR DELETION
       setDeleteTarget(record);
       // OPEN CONFIRMATION DIALOG
       setDeleteDialogOpen(true);
     },
-    [canDelete],
+    [canDelete, isTrashMode, deleteMutation],
   );
   // SHARED PROPS OBJECT PASSED TO ALL THREE VIEW COMPONENTS
   const viewProps = {

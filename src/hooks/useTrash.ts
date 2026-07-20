@@ -9,6 +9,8 @@ import type {
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
+import { dashboardKeys } from "./useDashboard";
+import { analyticsKeys } from "./useAnalytics";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // <== QUERY PARAMS TYPE ==>
@@ -83,6 +85,7 @@ export const useTrash = ({ entityType, page, limit }: UseTrashParams) => {
 
 /**
  * RESTORE A SINGLE TRASHED ITEM BACK TO ITS ORIGINAL COLLECTION
+ * INVALIDATES BOTH THE TRASH LIST AND THE ITEM'S ORIGIN MODULE SO IT REAPPEARS WITHOUT A RELOAD
  */
 // <== USE RESTORE TRASH ITEM MUTATION HOOK ==>
 export const useRestoreTrashItem = () => {
@@ -92,10 +95,10 @@ export const useRestoreTrashItem = () => {
   return useMutation<
     ApiResponse<{ restored: Record<string, unknown> }>,
     AxiosError<ApiErrorResponse>,
-    string
+    { trashId: string; entityType: TrashCategory }
   >({
     // <== MUTATION FUNCTION ==>
-    mutationFn: async (trashId) => {
+    mutationFn: async ({ trashId }) => {
       // CALL RESTORE API
       const response = await apiClient.patch<
         ApiResponse<{ restored: Record<string, unknown> }>
@@ -104,9 +107,58 @@ export const useRestoreTrashItem = () => {
       return response.data;
     },
     // <== ON SUCCESS ==>
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       // INVALIDATING TRASH LIST CACHE
       queryClient.invalidateQueries({ queryKey: trashKeys.all });
+      // INVALIDATING THE ORIGIN MODULE'S CACHE SO THE RESTORED ITEM REAPPEARS THERE IMMEDIATELY
+      switch (variables.entityType) {
+        // IF THE RESTORED ITEM BELONGS TO THE QUICK SALES MODULE
+        case "QuickSale":
+          // INVALIDATING QUICK SALES QUERIES
+          queryClient.invalidateQueries({ queryKey: ["quickSales", "list"] });
+          // BREAKING OUT OF SWITCH STATEMENT
+          break;
+        // IF THE RESTORED ITEM BELONGS TO THE SALES MODULE
+        case "Sale":
+          // INVALIDATING SALES LIST QUERIES
+          queryClient.invalidateQueries({ queryKey: ["sales", "list"] });
+          // INVALIDATING RECOVERY LIST QUERIES
+          queryClient.invalidateQueries({ queryKey: ["recoveries", "list"] });
+          // BREAKING OUT OF SWITCH STATEMENT
+          break;
+        // IF THE RESTORED ITEM BELONGS TO THE CUSTOMERS MODULE
+        case "Customer":
+          // INVALIDATING CUSTOMERS LIST QUERIES
+          queryClient.invalidateQueries({ queryKey: ["customers", "list"] });
+          // INVALIDATING CUSTOMERS DETAIL QUERIES
+          queryClient.invalidateQueries({ queryKey: ["customers", "detail"] });
+          // INVALIDATING RECOVERY LIST QUERIES
+          queryClient.invalidateQueries({ queryKey: ["recoveries", "list"] });
+          // BREAKING OUT OF SWITCH STATEMENT
+          break;
+        // IF THE RESTORED ITEM BELONGS TO THE EXPENDITURES MODULE
+        case "Expenditure":
+          // INVALIDATING EXPENDITURES LIST QUERIES
+          queryClient.invalidateQueries({ queryKey: ["expenditures", "list"] });
+          // BREAKING OUT OF SWITCH STATEMENT
+          break;
+        // IF THE RESTORED ITEM BELONGS TO THE PURCHASES MODULE
+        case "Purchase":
+          // INVALIDATING PURCHASES LIST QUERIES
+          queryClient.invalidateQueries({ queryKey: ["purchases", "list"] });
+          // BREAKING OUT OF SWITCH STATEMENT
+          break;
+        // IF THE RESTORED ITEM BELONGS TO THE STAFF MODULE
+        case "StaffMember":
+          // INVALIDATING STAFF LIST QUERIES
+          queryClient.invalidateQueries({ queryKey: ["staff", "list"] });
+          // BREAKING OUT OF SWITCH STATEMENT
+          break;
+      }
+      // INVALIDATING DASHBOARD QUERIES
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATING ANALYTICS QUERIES
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success(data.message || "Item restored successfully!");
     },

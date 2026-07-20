@@ -15,6 +15,7 @@ import type {
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
+import { trashKeys } from "./useTrash";
 import apiClient from "../lib/apiClient";
 import { dashboardKeys } from "./useDashboard";
 import { analyticsKeys } from "./useAnalytics";
@@ -329,7 +330,7 @@ export const useDeleteCustomer = () => {
       return response.data;
     },
     // <== ON SUCCESS ==>
-    onSuccess: (): void => {
+    onSuccess: (data): void => {
       // INVALIDATE LIST QUERIES
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       // INVALIDATE RECOVERY LIST QUERIES (CROSS-MODULE SYNC — DELETED CUSTOMER REMOVES DELIVERY OUTSTANDING)
@@ -338,8 +339,10 @@ export const useDeleteCustomer = () => {
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — DELIVERY PERFORMANCE CHART CHANGES)
       queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
+      // INVALIDATE TRASH QUERIES
+      queryClient.invalidateQueries({ queryKey: trashKeys.all });
       // SHOW SUCCESS TOAST
-      toast.success("Customer deleted successfully!");
+      toast.success(data.message || "Customer deleted successfully!");
     },
     // <== ON ERROR ==>
     onError: (error: AxiosError<ApiErrorResponse>): void => {
