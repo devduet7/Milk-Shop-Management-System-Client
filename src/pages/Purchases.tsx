@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
+import { useDeletionMode } from "@/hooks/useSettings";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { usePurchases, useDeletePurchase } from "@/hooks/usePurchases";
 import PurchaseGridView from "@/components/purchases/PurchaseGridView";
@@ -320,8 +321,10 @@ const Purchases = memo(() => {
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
   const monthStr = format(selectedMonth, "yyyy-MM");
-  // DERIVING PERMISSION FLAGS FOR THE "purchases" MODULE
+  // DERIVING PERMISSION FLAGS FOR THE PURCHASES MODULE
   const { canCreate, canEdit, canDelete } = usePermission("purchases");
+  // DERIVING DELETION MODE FOR USER ACCOUNT
+  const { isTrashMode } = useDeletionMode();
   // FETCH PURCHASES FROM SERVER WITH ALL ACTIVE FILTERS
   const { data, isLoading, isError } = usePurchases(
     filter,
@@ -441,17 +444,24 @@ const Purchases = memo(() => {
     // CLEAR STAGED TARGET
     setDeleteTarget(null);
   }, [deleteMutation.isPending]);
-  // STAGE PURCHASE FOR DELETE — OPENS CONFIRMATION DIALOG
+  // STAGE PURCHASE FOR DELETE — TRIGGERS CONFIRMATION DIALOG OR IMMEDIATE DELETION
   const handleDelete = useCallback(
     (record: Purchase): void => {
       // GUARD: BLOCK IF USER LACKS DELETE PERMISSION
       if (!canDelete) return;
-      // STAGE THE RECORD FOR DELETION
+      // IF THE DELETION MODE IS TRASH
+      if (isTrashMode) {
+        // CALL DELETE MUTATION
+        deleteMutation.mutate(record._id);
+        // RETURN EARLY TO STOP FURTHER EXECUTION
+        return;
+      }
+      // STAGE RECORD FOR DELETION
       setDeleteTarget(record);
       // OPEN CONFIRMATION DIALOG
       setDeleteDialogOpen(true);
     },
-    [canDelete],
+    [canDelete, isTrashMode, deleteMutation],
   );
   // IS NEXT MONTH DISABLED (CANNOT NAVIGATE PAST CURRENT MONTH)
   const isNextMonthDisabled =
