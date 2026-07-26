@@ -19,6 +19,7 @@ const Table = forwardRef<HTMLTableElement, HTMLAttributes<HTMLTableElement>>(
     </div>
   ),
 );
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 Table.displayName = "Table";
 
@@ -29,6 +30,7 @@ const TableHeader = forwardRef<
 >(({ className, ...props }, ref) => (
   <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props} />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TableHeader.displayName = "TableHeader";
 
@@ -43,6 +45,7 @@ const TableBody = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TableBody.displayName = "TableBody";
 
@@ -60,6 +63,7 @@ const TableFooter = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TableFooter.displayName = "TableFooter";
 
@@ -77,6 +81,7 @@ const TableRow = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TableRow.displayName = "TableRow";
 
@@ -94,6 +99,7 @@ const TableHead = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TableHead.displayName = "TableHead";
 
@@ -108,6 +114,7 @@ const TableCell = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TableCell.displayName = "TableCell";
 
@@ -122,6 +129,7 @@ const TableCaption = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TableCaption.displayName = "TableCaption";
 
