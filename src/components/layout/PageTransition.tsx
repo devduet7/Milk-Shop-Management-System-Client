@@ -16,6 +16,7 @@ const PAGE_VARIANTS: Variants = {
     transition: { duration: 0.2 },
   },
 };
+
 // <== PAGE TRANSITION PROPS INTERFACE ==>
 interface PageTransitionProps {
   // <== CHILDREN ==>
@@ -36,7 +37,9 @@ const PageTransition = memo(({ children, className }: PageTransitionProps) => (
     {children}
   </motion.div>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 PageTransition.displayName = "PageTransition";
+
 // <== EXPORT ==>
 export { PageTransition };
