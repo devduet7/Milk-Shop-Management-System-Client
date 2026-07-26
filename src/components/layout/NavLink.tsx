@@ -34,7 +34,9 @@ const NavLink = memo(
     },
   ),
 );
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 NavLink.displayName = "NavLink";
+
 // <== EXPORT ==>
 export { NavLink };
