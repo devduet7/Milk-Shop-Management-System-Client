@@ -36,6 +36,7 @@ const ThemeProvider = memo(({ children }: ThemeProviderProps) => {
     </ThemeContext.Provider>
   );
 });
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 ThemeProvider.displayName = "ThemeProvider";
 
