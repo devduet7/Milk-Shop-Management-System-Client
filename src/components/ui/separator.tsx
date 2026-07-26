@@ -4,8 +4,8 @@ import {
   type ElementRef,
   type ComponentPropsWithoutRef,
 } from "react";
-import * as SeparatorPrimitive from "@radix-ui/react-separator";
 import { cn } from "@/lib/utils";
+import * as SeparatorPrimitive from "@radix-ui/react-separator";
 
 // <== SEPARATOR COMPONENT ==>
 const Separator = forwardRef<
@@ -29,6 +29,7 @@ const Separator = forwardRef<
     />
   ),
 );
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 Separator.displayName = SeparatorPrimitive.Root.displayName;
 
