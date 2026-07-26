@@ -5,8 +5,8 @@ import {
   CATEGORY_CONFIG,
   getDaysUntilPurge,
 } from "@/lib/trashUtils";
-import { cn } from "@/lib/utils";
 import { memo } from "react";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
