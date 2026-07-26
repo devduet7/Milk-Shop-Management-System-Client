@@ -163,7 +163,7 @@ export type DashboardStaffStats = {
   pendingCount: number;
 };
 
-// <== RECOVERY STATS TYPE (ALL-TIME) ==>
+// <== RECOVERY STATS TYPE ==>
 export type DashboardRecoveryStats = {
   // <== DELIVERY OUTSTANDING FOR ALL-TIME ==>
   deliveryOutstanding: number;
