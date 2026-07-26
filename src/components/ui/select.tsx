@@ -34,6 +34,7 @@ const SelectTrigger = forwardRef<
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
@@ -53,6 +54,7 @@ const SelectScrollUpButton = forwardRef<
     <ChevronUp className="h-4 w-4" />
   </SelectPrimitive.ScrollUpButton>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName;
 
@@ -72,6 +74,7 @@ const SelectScrollDownButton = forwardRef<
     <ChevronDown className="h-4 w-4" />
   </SelectPrimitive.ScrollDownButton>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SelectScrollDownButton.displayName =
   SelectPrimitive.ScrollDownButton.displayName;
@@ -110,6 +113,7 @@ const SelectContent = forwardRef<
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
@@ -124,6 +128,7 @@ const SelectLabel = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
@@ -150,6 +155,7 @@ const SelectItem = forwardRef<
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
@@ -164,6 +170,7 @@ const SelectSeparator = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 
