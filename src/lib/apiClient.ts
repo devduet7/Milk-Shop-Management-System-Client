@@ -18,11 +18,13 @@ interface ApiErrorResponse {
   // <== SUCCESS FLAG ==>
   success?: boolean;
 }
+
 // <== EXTENDED REQUEST CONFIG WITH RETRY FLAG ==>
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   // <== RETRY FLAG TO PREVENT INFINITE LOOPS ==>
   _retry?: boolean;
 }
+
 // <== TOKEN REFRESH CALLBACK TYPE ==>
 type TokenRefreshCallback = (error?: AxiosError) => void;
 
