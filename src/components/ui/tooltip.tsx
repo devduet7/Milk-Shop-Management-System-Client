@@ -31,6 +31,7 @@ const TooltipContent = forwardRef<
     />
   </TooltipPrimitive.Portal>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
