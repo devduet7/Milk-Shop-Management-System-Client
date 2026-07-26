@@ -2,9 +2,9 @@
 import {
   BarChart2,
   DollarSign,
+  TrendingUp,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
   TrendingDown,
   type LucideIcon,
 } from "lucide-react";

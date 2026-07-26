@@ -24,6 +24,7 @@ const TabsList = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TabsList.displayName = TabsPrimitive.List.displayName;
 
@@ -41,6 +42,7 @@ const TabsTrigger = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
@@ -58,6 +60,7 @@ const TabsContent = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 TabsContent.displayName = TabsPrimitive.Content.displayName;
 

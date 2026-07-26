@@ -31,7 +31,7 @@ export type MonthlyBreakdownEntry = MonthlyStats & {
   paymentStatus: PaymentStatus;
 };
 
-// <== CUSTOMER TYPE (FROM LIST ENDPOINT) ==>
+// <== CUSTOMER TYPE ==>
 export type Customer = {
   // <== MONGODB ID ==>
   _id: string;
@@ -71,7 +71,7 @@ export type CustomersSummary = {
   totalOutstanding: number;
 };
 
-// <== PAGINATION META TYPE (FROM SERVER PAGINATION RESPONSE) ==>
+// <== PAGINATION META TYPE ==>
 export type PaginationMeta = {
   // <== CURRENT PAGE NUMBER ==>
   page: number;
@@ -87,7 +87,7 @@ export type PaginationMeta = {
   hasPrevPage: boolean;
 };
 
-// <== CUSTOMERS LIST DATA TYPE (GET /customers RESPONSE) ==>
+// <== CUSTOMERS LIST DATA TYPE ==>
 export type CustomersListData = {
   // <== CUSTOMERS ARRAY ==>
   customers: Customer[];

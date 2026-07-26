@@ -28,6 +28,7 @@ const Switch = forwardRef<
     />
   </SwitchPrimitives.Root>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 Switch.displayName = SwitchPrimitives.Root.displayName;
 

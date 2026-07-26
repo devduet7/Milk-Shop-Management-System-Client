@@ -14,7 +14,7 @@ import { Moon, Sun, Milk, Eye, EyeOff, Loader2 } from "lucide-react";
 import { loginSchema, type LoginFormValues } from "@/validators/authSchemas";
 
 // <== LOGIN PAGE COMPONENT ==>
-const Login = () => {
+const Login = memo(() => {
   // SHOW PASSWORD STATE
   const [showPw, setShowPw] = useState<boolean>(false);
   // THEME HOOK
@@ -205,10 +205,10 @@ const Login = () => {
       </motion.div>
     </div>
   );
-};
+});
 
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 Login.displayName = "Login";
 
 // <== MEMOIZED EXPORT TO PREVENT UNNECESSARY RE-RENDERS ==>
-export default memo(Login);
+export default Login;

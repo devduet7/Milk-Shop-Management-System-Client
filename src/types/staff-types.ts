@@ -18,7 +18,7 @@ export type StaffMonthRecord = {
   totalExtraAllocated: number;
 };
 
-// <== STAFF MEMBER TYPE (ENRICHED WITH MONTH DATA) ==>
+// <== STAFF MEMBER TYPE ==>
 export type StaffMember = {
   // <== MONGODB ID ==>
   _id: string;

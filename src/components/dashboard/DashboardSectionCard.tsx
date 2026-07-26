@@ -57,7 +57,7 @@ interface DashboardSectionCardProps {
   defaultExpanded?: boolean;
 }
 
-// <== DASHBOARD SECTION CARD — COLLAPSIBLE SECTION WITH STATS CHIPS AND RECORDS TABLE ==>
+// <== DASHBOARD SECTION CARD COMPONENT ==>
 const DashboardSectionCard = memo(
   ({
     title,

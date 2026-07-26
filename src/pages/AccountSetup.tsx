@@ -1,7 +1,7 @@
 // <== IMPORTS ==>
 import {
-  useCompleteAccountSetup,
   type ApiErrorResponse,
+  useCompleteAccountSetup,
 } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { type AxiosError } from "axios";

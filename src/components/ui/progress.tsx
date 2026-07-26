@@ -27,6 +27,7 @@ const Progress = forwardRef<
     />
   </ProgressPrimitive.Root>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 Progress.displayName = ProgressPrimitive.Root.displayName;
 

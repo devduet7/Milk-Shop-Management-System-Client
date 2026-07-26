@@ -16,7 +16,7 @@ export type Sale = {
   _id: string;
   // <== USER ID ==>
   userId: string;
-  // <== SALE TYPE (customer | shop) ==>
+  // <== SALE TYPE ==>
   saleType: SaleType;
   // <== CUSTOMER NAME (NULL FOR SHOP SALES) ==>
   customerName: string | null;
@@ -42,7 +42,7 @@ export type Sale = {
   updatedAt: string;
 };
 
-// <== SALE STATS TYPE (ALWAYS COMBINED — ALL SALE TYPES FOR THE PERIOD) ==>
+// <== SALE STATS TYPE ==>
 export type SaleStats = {
   // <== TOTAL REVENUE ACROSS ALL SALES ==>
   totalRevenue: number;

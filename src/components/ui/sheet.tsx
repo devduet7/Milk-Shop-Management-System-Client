@@ -33,6 +33,7 @@ const SheetOverlay = forwardRef<
     ref={ref}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
@@ -83,6 +84,7 @@ const SheetContent = forwardRef<
     </SheetPrimitive.Content>
   </SheetPortal>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
@@ -99,6 +101,7 @@ const SheetHeader = ({
     {...props}
   />
 );
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SheetHeader.displayName = "SheetHeader";
 
@@ -115,6 +118,7 @@ const SheetFooter = ({
     {...props}
   />
 );
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SheetFooter.displayName = "SheetFooter";
 
@@ -129,6 +133,7 @@ const SheetTitle = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SheetTitle.displayName = SheetPrimitive.Title.displayName;
 
@@ -143,6 +148,7 @@ const SheetDescription = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 

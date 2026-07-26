@@ -132,7 +132,7 @@ export type RecoveryAppliedFilter = {
   endDate: string;
 };
 
-// <== RECOVERIES LIST DATA TYPE (GET /recoveries RESPONSE) ==>
+// <== RECOVERIES LIST DATA TYPE ==>
 export type RecoveriesListData = {
   // <== PAGINATED RECOVERY RECORDS FOR THE ACTIVE TAB ==>
   records: DeliveryRecovery[] | SaleRecovery[];
@@ -158,7 +158,7 @@ export type AddDeliveryPaymentFormValues = {
 
 // <== UPDATE SALE PAYMENT FORM VALUES TYPE ==>
 export type UpdateSalePaymentFormValues = {
-  // <== NEW PAID AMOUNT (0 to totalAmount) ==>
+  // <== NEW PAID AMOUNT ==>
   paidAmount: number;
 };
 

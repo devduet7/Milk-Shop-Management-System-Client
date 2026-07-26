@@ -32,6 +32,7 @@ const DialogOverlay = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
@@ -59,6 +60,7 @@ const DialogContent = forwardRef<
     </DialogPrimitive.Content>
   </DialogPortal>
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
@@ -75,6 +77,7 @@ const DialogHeader = ({
     {...props}
   />
 );
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 DialogHeader.displayName = "DialogHeader";
 
@@ -91,6 +94,7 @@ const DialogFooter = ({
     {...props}
   />
 );
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 DialogFooter.displayName = "DialogFooter";
 
@@ -108,6 +112,7 @@ const DialogTitle = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 
@@ -122,6 +127,7 @@ const DialogDescription = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
