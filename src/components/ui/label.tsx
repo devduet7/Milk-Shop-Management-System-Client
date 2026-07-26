@@ -25,6 +25,7 @@ const Label = forwardRef<
     {...props}
   />
 ));
+
 // <== DISPLAY NAME FOR DEVTOOLS ==>
 Label.displayName = LabelPrimitive.Root.displayName;
 
