@@ -1,5 +1,4 @@
 // <== IMPORTS ==>
-import { useEffect } from "react";
 import type {
   ApiResponse,
   TrashListData,
@@ -7,6 +6,7 @@ import type {
   ApiErrorResponse,
 } from "../types/trash-types";
 import { toast } from "sonner";
+import { useEffect } from "react";
 import { AxiosError } from "axios";
 import apiClient from "../lib/apiClient";
 import { dashboardKeys } from "./useDashboard";
