@@ -29,10 +29,6 @@ interface DeliveryPaymentDialogProps {
   onClose: () => void;
 }
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== DELIVERY PAYMENT DIALOG COMPONENT ==>
 const DeliveryPaymentDialog = memo(
   ({ open, customer, onClose }: DeliveryPaymentDialogProps) => {
@@ -186,7 +182,7 @@ const DeliveryPaymentDialog = memo(
                       type="number"
                       inputMode="numeric"
                       placeholder="Enter amount"
-                      className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                      className="mt-1.5 h-10"
                       disabled={isPending}
                       {...register("amount", { valueAsNumber: true })}
                     />
