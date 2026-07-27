@@ -37,10 +37,6 @@ interface ShopSaleFormDialogProps {
   onClose: () => void;
 }
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== SHOP SALE FORM DIALOG COMPONENT ==>
 const ShopSaleFormDialog = memo(
   ({ open, editSale, onClose }: ShopSaleFormDialogProps) => {
@@ -212,7 +208,7 @@ const ShopSaleFormDialog = memo(
                     type="number"
                     inputMode="decimal"
                     placeholder="e.g. 20"
-                    className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                    className="mt-1.5 h-10"
                     disabled={isPending}
                     {...register("quantity", { valueAsNumber: true })}
                   />
@@ -236,7 +232,7 @@ const ShopSaleFormDialog = memo(
                     type="number"
                     inputMode="numeric"
                     placeholder="e.g. 120"
-                    className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                    className="mt-1.5 h-10"
                     disabled={isPending}
                     {...register("pricePerUnit", { valueAsNumber: true })}
                   />
