@@ -4,10 +4,6 @@ import { Label } from "@/components/ui/label";
 import { Edit2, Check, X, Loader2, ShieldCheck } from "lucide-react";
 import { memo, useState, useRef, useEffect, useCallback } from "react";
 
-// <== NO SPINNER CLASS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== EDITABLE FIELD PROPS ==>
 interface EditableFieldProps {
   // <== FIELD ID FOR LABEL ASSOCIATION ==>
@@ -169,10 +165,7 @@ const EditableField = memo(
                   if (error) setError(null);
                 }}
                 onKeyDown={handleKeyDown}
-                className={cn(
-                  "flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground",
-                  NO_SPINNER,
-                )}
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 disabled={isLoading}
               />
               {/* SAVE BUTTON */}
