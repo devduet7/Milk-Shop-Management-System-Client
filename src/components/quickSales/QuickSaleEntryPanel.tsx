@@ -15,10 +15,6 @@ const MILK_RATE_KEY = "qs_milk_rate";
 // <== LOCAL STORAGE YOGHURT RATE KEY FOR PERSISTED RATES ==>
 const YOGHURT_RATE_KEY = "qs_yoghurt_rate";
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== ENTRY FORM SCHEMA — VALIDATES QUANTITY INPUT ONLY ==>
 const entrySchema = z.object({
   // <== QUANTITY FIELD (REQUIRED) ==>
@@ -123,7 +119,7 @@ const LockedRateDisplay = memo(
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={handleKeyDown}
-              className={cn("h-8 w-20 text-xs", NO_SPINNER)}
+              className="h-8 w-20 text-xs"
             />
             {/* BUTTON ROW */}
             <div className="flex items-center gap-1.5 shrink-0">
@@ -319,17 +315,10 @@ const SaleForm = memo(
               step="0.5"
               min="0"
               placeholder={isMilk ? "e.g. 2.5" : "e.g. 1.5"}
-              className={cn("mt-1.5 h-10", NO_SPINNER)}
+              className="mt-1.5 h-10"
               disabled={isPending}
               value={inputValue}
               onChange={handleChange}
-              onWheel={(e) => e.currentTarget.blur()}
-              onKeyDown={(e) => {
-                // PREVENT NEGATIVE AND SCIENTIFIC NOTATION INPUT
-                if (e.key === "-" || e.key === "e" || e.key === "E")
-                  // PREVENT DEFAULT TO BLOCK THE KEY INPUT
-                  e.preventDefault();
-              }}
             />
             {/* VALIDATION ERROR — ONLY SHOWN WHEN FIELD HAS A POSITIVE VALUE */}
             {inputError && inputQty > 0 && (
