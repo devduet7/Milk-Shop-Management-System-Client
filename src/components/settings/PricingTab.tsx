@@ -1,15 +1,12 @@
 // <== IMPORTS ==>
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { memo, useState, useCallback } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useGetProfile, useUpdatePricing } from "@/hooks/useSettings";
 import { Milk, IceCream, Edit2, Check, X, Loader2 } from "lucide-react";
-
-// <== NO SPINNER CLASS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 // <== RATE EDIT CARD PROPS ==>
 interface RateEditCardProps {
@@ -131,16 +128,15 @@ const RateEditCard = memo(
           </Label>
           <div
             className={cn(
-              "flex items-center gap-2 h-10 px-3 mt-1.5 rounded-lg border transition-colors",
-              isEditing
-                ? "border-primary/60 bg-background ring-1 ring-primary/20"
-                : "border-border bg-muted/30",
+              "flex items-center gap-2 mt-1.5",
+              !isEditing &&
+                "h-10 px-3 rounded-lg border border-border bg-muted/30 transition-colors",
             )}
           >
             {isEditing ? (
               // EDIT MODE
               <>
-                <input
+                <Input
                   id={`rate-${label}`}
                   type="number"
                   inputMode="numeric"
@@ -150,10 +146,7 @@ const RateEditCard = memo(
                     if (error) setError(null);
                   }}
                   onKeyDown={handleKeyDown}
-                  className={cn(
-                    "flex-1 bg-transparent text-sm outline-none",
-                    NO_SPINNER,
-                  )}
+                  className="flex-1 h-10 rounded-lg border-primary/60 bg-background ring-1 ring-primary/20"
                   disabled={isLoading}
                 />
                 {/* SAVE BUTTON */}
