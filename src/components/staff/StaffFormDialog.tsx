@@ -21,10 +21,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import type { StaffMember } from "@/types/staff-types";
 import { useAddStaff, useUpdateStaff } from "@/hooks/useStaff";
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== STAFF FORM DIALOG PROPS ==>
 interface StaffFormDialogProps {
   // <== DIALOG OPEN STATE ==>
@@ -187,7 +183,7 @@ const StaffFormDialog = memo(
                   type="number"
                   inputMode="numeric"
                   placeholder="Enter monthly salary"
-                  className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                  className="mt-1.5 h-10"
                   disabled={isPending}
                   {...register("monthlySalary", { valueAsNumber: true })}
                 />

@@ -39,10 +39,6 @@ interface ExpenditureFormDialogProps {
   onClose: () => void;
 }
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== EXPENDITURE FORM DIALOG COMPONENT ==>
 const ExpenditureFormDialog = memo(
   ({ open, editExpenditure, onClose }: ExpenditureFormDialogProps) => {
@@ -219,7 +215,7 @@ const ExpenditureFormDialog = memo(
                   type="number"
                   inputMode="numeric"
                   placeholder="e.g. 1500"
-                  className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                  className="mt-1.5 h-10"
                   disabled={isPending}
                   {...register("amount", { valueAsNumber: true })}
                 />

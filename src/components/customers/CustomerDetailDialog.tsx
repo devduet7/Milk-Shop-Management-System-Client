@@ -41,10 +41,6 @@ interface CustomerDetailDialogProps {
   onClose: () => void;
 }
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== GET NEXT DELIVERY STATUS (3-STATE CYCLE) ==>
 const getNextDeliveryStatus = (
   current: DeliveryStatus | null,
@@ -421,7 +417,6 @@ const CustomerDetailDialog = memo(
                         }
                         className={cn(
                           "w-full",
-                          NO_SPINNER,
                           paymentError &&
                             "border-destructive focus-visible:ring-destructive",
                         )}

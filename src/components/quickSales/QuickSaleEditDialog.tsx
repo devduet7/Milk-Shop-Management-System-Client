@@ -20,10 +20,6 @@ import { Loader2, Milk, IceCream, Edit2 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import type { QuickSale, QuickSaleType } from "@/types/quick-sale-types";
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== QUICK SALE EDIT DIALOG PROPS ==>
 interface QuickSaleEditDialogProps {
   // <== DIALOG OPEN STATE ==>
@@ -207,7 +203,7 @@ const QuickSaleEditDialog = memo(
                       type="number"
                       inputMode="decimal"
                       step="0.5"
-                      className={cn("mt-1.5 h-10", NO_SPINNER)}
+                      className="mt-1.5 h-10"
                       disabled={isPending}
                       {...register("quantity", { valueAsNumber: true })}
                     />
@@ -230,7 +226,7 @@ const QuickSaleEditDialog = memo(
                       id="eq-rate"
                       type="number"
                       inputMode="numeric"
-                      className={cn("mt-1.5 h-10", NO_SPINNER)}
+                      className="mt-1.5 h-10"
                       disabled={isPending}
                       {...register("rate", { valueAsNumber: true })}
                     />

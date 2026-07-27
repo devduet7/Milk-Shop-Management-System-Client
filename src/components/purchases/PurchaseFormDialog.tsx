@@ -29,10 +29,6 @@ interface PurchaseFormDialogProps {
   onClose: () => void;
 }
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== PURCHASE FORM DIALOG COMPONENT ==>
 const PurchaseFormDialog = memo(
   ({ open, editPurchase, onClose }: PurchaseFormDialogProps) => {
@@ -174,7 +170,7 @@ const PurchaseFormDialog = memo(
                     type="number"
                     inputMode="decimal"
                     placeholder="e.g. 50"
-                    className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                    className="mt-1.5 h-10"
                     disabled={isPending}
                     {...register("milkQuantity", { valueAsNumber: true })}
                   />
@@ -198,7 +194,7 @@ const PurchaseFormDialog = memo(
                     type="number"
                     inputMode="numeric"
                     placeholder="e.g. 5000"
-                    className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                    className="mt-1.5 h-10"
                     disabled={isPending}
                     {...register("totalCost", { valueAsNumber: true })}
                   />
