@@ -35,10 +35,6 @@ interface SalePaymentUpdateDialogProps {
   canDelete: boolean;
 }
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== SALE PAYMENT UPDATE DIALOG COMPONENT ==>
 const SalePaymentUpdateDialog = memo(
   ({ open, sale, onClose, canDelete }: SalePaymentUpdateDialogProps) => {
@@ -196,7 +192,7 @@ const SalePaymentUpdateDialog = memo(
                       type="number"
                       inputMode="numeric"
                       placeholder={`0 – ${sale.totalAmount.toLocaleString()}`}
-                      className={`mt-1.5 h-10 ${NO_SPINNER}`}
+                      className="mt-1.5 h-10"
                       disabled={isPending}
                       {...register("paidAmount", { valueAsNumber: true })}
                     />
