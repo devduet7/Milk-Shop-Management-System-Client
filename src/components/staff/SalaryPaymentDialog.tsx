@@ -20,10 +20,6 @@ import { memo, useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { StaffMember } from "@/types/staff-types";
 
-// <== NO SPINNER CLASS — HIDES BROWSER NATIVE NUMBER INPUT ARROWS ==>
-const NO_SPINNER =
-  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
 // <== SALARY PAYMENT DIALOG PROPS ==>
 interface SalaryPaymentDialogProps {
   // <== DIALOG OPEN STATE ==>
@@ -208,7 +204,7 @@ const SalaryPaymentDialog = memo(
                       type="number"
                       inputMode="numeric"
                       placeholder={`1 – ${remaining.toLocaleString()}`}
-                      className={`h-10 ${NO_SPINNER}`}
+                      className="h-10"
                       disabled={isPending}
                       {...register("amount", { valueAsNumber: true })}
                     />
