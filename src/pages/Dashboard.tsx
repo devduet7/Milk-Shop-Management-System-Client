@@ -7,6 +7,7 @@ import { memo, useState, useCallback } from "react";
 import { useDashboardSummary } from "@/hooks/useDashboard";
 import SalesSection from "@/components/dashboard/SalesSection";
 import StaffSection from "@/components/dashboard/StaffSection";
+import MilkLogSection from "@/components/dashboard/MilkLogSection";
 import { PageTransition } from "@/components/layout/PageTransition";
 import DeliverySection from "@/components/dashboard/DeliverySection";
 import RecoverySection from "@/components/dashboard/RecoverySection";
@@ -174,6 +175,14 @@ const Dashboard = memo(() => {
           transition={{ delay: 0.2 }}
         >
           <PurchasesSection stats={summary?.purchases} month={monthStr} />
+        </motion.div>
+        {/* MILK LOG SECTION */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+        >
+          <MilkLogSection stats={summary?.milkLog} month={monthStr} />
         </motion.div>
         {/* EXPENDITURES SECTION */}
         <motion.div
