@@ -6,6 +6,7 @@ import type {
   DashboardSummary,
   DashboardSaleRecord,
   DashboardStaffRecord,
+  DashboardMilkLogRecord,
   DashboardPagedResponse,
   DashboardProductFilter,
   DashboardCategoryFilter,
@@ -68,6 +69,9 @@ export const dashboardKeys = {
   // <== CUSTOMERS KEY ==>
   customers: (month: string, page: number, limit: number) =>
     [...dashboardKeys.all, "customers", month, page, limit] as const,
+  // <== MILK LOGS KEY ==>
+  milkLogs: (month: string, page: number, limit: number) =>
+    [...dashboardKeys.all, "milkLogs", month, page, limit] as const,
 };
 
 // <== SHARED QUERY CONFIG ==>
@@ -518,6 +522,70 @@ export const useDashboardCustomers = (
           const response = await apiClient.get<
             ApiResponse<DashboardPagedResponse<DashboardCustomerRecord>>
           >("/dashboard/customers", {
+            params: { month, page: String(page + 1), limit: String(limit) },
+          });
+          // RETURN DATA
+          return response.data.data;
+        },
+        // <== STAKE TIME FROM SHARED QUERY CONFIG ==>
+        staleTime: SHARED_CONFIG.staleTime,
+      });
+    }
+  }, [query.data, month, page, limit, queryClient]);
+  // RETURN QUERY
+  return query;
+};
+
+/**
+ * FETCH AND CACHE PAGINATED MILK LOG ENTRIES FOR THE SELECTED MONTH
+ */
+// <== USE DASHBOARD MILK LOGS HOOK ==>
+export const useDashboardMilkLogs = (
+  month: string,
+  page: number,
+  limit: number,
+) => {
+  // GET AUTH STATE FROM STORE
+  const { isAuthenticated, isLoggingOut } = useAuthStore();
+  // USING THE QUERY CLIENT TO FETCH DATA
+  const queryClient = useQueryClient();
+  // RETURN QUERY
+  const query = useQuery<
+    DashboardPagedResponse<DashboardMilkLogRecord>,
+    AxiosError<ApiErrorResponse>
+  >({
+    // <== QUERY KEY ==>
+    queryKey: dashboardKeys.milkLogs(month, page, limit),
+    // <== QUERY FUNCTION ==>
+    queryFn: async () => {
+      // MAKING REQUEST TO GET DASHBOARD MILK LOGS
+      const response = await apiClient.get<
+        ApiResponse<DashboardPagedResponse<DashboardMilkLogRecord>>
+      >("/dashboard/milk-logs", {
+        params: { month, page: String(page), limit: String(limit) },
+      });
+      // RETURN DATA
+      return response.data.data;
+    },
+    // <== ENABLE QUERY IF AUTHENTICATED ==>
+    enabled: isAuthenticated && !isLoggingOut,
+    // <== SHARED QUERY CONFIG ==>
+    ...SHARED_CONFIG,
+  });
+  // SILENTLY PREFETCH NEXT PAGE
+  useEffect(() => {
+    // IF NEXT PAGE EXISTS
+    if (query.data?.pagination?.hasNextPage) {
+      // SILENTLY PREFETCH NEXT PAGE
+      queryClient.prefetchQuery({
+        // <== QUERY KEY ==>
+        queryKey: dashboardKeys.milkLogs(month, page + 1, limit),
+        // <== QUERY FUNCTION ==>
+        queryFn: async () => {
+          // MAKING REQUEST TO GET DASHBOARD MILK LOGS
+          const response = await apiClient.get<
+            ApiResponse<DashboardPagedResponse<DashboardMilkLogRecord>>
+          >("/dashboard/milk-logs", {
             params: { month, page: String(page + 1), limit: String(limit) },
           });
           // RETURN DATA
