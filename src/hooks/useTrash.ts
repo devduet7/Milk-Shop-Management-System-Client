@@ -148,6 +148,12 @@ export const useRestoreTrashItem = () => {
           queryClient.invalidateQueries({ queryKey: ["purchases", "list"] });
           // BREAKING OUT OF SWITCH STATEMENT
           break;
+        // IF THE RESTORED ITEM BELONGS TO THE MILK-LOG MODULE
+        case "MilkLog":
+          // INVALIDATING MILK LOG LIST QUERIES
+          queryClient.invalidateQueries({ queryKey: ["milkLogs", "list"] });
+          // BREAKING OUT OF SWITCH STATEMENT
+          break;
         // IF THE RESTORED ITEM BELONGS TO THE STAFF MODULE
         case "StaffMember":
           // INVALIDATING STAFF LIST QUERIES
