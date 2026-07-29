@@ -272,11 +272,7 @@ export const useDeletePurchase = () => {
   // QUERY CLIENT FOR CACHE INVALIDATION
   const queryClient = useQueryClient();
   // RETURN MUTATION
-  return useMutation<
-    ApiResponse<void>,
-    AxiosError<ApiErrorResponse>,
-    string // PURCHASE ID
-  >({
+  return useMutation<ApiResponse<void>, AxiosError<ApiErrorResponse>, string>({
     // <== MUTATION FUNCTION ==>
     mutationFn: async (id: string): Promise<ApiResponse<void>> => {
       // CALL DELETE PURCHASE API
