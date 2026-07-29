@@ -5,6 +5,7 @@ import Sales from "@/pages/Sales";
 import Staff from "@/pages/Staff";
 import Trash from "@/pages/Trash";
 import NotFound from "@/pages/NotFound";
+import MilkLogs from "@/pages/MilkLogs";
 import Dashboard from "@/pages/Dashboard";
 import Purchases from "@/pages/Purchases";
 import Analytics from "@/pages/Analytics";
@@ -95,6 +96,15 @@ const App = () => (
                     element={
                       <AdminRoute>
                         <Staff />
+                      </AdminRoute>
+                    }
+                  />
+                  {/* MILK LOG — ADMIN-AND-ABOVE ONLY */}
+                  <Route
+                    path="/milk-logs"
+                    element={
+                      <AdminRoute>
+                        <MilkLogs />
                       </AdminRoute>
                     }
                   />
