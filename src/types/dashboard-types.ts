@@ -194,6 +194,8 @@ export type DashboardSummary = {
   quickSales: DashboardQuickSalesStats;
   // <== PURCHASES STATS FOR THE MONTH ==>
   purchases: DashboardPurchasesStats;
+  // <== MILK LOG STATS FOR THE MONTH ==>
+  milkLog: DashboardMilkLogStats;
   // <== EXPENDITURES STATS FOR THE MONTH ==>
   expenditures: DashboardExpendituresStats;
   // <== DELIVERIES STATS FOR THE MONTH ==>
@@ -341,6 +343,32 @@ export type DashboardCustomerRecord = {
     // <== PENDING BILLING AMOUNT ==>
     billingPending: number;
   };
+};
+
+// <== DASHBOARD MILK LOG STATS TYPE ==>
+export type DashboardMilkLogStats = {
+  // <== TOTAL LEFTOVER CARRIED OVER FROM PREVIOUS DAYS ==>
+  totalLeftover: number;
+  // <== TOTAL MILK USED FOR YOGHURT ==>
+  totalYoghurt: number;
+  // <== TOTAL ENTRIES ==>
+  totalEntries: number;
+  // <== SHARE OF TOTAL LOGGED VOLUME THAT WENT TO YOGHURT (0-100) ==>
+  yoghurtSharePercent: number;
+};
+
+// <== DASHBOARD MILK LOG RECORD TYPE ==>
+export type DashboardMilkLogRecord = {
+  // <== MILK LOG RECORD ID ==>
+  _id: string;
+  // <== ENTRY TYPE ==>
+  type: "leftover" | "yoghurt";
+  // <== QUANTITY IN LITERS ==>
+  quantity: number;
+  // <== DATE ==>
+  date: string;
+  // <== NOTE ==>
+  note: string | null;
 };
 
 // <== GENERIC API RESPONSE WRAPPER ==>
