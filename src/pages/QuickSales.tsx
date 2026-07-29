@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
 import { useDeletionMode } from "@/hooks/useSettings";
+import DatePicker from "@/components/common/DatePicker";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuickSales, useDeleteQuickSale } from "@/hooks/useQuickSales";
@@ -40,7 +41,6 @@ import QuickSaleGridView from "@/components/quickSales/QuickSaleGridView";
 import QuickSaleTableView from "@/components/quickSales/QuickSaleTableView";
 import QuickSaleStatsCards from "@/components/quickSales/QuickSaleStatsCards";
 import QuickSaleEntryPanel from "@/components/quickSales/QuickSaleEntryPanel";
-import QuickSaleDatePicker from "@/components/quickSales/QuickSaleDatePicker";
 import QuickSaleEditDialog from "@/components/quickSales/QuickSaleEditDialog";
 import QuickSaleDeleteDialog from "@/components/quickSales/QuickSaleDeleteDialog";
 
@@ -579,7 +579,7 @@ const QuickSales = memo(() => {
             </button>
           ))}
           {/* CUSTOM DATE PICKER */}
-          <QuickSaleDatePicker
+          <DatePicker
             selectedDate={specificDate}
             onDateSelect={handleDateSelect}
             onClear={handleDateClear}

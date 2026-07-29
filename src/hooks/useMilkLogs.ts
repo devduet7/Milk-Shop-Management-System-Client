@@ -1,69 +1,77 @@
 // <== IMPORTS ==>
 import type {
-  Purchase,
+  MilkLog,
   ApiResponse,
-  PurchaseFilter,
+  MilkLogListData,
   ApiErrorResponse,
-  PurchasesListData,
-  AddPurchaseFormValues,
-  UpdatePurchaseVariables,
-} from "../types/purchase-types";
+  MilkLogFilterType,
+  MilkLogTypeFilter,
+  AddMilkLogFormValues,
+  UpdateMilkLogVariables,
+} from "../types/milk-log-types";
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { AxiosError } from "axios";
 import { trashKeys } from "./useTrash";
 import apiClient from "../lib/apiClient";
 import { dashboardKeys } from "./useDashboard";
-import { analyticsKeys } from "./useAnalytics";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // <== QUERY KEY FACTORY ==>
-export const purchaseKeys = {
-  // <== ROOT KEY FOR ALL PURCHASE QUERIES ==>
-  all: ["purchases"] as const,
+export const milkLogKeys = {
+  // <== ROOT KEY FOR ALL MILK LOG QUERIES ==>
+  all: ["milkLogs"] as const,
   // <== LIST QUERY NAMESPACE ==>
-  lists: () => [...purchaseKeys.all, "list"] as const,
+  lists: () => [...milkLogKeys.all, "list"] as const,
   // <== SPECIFIC LIST WITH ALL ACTIVE FILTERS (EACH COMBINATION CACHED SEPARATELY) ==>
   list: (filters: {
-    filter: PurchaseFilter;
+    filterType: MilkLogFilterType;
+    date: string;
     month: string;
-    search: string;
+    rangeStart: string;
+    rangeEnd: string;
+    entryType: MilkLogTypeFilter;
     page: number;
     limit: number;
-  }) => [...purchaseKeys.lists(), filters] as const,
+  }) => [...milkLogKeys.lists(), filters] as const,
 };
 
 /**
- * FETCH PURCHASES WITH FILTERS, PAGINATION, AND PERIOD STATS
- * @param filter - PERIOD FILTER TYPE (TODAY | WEEK | MONTH)
- * @param month - BILLING MONTH STRING (YYYY-MM) — ONLY USED WHEN FILTER IS MONTH
- * @param search - OPTIONAL SUPPLIER SEARCH QUERY STRING
- * @param page - CURRENT PAGE NUMBER (1-BASED)
- * @param limit - ITEMS PER PAGE
- * @returns PURCHASES LIST DATA WITH PAGINATION AND STATS
+ * FETCH MILK LOG ENTRIES WITH FILTERS, PAGINATION, AND PERIOD STATS
  */
-// <== FETCH PURCHASES QUERY FUNCTION ==>
-const fetchPurchases = async (
-  filter: PurchaseFilter,
+// <== FETCH MILK LOGS QUERY FUNCTION ==>
+const fetchMilkLogs = async (
+  filterType: MilkLogFilterType,
+  date: string,
   month: string,
-  search: string,
+  rangeStart: string,
+  rangeEnd: string,
+  entryType: MilkLogTypeFilter,
   page: number,
   limit: number,
-): Promise<PurchasesListData> => {
+): Promise<MilkLogListData> => {
   // BUILD REQUEST PARAMS
   const params: Record<string, string> = {
-    filter,
+    filterType,
+    type: entryType,
     page: String(page),
     limit: String(limit),
   };
-  // ONLY INCLUDE MONTH WHEN FILTER IS MONTH
-  if (filter === "month" && month) params.month = month;
-  // ONLY INCLUDE SEARCH IF NOT EMPTY
-  if (search.trim()) params.search = search.trim();
+  // ONLY INCLUDE MONTH WHEN FILTER TYPE IS MONTH
+  if (filterType === "month" && month) params.month = month;
+  // ONLY INCLUDE DATE WHEN FILTER TYPE IS DATE
+  if (filterType === "date" && date) params.date = date;
+  // ONLY INCLUDE RANGE BOUNDS WHEN FILTER TYPE IS RANGE
+  if (filterType === "range") {
+    // INCLUDING RANGE START IF PRESENT
+    if (rangeStart) params.rangeStart = rangeStart;
+    // INCLUDING RANGE END IF PRESENT
+    if (rangeEnd) params.rangeEnd = rangeEnd;
+  }
   // MAKE API REQUEST
-  const response = await apiClient.get<ApiResponse<PurchasesListData>>(
-    "/purchases",
+  const response = await apiClient.get<ApiResponse<MilkLogListData>>(
+    "/milk-logs",
     { params },
   );
   // RETURN DATA OR SAFE FALLBACK
@@ -79,37 +87,35 @@ const fetchPurchases = async (
         hasPrevPage: false,
       },
       stats: {
-        totalSpent: 0,
-        totalMilk: 0,
-        totalPurchases: 0,
-        avgCostPerLiter: 0,
-        supplierBreakdown: {},
+        totalLeftover: 0,
+        totalYoghurt: 0,
+        totalEntries: 0,
+        yoghurtSharePercent: 0,
       },
       appliedFilter: {
-        type: filter,
-        month: filter === "month" ? month : null,
+        filterType,
         startDate: "",
         endDate: "",
+        month: filterType === "month" ? month : null,
+        date: filterType === "date" ? date : null,
       },
     }
   );
 };
 
 /**
- * FETCH AND CACHE PURCHASES WITH PERIOD STATS
+ * FETCH AND CACHE MILK LOG ENTRIES WITH PERIOD STATS
  * EACH UNIQUE COMBINATION OF FILTERS + PAGE + LIMIT IS CACHED SEPARATELY
  * NEXT PAGE IS SILENTLY PREFETCHED AFTER CURRENT PAGE LOADS
- * @param filter - PERIOD FILTER TYPE
- * @param month - BILLING MONTH (YYYY-MM) — ONLY WHEN FILTER IS MONTH
- * @param search - DEBOUNCED SUPPLIER SEARCH QUERY
- * @param page - CURRENT PAGE NUMBER (1-BASED)
- * @param limit - ITEMS PER PAGE
  */
-// <== USE PURCHASES QUERY HOOK ==>
-export const usePurchases = (
-  filter: PurchaseFilter,
+// <== USE MILK LOGS QUERY HOOK ==>
+export const useMilkLogs = (
+  filterType: MilkLogFilterType,
+  date: string,
   month: string,
-  search: string,
+  rangeStart: string,
+  rangeEnd: string,
+  entryType: MilkLogTypeFilter,
   page: number,
   limit: number,
 ) => {
@@ -118,11 +124,30 @@ export const usePurchases = (
   // QUERY CLIENT FOR NEXT-PAGE PREFETCH
   const queryClient = useQueryClient();
   // FETCH CURRENT PAGE
-  const query = useQuery<PurchasesListData, AxiosError<ApiErrorResponse>>({
-    // <== QUERY KEY (ALL FILTERS + PAGE + LIMIT FOR ISOLATED CACHE ENTRIES) ==>
-    queryKey: purchaseKeys.list({ filter, month, search, page, limit }),
+  const query = useQuery<MilkLogListData, AxiosError<ApiErrorResponse>>({
+    // <== QUERY KEY ==>
+    queryKey: milkLogKeys.list({
+      filterType,
+      date,
+      month,
+      rangeStart,
+      rangeEnd,
+      entryType,
+      page,
+      limit,
+    }),
     // <== QUERY FUNCTION ==>
-    queryFn: () => fetchPurchases(filter, month, search, page, limit),
+    queryFn: () =>
+      fetchMilkLogs(
+        filterType,
+        date,
+        month,
+        rangeStart,
+        rangeEnd,
+        entryType,
+        page,
+        limit,
+      ),
     // <== ONLY FETCH WHEN AUTHENTICATED AND NOT LOGGING OUT ==>
     enabled: isAuthenticated && !isLoggingOut,
     // <== STALE TIME: 2 MINUTES ==>
@@ -147,96 +172,72 @@ export const usePurchases = (
   useEffect(() => {
     // ONLY PREFETCH IF SERVER SAYS THERE IS A NEXT PAGE
     if (query.data?.pagination?.hasNextPage) {
-      // PREFETCH NEXT PAGE — STORES IN CACHE SO PAGE TURN IS INSTANT
+      // PREFETCH NEXT PAGE
       queryClient.prefetchQuery({
         // NEXT PAGE QUERY KEY
-        queryKey: purchaseKeys.list({
-          filter,
+        queryKey: milkLogKeys.list({
+          filterType,
+          date,
           month,
-          search,
+          rangeStart,
+          rangeEnd,
+          entryType,
           page: page + 1,
           limit,
         }),
         // NEXT PAGE QUERY FUNCTION
-        queryFn: () => fetchPurchases(filter, month, search, page + 1, limit),
+        queryFn: () =>
+          fetchMilkLogs(
+            filterType,
+            date,
+            month,
+            rangeStart,
+            rangeEnd,
+            entryType,
+            page + 1,
+            limit,
+          ),
         // SAME STALE TIME AS MAIN QUERY
         staleTime: 2 * 60 * 1000,
       });
     }
-  }, [query.data, filter, month, search, page, limit, queryClient]);
+  }, [
+    query.data,
+    filterType,
+    date,
+    month,
+    rangeStart,
+    rangeEnd,
+    entryType,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };
 
 /**
- * ADD A NEW PURCHASE RECORD MUTATION
+ * ADD A NEW MILK LOG ENTRY MUTATION
+ * INVALIDATES MILK LOG LISTS AND DASHBOARD QUERIES ON SUCCESS AND TRASH QUERIES ON FAILURE
  */
-// <== USE ADD PURCHASE MUTATION HOOK ==>
-export const useAddPurchase = () => {
+// <== USE ADD MILK LOG MUTATION HOOK ==>
+export const useAddMilkLog = () => {
   // QUERY CLIENT FOR CACHE INVALIDATION
   const queryClient = useQueryClient();
   // RETURN MUTATION
   return useMutation<
-    ApiResponse<{ purchase: Purchase }>,
+    ApiResponse<{ milkLog: MilkLog }>,
     AxiosError<ApiErrorResponse>,
-    AddPurchaseFormValues
+    AddMilkLogFormValues
   >({
     // <== MUTATION FUNCTION ==>
     mutationFn: async (
-      data: AddPurchaseFormValues,
-    ): Promise<ApiResponse<{ purchase: Purchase }>> => {
-      // CALL ADD PURCHASE API
-      const response = await apiClient.post<
-        ApiResponse<{ purchase: Purchase }>
-      >("/purchases", data);
-      // RETURN RESPONSE DATA
-      return response.data;
-    },
-    // <== ON SUCCESS ==>
-    onSuccess: (): void => {
-      // INVALIDATE ALL LIST QUERIES TO TRIGGER REFETCH
-      queryClient.invalidateQueries({ queryKey: purchaseKeys.lists() });
-      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — PURCHASE COST AND SECTION CHANGE)
-      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
-      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — PURCHASES TREND CHART CHANGES)
-      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
-      // SHOW SUCCESS TOAST
-      toast.success("Purchase added successfully!");
-    },
-    // <== ON ERROR ==>
-    onError: (error: AxiosError<ApiErrorResponse>): void => {
-      // SHOW ERROR TOAST WITH SERVER MESSAGE OR FALLBACK
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to add purchase. Please try again.",
-      );
-    },
-  });
-};
-
-/**
- * UPDATE AN EXISTING PURCHASE RECORD MUTATION
- */
-// <== USE UPDATE PURCHASE MUTATION HOOK ==>
-export const useUpdatePurchase = () => {
-  // QUERY CLIENT FOR CACHE INVALIDATION
-  const queryClient = useQueryClient();
-  // RETURN MUTATION
-  return useMutation<
-    ApiResponse<{ purchase: Purchase }>,
-    AxiosError<ApiErrorResponse>,
-    UpdatePurchaseVariables
-  >({
-    // <== MUTATION FUNCTION ==>
-    mutationFn: async ({
-      id,
-      data,
-    }: UpdatePurchaseVariables): Promise<
-      ApiResponse<{ purchase: Purchase }>
-    > => {
-      // CALL UPDATE PURCHASE API
-      const response = await apiClient.put<ApiResponse<{ purchase: Purchase }>>(
-        `/purchases/${id}`,
+      data: AddMilkLogFormValues,
+    ): Promise<ApiResponse<{ milkLog: MilkLog }>> => {
+      // CALL ADD MILK LOG API
+      const response = await apiClient.post<ApiResponse<{ milkLog: MilkLog }>>(
+        "/milk-logs",
         data,
       );
       // RETURN RESPONSE DATA
@@ -245,39 +246,85 @@ export const useUpdatePurchase = () => {
     // <== ON SUCCESS ==>
     onSuccess: (): void => {
       // INVALIDATE ALL LIST QUERIES
-      queryClient.invalidateQueries({ queryKey: purchaseKeys.lists() });
-      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — PURCHASE COST AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: milkLogKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — SUMMARY AND MILK LOG SECTION BOTH CHANGE)
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
-      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — PURCHASES TREND CHART CHANGES)
-      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
-      toast.success("Purchase updated successfully!");
+      toast.success("Milk log entry added successfully!");
     },
     // <== ON ERROR ==>
     onError: (error: AxiosError<ApiErrorResponse>): void => {
       // SHOW ERROR TOAST WITH SERVER MESSAGE OR FALLBACK
       toast.error(
         error.response?.data?.message ||
-          "Failed to update purchase. Please try again.",
+          "Failed to add milk log entry. Please try again.",
       );
     },
   });
 };
 
 /**
- * DELETE A PURCHASE RECORD MUTATION
+ * UPDATE AN EXISTING MILK LOG ENTRY MUTATION
+ * INVALIDATES MILK LOG LISTS AND DASHBOARD QUERIES ON SUCCESS
  */
-// <== USE DELETE PURCHASE MUTATION HOOK ==>
-export const useDeletePurchase = () => {
+// <== USE UPDATE MILK LOG MUTATION HOOK ==>
+export const useUpdateMilkLog = () => {
+  // QUERY CLIENT FOR CACHE INVALIDATION
+  const queryClient = useQueryClient();
+  // RETURN MUTATION
+  return useMutation<
+    ApiResponse<{ milkLog: MilkLog }>,
+    AxiosError<ApiErrorResponse>,
+    UpdateMilkLogVariables
+  >({
+    // <== MUTATION FUNCTION ==>
+    mutationFn: async ({
+      id,
+      data,
+    }: UpdateMilkLogVariables): Promise<ApiResponse<{ milkLog: MilkLog }>> => {
+      // CALL UPDATE MILK LOG API
+      const response = await apiClient.put<ApiResponse<{ milkLog: MilkLog }>>(
+        `/milk-logs/${id}`,
+        data,
+      );
+      // RETURN RESPONSE DATA
+      return response.data;
+    },
+    // <== ON SUCCESS ==>
+    onSuccess: (): void => {
+      // INVALIDATE ALL LIST QUERIES
+      queryClient.invalidateQueries({ queryKey: milkLogKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — SUMMARY AND MILK LOG SECTION BOTH CHANGE)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // SHOW SUCCESS TOAST
+      toast.success("Milk log entry updated successfully!");
+    },
+    // <== ON ERROR ==>
+    onError: (error: AxiosError<ApiErrorResponse>): void => {
+      // SHOW ERROR TOAST WITH SERVER MESSAGE OR FALLBACK
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to update milk log entry. Please try again.",
+      );
+    },
+  });
+};
+
+/**
+ * DELETE A MILK LOG ENTRY MUTATION
+ * INVALIDATES MILK LOG LISTS, DASHBOARD, AND TRASH QUERIES ON SUCCESS
+ */
+// <== USE DELETE MILK LOG MUTATION HOOK ==>
+export const useDeleteMilkLog = () => {
   // QUERY CLIENT FOR CACHE INVALIDATION
   const queryClient = useQueryClient();
   // RETURN MUTATION
   return useMutation<ApiResponse<void>, AxiosError<ApiErrorResponse>, string>({
     // <== MUTATION FUNCTION ==>
     mutationFn: async (id: string): Promise<ApiResponse<void>> => {
-      // CALL DELETE PURCHASE API
+      // CALL DELETE MILK LOG API
       const response = await apiClient.delete<ApiResponse<void>>(
-        `/purchases/${id}`,
+        `/milk-logs/${id}`,
       );
       // RETURN RESPONSE DATA
       return response.data;
@@ -285,22 +332,20 @@ export const useDeletePurchase = () => {
     // <== ON SUCCESS ==>
     onSuccess: (data): void => {
       // INVALIDATE ALL LIST QUERIES
-      queryClient.invalidateQueries({ queryKey: purchaseKeys.lists() });
-      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — PURCHASE COST AND SECTION CHANGE)
+      queryClient.invalidateQueries({ queryKey: milkLogKeys.lists() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — SUMMARY AND MILK LOG SECTION BOTH CHANGE)
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
-      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — PURCHASES TREND CHART CHANGES)
-      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
-      // INVALIDATE TRASH QUERIES
+      // INVALIDATE TRASH QUERIES (RECORD MAY HAVE BEEN MOVED TO TRASH)
       queryClient.invalidateQueries({ queryKey: trashKeys.all });
       // SHOW SUCCESS TOAST
-      toast.success(data.message || "Purchase deleted successfully!");
+      toast.success(data.message || "Milk log entry deleted successfully!");
     },
     // <== ON ERROR ==>
     onError: (error: AxiosError<ApiErrorResponse>): void => {
       // SHOW ERROR TOAST WITH SERVER MESSAGE OR FALLBACK
       toast.error(
         error.response?.data?.message ||
-          "Failed to delete purchase. Please try again.",
+          "Failed to delete milk log entry. Please try again.",
       );
     },
   });

@@ -1,6 +1,7 @@
 // <== IMPORTS ==>
 import {
   Zap,
+  Milk,
   Users,
   Wallet,
   Package,
@@ -58,6 +59,12 @@ export const CATEGORY_CONFIG: Record<TrashCategory, TrashCategoryConfig> = {
     icon: UserCog,
     className: "text-cyan-600 dark:text-cyan-400 bg-cyan-500/10",
   },
+  // MILK LOG
+  MilkLog: {
+    label: "Milk Log",
+    icon: Milk,
+    className: "text-blue-600 dark:text-blue-400 bg-blue-500/10",
+  },
 };
 
 /**
@@ -97,6 +104,10 @@ export const getItemTitle = (record: TrashRecord): string => {
     case "QuickSale":
       // RETURN THE QUICK SALE'S TYPE
       return `${s.type === "milk" ? "Milk" : "Yoghurt"} Quick Sale`;
+    // IF THE ENTITY IS A MILK LOG ENTRY
+    case "MilkLog":
+      // RETURN THE MILK LOG'S ENTRY TYPE
+      return `${s.type === "leftover" ? "Leftover" : "Yoghurt"} Milk Log`;
     // IF THE ENTITY IS UNKNOWN
     default:
       // RETURN "RECORD"
@@ -134,6 +145,10 @@ export const getItemSubtitle = (record: TrashRecord): string => {
     case "QuickSale":
       // RETURN THE QUICK SALE'S TYPE
       return `${(s.quantity as number) ?? "—"}${s.type === "milk" ? "L" : "kg"} · ₨${((s.total as number) ?? 0).toLocaleString()}${s.date ? ` · ${s.date}` : ""}`;
+    // IF THE ENTITY IS A MILK LOG ENTRY
+    case "MilkLog":
+      // RETURN THE MILK LOG'S QUANTITY AND DATE
+      return `${(s.quantity as number) ?? "—"}L${s.date ? ` · ${s.date}` : ""}`;
     // IF THE ENTITY IS UNKNOWN
     default:
       // RETURN EMPTY STRING

@@ -8,36 +8,46 @@ import {
   isSameDay,
   startOfMonth,
   getDaysInMonth,
+  isWithinInterval,
 } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { memo, useRef, useState, useEffect, useCallback } from "react";
+import { X, CalendarRange, ChevronLeft, ChevronRight } from "lucide-react";
 
 // <== DAY NAME HEADERS ==>
 const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
 
-// <== QUICK SALE DATE PICKER PROPS ==>
-interface QuickSaleDatePickerProps {
-  // <== CURRENTLY SELECTED DATE (YYYY-MM-DD | NULL) ==>
-  selectedDate: string | null;
-  // <== DATE SELECT CALLBACK ==>
-  onDateSelect: (date: string) => void;
-  // <== CLEAR SELECTED DATE CALLBACK ==>
+// <== DATE RANGE PICKER PROPS ==>
+interface DateRangePickerProps {
+  // <== CURRENTLY SELECTED RANGE START (YYYY-MM-DD | NULL) ==>
+  startDate: string | null;
+  // <== CURRENTLY SELECTED RANGE END (YYYY-MM-DD | NULL) ==>
+  endDate: string | null;
+  // <== RANGE SELECT CALLBACK — FIRES ONCE BOTH ENDS ARE CHOSEN ==>
+  onRangeSelect: (start: string, end: string) => void;
+  // <== CLEAR SELECTED RANGE CALLBACK ==>
   onClear: () => void;
 }
 
-// <== QUICK SALE DATE PICKER COMPONENT ==>
-const QuickSaleDatePicker = memo(
-  ({ selectedDate, onDateSelect, onClear }: QuickSaleDatePickerProps) => {
+// <== DATE RANGE PICKER COMPONENT ==>
+const DateRangePicker = memo(
+  ({ startDate, endDate, onRangeSelect, onClear }: DateRangePickerProps) => {
     // CALENDAR POPOVER OPEN STATE
     const [isOpen, setIsOpen] = useState<boolean>(false);
-    // VIEW DATE STATE — THE MONTH CURRENTLY DISPLAYED IN THE PICKER (INDEPENDENT OF SELECTION)
+    // VIEW DATE STATE — THE MONTH CURRENTLY DISPLAYED IN THE PICKER
     const [viewDate, setViewDate] = useState<Date>(() =>
-      selectedDate ? parseISO(selectedDate) : new Date(),
+      startDate ? parseISO(startDate) : new Date(),
     );
+    // DRAFT START DATE DURING SELECTION (SET BY THE FIRST CLICK, BEFORE THE RANGE IS COMPLETE)
+    const [draftStart, setDraftStart] = useState<string | null>(startDate);
     // CONTAINER REF FOR CLICK OUTSIDE DETECTION
     const containerRef = useRef<HTMLDivElement>(null);
+    // SYNC DRAFT START WITH THE COMMITTED PROP WHENEVER THE CALENDAR IS CLOSED
+    useEffect(() => {
+      // ONLY SYNC WHEN CLOSED — AVOID CLOBBERING AN IN-PROGRESS SELECTION WHILE OPEN
+      if (!isOpen) setDraftStart(startDate);
+    }, [startDate, isOpen]);
     // CLOSE CALENDAR ON CLICK OUTSIDE
     useEffect(() => {
       // CLICK OUTSIDE HANDLER
@@ -77,7 +87,7 @@ const QuickSaleDatePicker = memo(
       // RETURN ARRAY
       return days;
     })();
-    // HANDLE DAY CLICK
+    // HANDLE DAY CLICK — FIRST CLICK STARTS THE RANGE, SECOND CLICK COMPLETES IT
     const handleDayClick = useCallback(
       (day: number): void => {
         // BUILD DATE OBJECT FOR THE CLICKED DAY IN VIEW MONTH
@@ -88,14 +98,25 @@ const QuickSaleDatePicker = memo(
         );
         // BLOCK FUTURE DATES
         if (isFuture(clicked) && !isToday(clicked)) return;
-        // FORMAT DATE AS YYYY-MM-DD
+        // FORMAT CLICKED DATE AS YYYY-MM-DD
         const formatted = format(clicked, "yyyy-MM-dd");
-        // FIRE CALLBACK
-        onDateSelect(formatted);
-        // CLOSE CALENDAR
+        // FIRST CLICK, OR RESTARTING AFTER A PREVIOUSLY COMPLETED RANGE — SET DRAFT START ONLY
+        if (!draftStart || (startDate && endDate)) {
+          // STARTING A FRESH SELECTION
+          setDraftStart(formatted);
+          // WAITING FOR THE SECOND CLICK TO COMPLETE THE RANGE
+          return;
+        }
+        // SECOND CLICK — COMPLETE THE RANGE, SWAPPING IF THE USER PICKED BACKWARDS
+        const finalStart = formatted < draftStart ? formatted : draftStart;
+        // RESOLVING THE FINAL END DATE
+        const finalEnd = formatted < draftStart ? draftStart : formatted;
+        // FIRING THE CALLBACK WITH THE COMPLETED RANGE
+        onRangeSelect(finalStart, finalEnd);
+        // CLOSING THE CALENDAR — SELECTION IS COMPLETE
         setIsOpen(false);
       },
-      [viewDate, onDateSelect],
+      [viewDate, draftStart, startDate, endDate, onRangeSelect],
     );
     // NAVIGATE TO PREVIOUS MONTH
     const handlePrevMonth = useCallback((): void => {
@@ -132,9 +153,13 @@ const QuickSaleDatePicker = memo(
           viewDate.getMonth() >= now.getMonth())
       );
     })();
-    // PARSED SELECTED DATE OBJECT FOR COMPARISON
-    const selectedDateObj = selectedDate ? parseISO(selectedDate) : null;
-    // RETURNING DATE PICKER
+    // PARSED COMMITTED RANGE BOUNDARIES FOR HIGHLIGHTING
+    const committedStartObj = startDate ? parseISO(startDate) : null;
+    // PARSED COMMITTED END FOR HIGHLIGHTING
+    const committedEndObj = endDate ? parseISO(endDate) : null;
+    // PARSED DRAFT START FOR HIGHLIGHTING THE IN-PROGRESS SELECTION
+    const draftStartObj = draftStart ? parseISO(draftStart) : null;
+    // RETURNING DATE RANGE PICKER
     return (
       // CONTAINER
       <div ref={containerRef} className="relative">
@@ -143,20 +168,20 @@ const QuickSaleDatePicker = memo(
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
           className={cn(
-            "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border",
-            selectedDate
+            "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap",
+            startDate && endDate
               ? "bg-primary text-primary-foreground border-primary shadow-sm"
               : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
           )}
         >
-          <Calendar className="w-3.5 h-3.5" />
+          <CalendarRange className="w-3.5 h-3.5" />
           <span>
-            {selectedDate
-              ? format(parseISO(selectedDate), "dd MMM yyyy")
-              : "Pick Date"}
+            {startDate && endDate
+              ? `${format(parseISO(startDate), "dd MMM")} – ${format(parseISO(endDate), "dd MMM")}`
+              : "Date Range"}
           </span>
           {/* CLEAR BUTTON */}
-          {selectedDate && (
+          {startDate && endDate && (
             <span
               role="button"
               tabIndex={0}
@@ -186,6 +211,12 @@ const QuickSaleDatePicker = memo(
               transition={{ duration: 0.15 }}
               className="absolute top-full mt-2 right-0 z-50 w-72 glass-card p-4 shadow-lg border border-border rounded-xl"
             >
+              {/* SELECTION HINT */}
+              <p className="text-[11px] text-muted-foreground text-center mb-2">
+                {!draftStart || (startDate && endDate)
+                  ? "Select a start date"
+                  : "Now select an end date"}
+              </p>
               {/* MONTH NAVIGATION HEADER */}
               <div className="flex items-center justify-between mb-3">
                 {/* PREV MONTH */}
@@ -237,10 +268,23 @@ const QuickSaleDatePicker = memo(
                   const isFutureDay = isFuture(dayDate) && !isToday(dayDate);
                   // IS THIS DAY TODAY
                   const isDayToday = isToday(dayDate);
-                  // IS THIS DAY THE SELECTED DATE
-                  const isSelected =
-                    selectedDateObj !== null &&
-                    isSameDay(dayDate, selectedDateObj);
+                  // IS THIS DAY THE DRAFT START (IN-PROGRESS SELECTION ANCHOR)
+                  const isDraftStart =
+                    draftStartObj !== null && isSameDay(dayDate, draftStartObj);
+                  // IS THIS DAY EITHER COMMITTED ENDPOINT
+                  const isCommittedEndpoint =
+                    (committedStartObj !== null &&
+                      isSameDay(dayDate, committedStartObj)) ||
+                    (committedEndObj !== null &&
+                      isSameDay(dayDate, committedEndObj));
+                  // IS THIS DAY WITHIN THE COMMITTED RANGE
+                  const isInRange =
+                    committedStartObj !== null &&
+                    committedEndObj !== null &&
+                    isWithinInterval(dayDate, {
+                      start: committedStartObj,
+                      end: committedEndObj,
+                    });
                   // RETURNING DAY BUTTON
                   return (
                     <button
@@ -250,12 +294,19 @@ const QuickSaleDatePicker = memo(
                       onClick={() => handleDayClick(day)}
                       className={cn(
                         "h-8 w-full flex items-center justify-center rounded-md text-xs font-medium transition-all",
-                        isSelected &&
+                        (isCommittedEndpoint || isDraftStart) &&
                           "bg-primary text-primary-foreground shadow-sm",
-                        !isSelected &&
+                        isInRange &&
+                          !isCommittedEndpoint &&
+                          "bg-primary/15 text-primary",
+                        !isCommittedEndpoint &&
+                          !isDraftStart &&
+                          !isInRange &&
                           isDayToday &&
                           "border border-primary text-primary",
-                        !isSelected &&
+                        !isCommittedEndpoint &&
+                          !isDraftStart &&
+                          !isInRange &&
                           !isDayToday &&
                           !isFutureDay &&
                           "hover:bg-muted",
@@ -267,18 +318,6 @@ const QuickSaleDatePicker = memo(
                   );
                 })}
               </div>
-              {/* TODAY SHORTCUT */}
-              <button
-                type="button"
-                onClick={() => {
-                  const todayStr = format(new Date(), "yyyy-MM-dd");
-                  onDateSelect(todayStr);
-                  setIsOpen(false);
-                }}
-                className="mt-3 w-full text-xs text-primary font-medium hover:underline text-center"
-              >
-                Jump to Today
-              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -288,7 +327,7 @@ const QuickSaleDatePicker = memo(
 );
 
 // <== DISPLAY NAME FOR DEVTOOLS ==>
-QuickSaleDatePicker.displayName = "QuickSaleDatePicker";
+DateRangePicker.displayName = "DateRangePicker";
 
 // <== EXPORT ==>
-export default QuickSaleDatePicker;
+export default DateRangePicker;

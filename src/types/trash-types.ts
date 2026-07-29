@@ -5,7 +5,8 @@ export type TrashCategory =
   | "Customer"
   | "Expenditure"
   | "Purchase"
-  | "StaffMember";
+  | "StaffMember"
+  | "MilkLog";
 
 // <== TRASH SNAPSHOT TYPE ==>
 export type TrashSnapshot = Record<string, unknown>;
