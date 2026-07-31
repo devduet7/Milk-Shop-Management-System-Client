@@ -60,8 +60,10 @@ export type DeliveryRecovery = {
 export type SaleRecovery = {
   // <== SALE MONGODB ID ==>
   _id: string;
-  // <== USER ID ==>
-  userId: string;
+  // <== ACCOUNT ID (TENANT THIS SALE RECORD BELONGS TO) ==>
+  accountId: string;
+  // <== USER ID WHO PERFORMED THIS SALE ==>
+  performedBy: string;
   // <== SALE TYPE — ALWAYS CUSTOMER FOR RECOVERIES ==>
   saleType: "customer";
   // <== CUSTOMER NAME ==>
