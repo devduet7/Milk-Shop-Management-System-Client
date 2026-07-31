@@ -11,8 +11,10 @@ export type ViewMode = "table" | "list" | "grid";
 export type Expenditure = {
   // <== MONGODB ID ==>
   _id: string;
-  // <== USER ID ==>
-  userId: string;
+  // <== ACCOUNT ID (TENANT THIS EXPENDITURE RECORD BELONGS TO) ==>
+  accountId: string;
+  // <== USER ID WHO PERFORMED THIS EXPENDITURE ==>
+  performedBy: string;
   // <== TITLE ==>
   title: string;
   // <== CATEGORY ==>
