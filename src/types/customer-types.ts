@@ -103,12 +103,20 @@ export type DeliveryRecord = {
   _id: string;
   // <== CUSTOMER ID ==>
   customerId: string;
+  // <== ACCOUNT ID (TENANT THIS RECORD BELONGS TO) ==>
+  accountId: string;
+  // <== USER ID WHO LAST MARKED THIS DELIVERY ==>
+  performedBy: string;
   // <== DATE STRING (YYYY-MM-DD) ==>
   date: string;
   // <== DELIVERY STATUS ==>
   status: DeliveryStatus;
   // <== MILK QUANTITY DELIVERED ==>
   milkQuantity: number;
+  // <== CREATED AT ISO STRING ==>
+  createdAt: string;
+  // <== UPDATED AT ISO STRING ==>
+  updatedAt: string;
 };
 
 // <== PAYMENT TYPE ==>
@@ -117,8 +125,10 @@ export type Payment = {
   _id: string;
   // <== CUSTOMER ID ==>
   customerId: string;
-  // <== USER ID ==>
-  userId: string;
+  // <== ACCOUNT ID (TENANT THIS PAYMENT BELONGS TO) ==>
+  accountId: string;
+  // <== USER ID WHO RECORDED THIS PAYMENT ==>
+  performedBy: string;
   // <== PAYMENT AMOUNT ==>
   amount: number;
   // <== BILLING MONTH (YYYY-MM) ==>
@@ -127,6 +137,10 @@ export type Payment = {
   paymentDate: string;
   // <== OPTIONAL NOTE ==>
   note: string | null;
+  // <== CREATED AT ISO STRING ==>
+  createdAt: string;
+  // <== UPDATED AT ISO STRING ==>
+  updatedAt: string;
 };
 
 // <== CUSTOMER DETAIL BASE TYPE ==>

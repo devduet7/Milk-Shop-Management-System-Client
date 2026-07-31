@@ -8,8 +8,10 @@ export type ViewMode = "table" | "list" | "grid";
 export type Purchase = {
   // <== MONGODB ID ==>
   _id: string;
-  // <== USER ID ==>
-  userId: string;
+  // <== ACCOUNT ID (TENANT THIS PURCHASE RECORD BELONGS TO) ==>
+  accountId: string;
+  // <== USER ID WHO PERFORMED THIS PURCHASE ==>
+  performedBy: string;
   // <== SUPPLIER NAME ==>
   supplier: string;
   // <== MILK QUANTITY IN LITERS ==>

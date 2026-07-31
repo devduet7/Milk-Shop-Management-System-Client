@@ -8,6 +8,10 @@ export type StaffViewMode = "table" | "list" | "grid";
 export type StaffMonthRecord = {
   // <== MONGODB ID ==>
   _id: string;
+  // <== STAFF MEMBER ID ==>
+  staffId: string;
+  // <== ACCOUNT ID (TENANT THIS RECORD BELONGS TO) ==>
+  accountId: string;
   // <== BILLING MONTH (YYYY-MM) ==>
   month: string;
   // <== TOTAL SALARY PAID THIS MONTH ==>
@@ -16,14 +20,20 @@ export type StaffMonthRecord = {
   status: StaffSalaryStatus;
   // <== DENORMALISED SUM OF ALL EXTRA ALLOCATIONS THIS MONTH ==>
   totalExtraAllocated: number;
+  // <== CREATED AT ISO STRING ==>
+  createdAt: string;
+  // <== UPDATED AT ISO STRING ==>
+  updatedAt: string;
 };
 
 // <== STAFF MEMBER TYPE ==>
 export type StaffMember = {
   // <== MONGODB ID ==>
   _id: string;
-  // <== USER ID ==>
-  userId: string;
+  // <== ACCOUNT ID (TENANT THIS STAFF RECORD BELONGS TO) ==>
+  accountId: string;
+  // <== USER ID WHO CREATED THIS STAFF RECORD ==>
+  performedBy: string;
   // <== STAFF NAME ==>
   name: string;
   // <== FIXED MONTHLY SALARY ==>
@@ -94,6 +104,10 @@ export type StaffExtraAllocation = {
   _id: string;
   // <== STAFF MEMBER ID ==>
   staffId: string;
+  // <== ACCOUNT ID (TENANT THIS RECORD BELONGS TO) ==>
+  accountId: string;
+  // <== USER ID WHO RECORDED THIS ALLOCATION ==>
+  performedBy: string;
   // <== BILLING MONTH (YYYY-MM) ==>
   month: string;
   // <== EXACT DATE OF ALLOCATION (YYYY-MM-DD) ==>
@@ -104,6 +118,8 @@ export type StaffExtraAllocation = {
   note: string | null;
   // <== CREATED AT ISO STRING ==>
   createdAt: string;
+  // <== UPDATED AT ISO STRING ==>
+  updatedAt: string;
 };
 
 // <== EXTRA ALLOCATIONS DATA TYPE ==>

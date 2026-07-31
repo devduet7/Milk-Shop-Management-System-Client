@@ -14,8 +14,10 @@ export type QuickSaleViewMode = "table" | "list" | "grid";
 export type QuickSale = {
   // <== MONGODB ID ==>
   _id: string;
-  // <== USER ID ==>
-  userId: string;
+  // <== ACCOUNT ID (TENANT THIS RECORD BELONGS TO) ==>
+  accountId: string;
+  // <== USER ID WHO PERFORMED THIS SALE ==>
+  performedBy: string;
   // <== PRODUCT TYPE ==>
   type: QuickSaleType;
   // <== QUANTITY (LITERS FOR MILK, KG FOR YOGHURT) ==>

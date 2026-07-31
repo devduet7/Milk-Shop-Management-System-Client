@@ -29,6 +29,10 @@ export type TrashRecord = {
   deletedAt: string;
   // <== WHEN THIS ITEM WILL BE AUTO-PURGED ==>
   expiresAt: string;
+  // <== CREATED AT ISO STRING ==>
+  createdAt: string;
+  // <== UPDATED AT ISO STRING ==>
+  updatedAt: string;
 };
 
 // <== TRASH PAGINATION META TYPE ==>

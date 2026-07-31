@@ -14,8 +14,10 @@ export type ViewMode = "table" | "list" | "grid";
 export type Sale = {
   // <== MONGODB ID ==>
   _id: string;
-  // <== USER ID ==>
-  userId: string;
+  // <== ACCOUNT ID (TENANT THIS SALE RECORD BELONGS TO) ==>
+  accountId: string;
+  // <== USER ID WHO PERFORMED THIS SALE ==>
+  performedBy: string;
   // <== SALE TYPE ==>
   saleType: SaleType;
   // <== CUSTOMER NAME (NULL FOR SHOP SALES) ==>
