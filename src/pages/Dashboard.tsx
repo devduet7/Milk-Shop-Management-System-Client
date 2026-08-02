@@ -1,12 +1,16 @@
 // <== IMPORTS ==>
+import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { memo, useState, useCallback } from "react";
+import DatePicker from "@/components/common/DatePicker";
 import { useDashboardSummary } from "@/hooks/useDashboard";
 import SalesSection from "@/components/dashboard/SalesSection";
 import StaffSection from "@/components/dashboard/StaffSection";
+import DateRangePicker from "@/components/common/DateRangePicker";
+import type { DashboardFilterType } from "@/types/dashboard-types";
 import MilkLogSection from "@/components/dashboard/MilkLogSection";
 import { PageTransition } from "@/components/layout/PageTransition";
 import DeliverySection from "@/components/dashboard/DeliverySection";
@@ -68,24 +72,112 @@ const DashboardPageSkeleton = () => (
   </div>
 );
 
+// <== FILTER BUTTON TYPE ==>
+type FilterButton = {
+  // <== FILTER VALUE ==>
+  value: DashboardFilterType;
+  // <== DISPLAY LABEL ==>
+  label: string;
+};
+
+// <== FILTER BUTTONS CONFIG ==>
+const FILTER_BUTTONS: FilterButton[] = [
+  // TODAY FILTER
+  { value: "today", label: "Today" },
+  // WEEK FILTER
+  { value: "week", label: "This Week" },
+];
+
 // <== DASHBOARD PAGE COMPONENT ==>
 const Dashboard = memo(() => {
-  // SELECTED MONTH STATE — INITIALISED TO CURRENT MONTH
+  // ACTIVE FILTER TYPE STATE — DEFAULTS TO MONTH (MATCHES PRE-EXISTING BEHAVIOR)
+  const [filterType, setFilterType] = useState<DashboardFilterType>("month");
+  // SELECTED MONTH STATE — INITIALISED TO CURRENT MONTH. ALWAYS ACTIVE REGARDLESS OF FILTER TYPE
+  // SINCE STAFF PAYROLL AND MONTHLY BILLING FIGURES STAY MONTH-SCOPED NO MATTER WHICH PILL IS ACTIVE
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  // SELECTED SPECIFIC DATE FOR THE DATE PICKER FILTER (YYYY-MM-DD | NULL)
+  const [specificDate, setSpecificDate] = useState<string | null>(null);
+  // SELECTED RANGE START FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL)
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  // SELECTED RANGE END FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL)
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   // DERIVED MONTH STRING
   const monthStr = format(selectedMonth, "yyyy-MM");
+  // DERIVED DATE STRING FOR THE DATE FILTER
+  const dateStr = specificDate ?? "";
+  // DERIVED RANGE START STRING FOR THE RANGE FILTER
+  const rangeStartStr = rangeStart ?? "";
+  // DERIVED RANGE END STRING FOR THE RANGE FILTER
+  const rangeEndStr = rangeEnd ?? "";
   // IS NEXT MONTH DISABLED — BLOCK NAVIGATION INTO FUTURE MONTHS
   const isNextMonthDisabled =
     selectedMonth.getMonth() >= new Date().getMonth() &&
     selectedMonth.getFullYear() >= new Date().getFullYear();
-  // FETCH DASHBOARD SUMMARY FOR THE SELECTED MONTH
-  const { data: summary, isLoading } = useDashboardSummary(monthStr);
+  // FETCH DASHBOARD SUMMARY FOR THE SELECTED FILTER
+  const { data: summary, isLoading } = useDashboardSummary(
+    filterType,
+    monthStr,
+    dateStr,
+    rangeStartStr,
+    rangeEndStr,
+  );
+  // HANDLE FILTER TYPE CHANGE
+  const handleFilterChange = useCallback((type: DashboardFilterType): void => {
+    // UPDATE FILTER TYPE
+    setFilterType(type);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
+  }, []);
+  // HANDLE DATE PICKER SELECT — ACTIVATES THE DATE FILTER, CLEARS THE RANGE FILTER
+  const handleDateSelect = useCallback((date: string): void => {
+    // UPDATE SPECIFIC DATE
+    setSpecificDate(date);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
+    // SWITCH TO DATE FILTER
+    setFilterType("date");
+  }, []);
+  // HANDLE DATE PICKER CLEAR — REVERT TO MONTH FILTER
+  const handleDateClear = useCallback((): void => {
+    // CLEAR SPECIFIC DATE
+    setSpecificDate(null);
+    // SWITCH BACK TO MONTH FILTER
+    setFilterType("month");
+  }, []);
+  // HANDLE DATE RANGE PICKER SELECT — ACTIVATES THE RANGE FILTER, CLEARS THE DATE FILTER
+  const handleRangeSelect = useCallback((start: string, end: string): void => {
+    // UPDATE RANGE START
+    setRangeStart(start);
+    // UPDATE RANGE END
+    setRangeEnd(end);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // SWITCH TO RANGE FILTER
+    setFilterType("range");
+  }, []);
+  // HANDLE DATE RANGE PICKER CLEAR — REVERT TO MONTH FILTER
+  const handleRangeClear = useCallback((): void => {
+    // CLEAR RANGE START
+    setRangeStart(null);
+    // CLEAR RANGE END
+    setRangeEnd(null);
+    // SWITCH BACK TO MONTH FILTER
+    setFilterType("month");
+  }, []);
   // HANDLE PREV MONTH
   const handlePrevMonth = useCallback((): void => {
     // DECREMENT MONTH BY ONE
     setSelectedMonth(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1),
     );
+    // SELECTING A MONTH IMPLICITLY MEANS THE USER WANTS THE MONTH FILTER ACTIVE
+    setFilterType("month");
   }, []);
   // HANDLE NEXT MONTH
   const handleNextMonth = useCallback((): void => {
@@ -93,6 +185,8 @@ const Dashboard = memo(() => {
     setSelectedMonth(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1),
     );
+    // SELECTING A MONTH IMPLICITLY MEANS THE USER WANTS THE MONTH FILTER ACTIVE
+    setFilterType("month");
   }, []);
   // SHOW PAGE SKELETON ON INITIAL LOAD
   if (isLoading && !summary) {
@@ -119,28 +213,60 @@ const Dashboard = memo(() => {
             </p>
           </div>
         </div>
-        {/* RIGHT: MONTH NAVIGATION PILL */}
-        <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1 self-start sm:self-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-lg"
-            onClick={handlePrevMonth}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm font-semibold whitespace-nowrap min-w-[110px] text-center px-1">
-            {format(selectedMonth, "MMMM yyyy")}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-lg"
-            disabled={isNextMonthDisabled}
-            onClick={handleNextMonth}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+        {/* RIGHT: FILTER CONTROLS */}
+        <div className="flex items-center gap-1.5 flex-wrap self-start sm:self-auto">
+          {/* FILTER TYPE PILLS */}
+          {FILTER_BUTTONS.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => handleFilterChange(value)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap",
+                filterType === value
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+          {/* CUSTOM DATE PICKER */}
+          <DatePicker
+            selectedDate={specificDate}
+            onDateSelect={handleDateSelect}
+            onClear={handleDateClear}
+          />
+          {/* CUSTOM DATE RANGE PICKER */}
+          <DateRangePicker
+            startDate={rangeStart}
+            endDate={rangeEnd}
+            onRangeSelect={handleRangeSelect}
+            onClear={handleRangeClear}
+          />
+          {/* MONTH NAVIGATION — ALWAYS VISIBLE; STAFF PAYROLL AND BILLING STAY SCOPED TO THIS MONTH
+              REGARDLESS OF WHICH FILTER PILL ABOVE IS ACTIVE */}
+          <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-lg"
+              onClick={handlePrevMonth}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-semibold whitespace-nowrap min-w-[110px] text-center px-1">
+              {format(selectedMonth, "MMMM yyyy")}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 rounded-lg"
+              disabled={isNextMonthDisabled}
+              onClick={handleNextMonth}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
       {/* OVERVIEW CARDS — TOP-LEVEL FINANCIAL SUMMARY */}
@@ -156,7 +282,11 @@ const Dashboard = memo(() => {
           <SalesSection
             customerSales={summary?.sales?.customerSales}
             shopSales={summary?.sales?.shopSales}
+            filterType={filterType}
             month={monthStr}
+            date={dateStr}
+            rangeStart={rangeStartStr}
+            rangeEnd={rangeEndStr}
             isLoading={isLoading}
           />
         </motion.div>
@@ -166,7 +296,14 @@ const Dashboard = memo(() => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
-          <QuickSalesSection stats={summary?.quickSales} month={monthStr} />
+          <QuickSalesSection
+            stats={summary?.quickSales}
+            filterType={filterType}
+            month={monthStr}
+            date={dateStr}
+            rangeStart={rangeStartStr}
+            rangeEnd={rangeEndStr}
+          />
         </motion.div>
         {/* PURCHASES SECTION */}
         <motion.div
@@ -174,7 +311,14 @@ const Dashboard = memo(() => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <PurchasesSection stats={summary?.purchases} month={monthStr} />
+          <PurchasesSection
+            stats={summary?.purchases}
+            filterType={filterType}
+            month={monthStr}
+            date={dateStr}
+            rangeStart={rangeStartStr}
+            rangeEnd={rangeEndStr}
+          />
         </motion.div>
         {/* MILK LOG SECTION */}
         <motion.div
@@ -182,7 +326,14 @@ const Dashboard = memo(() => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.22 }}
         >
-          <MilkLogSection stats={summary?.milkLog} month={monthStr} />
+          <MilkLogSection
+            stats={summary?.milkLog}
+            filterType={filterType}
+            month={monthStr}
+            date={dateStr}
+            rangeStart={rangeStartStr}
+            rangeEnd={rangeEndStr}
+          />
         </motion.div>
         {/* EXPENDITURES SECTION */}
         <motion.div
@@ -190,7 +341,14 @@ const Dashboard = memo(() => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <ExpendituresSection stats={summary?.expenditures} month={monthStr} />
+          <ExpendituresSection
+            stats={summary?.expenditures}
+            filterType={filterType}
+            month={monthStr}
+            date={dateStr}
+            rangeStart={rangeStartStr}
+            rangeEnd={rangeEndStr}
+          />
         </motion.div>
         {/* CUSTOMER DELIVERIES SECTION */}
         <motion.div
