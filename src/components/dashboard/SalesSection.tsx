@@ -10,14 +10,15 @@ import type {
   SaleType,
   ShopSalesStats,
   CustomerSalesStats,
+  DashboardFilterType,
 } from "@/types/dashboard-types";
 import { cn } from "@/lib/utils";
 import { ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { memo, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardSales } from "@/hooks/useDashboard";
 import DashboardSectionCard from "./DashboardSectionCard";
+import { memo, useState, useEffect, useCallback } from "react";
 import PaginationControls from "@/components/common/PaginationControls";
 
 // <== SALES SECTION PROPS ==>
@@ -26,15 +27,31 @@ interface SalesSectionProps {
   customerSales: CustomerSalesStats | undefined;
   // <== SHOP SALES ==>
   shopSales: ShopSalesStats | undefined;
+  // <== ACTIVE FILTER TYPE ==>
+  filterType: DashboardFilterType;
   // <== MONTH ==>
   month: string;
+  // <== DATE (ONLY WHEN FILTER TYPE IS DATE) ==>
+  date: string;
+  // <== RANGE START (ONLY WHEN FILTER TYPE IS RANGE) ==>
+  rangeStart: string;
+  // <== RANGE END (ONLY WHEN FILTER TYPE IS RANGE) ==>
+  rangeEnd: string;
   // <== IS LOADING ==>
   isLoading: boolean;
 }
 
 // <== SALES SECTION COMPONENT ==>
 const SalesSection = memo(
-  ({ customerSales, shopSales, month }: SalesSectionProps) => {
+  ({
+    customerSales,
+    shopSales,
+    filterType,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+  }: SalesSectionProps) => {
     // SALE TYPE FILTER STATE
     const [saleType, setSaleType] = useState<SaleType>("all");
     // PAGE NUMBER STATE
@@ -43,11 +60,20 @@ const SalesSection = memo(
     const limit = 5;
     // FETCH PAGINATED SALES
     const { data, isLoading: recordsLoading } = useDashboardSales(
+      filterType,
       month,
+      date,
+      rangeStart,
+      rangeEnd,
       saleType,
       page,
       limit,
     );
+    // RESET TO PAGE 1 WHENEVER THE ACTIVE DATE FILTER CHANGES
+    useEffect(() => {
+      // RESET TO FIRST PAGE
+      setPage(1);
+    }, [filterType, month, date, rangeStart, rangeEnd]);
     // TOTAL COMBINED AMOUNT
     const totalAmount =
       (customerSales?.totalAmount ?? 0) + (shopSales?.totalAmount ?? 0);
@@ -235,7 +261,7 @@ const SalesSection = memo(
                     colSpan={7}
                     className="px-3 py-8 text-center text-muted-foreground text-xs"
                   >
-                    No sales recorded this month
+                    No sales recorded for this period
                   </td>
                 </tr>
               )}

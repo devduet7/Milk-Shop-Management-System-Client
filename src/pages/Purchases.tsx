@@ -28,6 +28,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
 import { useDeletionMode } from "@/hooks/useSettings";
+import DatePicker from "@/components/common/DatePicker";
+import DateRangePicker from "@/components/common/DateRangePicker";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { usePurchases, useDeletePurchase } from "@/hooks/usePurchases";
 import PurchaseGridView from "@/components/purchases/PurchaseGridView";
@@ -301,6 +303,12 @@ const Purchases = memo(() => {
   const [filter, setFilter] = useState<PurchaseFilter>("month");
   // SELECTED MONTH STATE — USED WHEN FILTER IS MONTH
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  // SELECTED SPECIFIC DATE FOR THE DATE PICKER FILTER (YYYY-MM-DD | NULL)
+  const [specificDate, setSpecificDate] = useState<string | null>(null);
+  // SELECTED RANGE START FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL)
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  // SELECTED RANGE END FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL)
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   // SEARCH INPUT STATE (RAW — UPDATES ON EVERY KEYSTROKE)
   const [search, setSearch] = useState<string>("");
   // VIEW MODE STATE — INITIALIZED FROM LOCAL STORAGE
@@ -321,6 +329,12 @@ const Purchases = memo(() => {
   const debouncedSearch = useDebounce(search, 300);
   // FORMAT SELECTED MONTH AS YYYY-MM FOR API
   const monthStr = format(selectedMonth, "yyyy-MM");
+  // DERIVED DATE STRING FOR THE DATE FILTER
+  const dateStr = specificDate ?? "";
+  // DERIVED RANGE START STRING FOR THE RANGE FILTER
+  const rangeStartStr = rangeStart ?? "";
+  // DERIVED RANGE END STRING FOR THE RANGE FILTER
+  const rangeEndStr = rangeEnd ?? "";
   // DERIVING PERMISSION FLAGS FOR THE PURCHASES MODULE
   const { canCreate, canEdit, canDelete } = usePermission("purchases");
   // DERIVING DELETION MODE FOR USER ACCOUNT
@@ -329,6 +343,9 @@ const Purchases = memo(() => {
   const { data, isLoading, isError } = usePurchases(
     filter,
     filter === "month" ? monthStr : "",
+    filter === "date" ? dateStr : "",
+    filter === "range" ? rangeStartStr : "",
+    filter === "range" ? rangeEndStr : "",
     debouncedSearch,
     currentPage,
     rowsPerPage,
@@ -339,7 +356,7 @@ const Purchases = memo(() => {
   useEffect(() => {
     // RESET TO PAGE 1
     setCurrentPage(1);
-  }, [filter, monthStr, debouncedSearch]);
+  }, [filter, monthStr, specificDate, rangeStart, rangeEnd, debouncedSearch]);
   // PURCHASE RECORDS FROM API RESPONSE — ALREADY PAGINATED BY SERVER
   const purchases = useMemo(() => data?.records ?? [], [data?.records]);
   // STATS FROM API RESPONSE
@@ -374,8 +391,52 @@ const Purchases = memo(() => {
   const handleFilterChange = useCallback((newFilter: PurchaseFilter): void => {
     // UPDATE FILTER
     setFilter(newFilter);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
     // RESET TO FIRST PAGE
     setCurrentPage(1);
+  }, []);
+  // HANDLE DATE PICKER SELECT — ACTIVATES THE DATE FILTER, CLEARS THE RANGE FILTER
+  const handleDateSelect = useCallback((date: string): void => {
+    // UPDATE SPECIFIC DATE
+    setSpecificDate(date);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
+    // SWITCH TO DATE FILTER
+    setFilter("date");
+  }, []);
+  // HANDLE DATE PICKER CLEAR — REVERT TO MONTH FILTER
+  const handleDateClear = useCallback((): void => {
+    // CLEAR SPECIFIC DATE
+    setSpecificDate(null);
+    // SWITCH BACK TO MONTH FILTER
+    setFilter("month");
+  }, []);
+  // HANDLE DATE RANGE PICKER SELECT — ACTIVATES THE RANGE FILTER, CLEARS THE DATE FILTER
+  const handleRangeSelect = useCallback((start: string, end: string): void => {
+    // UPDATE RANGE START
+    setRangeStart(start);
+    // UPDATE RANGE END
+    setRangeEnd(end);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // SWITCH TO RANGE FILTER
+    setFilter("range");
+  }, []);
+  // HANDLE DATE RANGE PICKER CLEAR — REVERT TO MONTH FILTER
+  const handleRangeClear = useCallback((): void => {
+    // CLEAR RANGE START
+    setRangeStart(null);
+    // CLEAR RANGE END
+    setRangeEnd(null);
+    // SWITCH BACK TO MONTH FILTER
+    setFilter("month");
   }, []);
   // HANDLE MONTH NAVIGATION — DECREMENT MONTH
   const handlePrevMonth = useCallback((): void => {
@@ -522,7 +583,7 @@ const Purchases = memo(() => {
                 onClick={() => handleFilterChange(value)}
                 className={cn(
                   "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap",
-                  filter === value
+                  filter === value && filter !== "date" && filter !== "range"
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
                     : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
                 )}
@@ -530,6 +591,19 @@ const Purchases = memo(() => {
                 {label}
               </button>
             ))}
+            {/* CUSTOM DATE PICKER */}
+            <DatePicker
+              selectedDate={specificDate}
+              onDateSelect={handleDateSelect}
+              onClear={handleDateClear}
+            />
+            {/* CUSTOM DATE RANGE PICKER */}
+            <DateRangePicker
+              startDate={rangeStart}
+              endDate={rangeEnd}
+              onRangeSelect={handleRangeSelect}
+              onClear={handleRangeClear}
+            />
             {/* MONTH NAVIGATION — ONLY SHOWN WHEN MONTH FILTER IS ACTIVE */}
             {filter === "month" && (
               <div className="flex items-center gap-1 ml-1">

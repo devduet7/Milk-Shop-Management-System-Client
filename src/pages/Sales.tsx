@@ -36,7 +36,9 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
 import { useDeletionMode } from "@/hooks/useSettings";
+import DatePicker from "@/components/common/DatePicker";
 import SaleStatsCards from "@/components/sales/SaleStatsCards";
+import DateRangePicker from "@/components/common/DateRangePicker";
 import SaleDeleteDialog from "@/components/sales/SaleDeleteDialog";
 import ShopSaleListView from "@/components/sales/ShopSaleListView";
 import ShopSaleGridView from "@/components/sales/ShopSaleGridView";
@@ -473,6 +475,12 @@ const Sales = memo(() => {
   const [filter, setFilter] = useState<SaleFilter>("month");
   // SELECTED MONTH STATE — USED WHEN FILTER IS MONTH
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  // SELECTED SPECIFIC DATE FOR THE DATE PICKER FILTER (YYYY-MM-DD | NULL) — SHARED ACROSS BOTH TABS
+  const [specificDate, setSpecificDate] = useState<string | null>(null);
+  // SELECTED RANGE START FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL) — SHARED ACROSS BOTH TABS
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  // SELECTED RANGE END FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL) — SHARED ACROSS BOTH TABS
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   // CUSTOMER VIEW MODE — INITIALIZED FROM LOCAL STORAGE
   const [customerView, setCustomerView] = useState<ViewMode>(
     getInitialCustomerView,
@@ -513,6 +521,12 @@ const Sales = memo(() => {
   const monthStr = format(selectedMonth, "yyyy-MM");
   // MONTH PARAM — ONLY PASS WHEN FILTER IS MONTH
   const activeMonth = filter === "month" ? monthStr : "";
+  // DATE PARAM — ONLY PASS WHEN FILTER IS DATE
+  const activeDate = filter === "date" ? (specificDate ?? "") : "";
+  // RANGE START PARAM — ONLY PASS WHEN FILTER IS RANGE
+  const activeRangeStart = filter === "range" ? (rangeStart ?? "") : "";
+  // RANGE END PARAM — ONLY PASS WHEN FILTER IS RANGE
+  const activeRangeEnd = filter === "range" ? (rangeEnd ?? "") : "";
   // FETCH CUSTOMER SALES FROM SERVER WITH ALL ACTIVE FILTERS
   const {
     data: customerData,
@@ -521,6 +535,9 @@ const Sales = memo(() => {
   } = useCustomerSales(
     filter,
     activeMonth,
+    activeDate,
+    activeRangeStart,
+    activeRangeEnd,
     debouncedCustomerSearch,
     pendingOnly,
     customerPage,
@@ -531,7 +548,16 @@ const Sales = memo(() => {
     data: shopData,
     isLoading: shopLoading,
     isError: shopError,
-  } = useShopSales(filter, activeMonth, shopProductFilter, shopPage, shopRows);
+  } = useShopSales(
+    filter,
+    activeMonth,
+    activeDate,
+    activeRangeStart,
+    activeRangeEnd,
+    shopProductFilter,
+    shopPage,
+    shopRows,
+  );
   // DELETE SALE MUTATION (SHARED FOR BOTH SALE TYPES)
   const deleteMutation = useDeleteSale();
   // DERIVING PERMISSION FLAGS FOR THE SALES MODULE — GOVERNS BOTH CUSTOMER AND SHOP TABS
@@ -542,12 +568,27 @@ const Sales = memo(() => {
   useEffect(() => {
     // RESET CUSTOMER PAGE TO 1
     setCustomerPage(1);
-  }, [filter, activeMonth, debouncedCustomerSearch, pendingOnly]);
+  }, [
+    filter,
+    activeMonth,
+    activeDate,
+    activeRangeStart,
+    activeRangeEnd,
+    debouncedCustomerSearch,
+    pendingOnly,
+  ]);
   // RESET SHOP PAGE TO 1 WHEN SHOP-SPECIFIC FILTERS CHANGE
   useEffect(() => {
     // RESET SHOP PAGE TO 1
     setShopPage(1);
-  }, [filter, activeMonth, shopProductFilter]);
+  }, [
+    filter,
+    activeMonth,
+    activeDate,
+    activeRangeStart,
+    activeRangeEnd,
+    shopProductFilter,
+  ]);
   // COMBINED STATS FROM API RESPONSE
   const stats = customerData?.stats ?? shopData?.stats;
   // COMBINED LOADING STATE FOR STATS CARDS SKELETON
@@ -588,10 +629,54 @@ const Sales = memo(() => {
   const handleFilterChange = useCallback((newFilter: SaleFilter): void => {
     // UPDATE FILTER
     setFilter(newFilter);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
     // RESET CUSTOMER PAGE TO 1
     setCustomerPage(1);
     // RESET SHOP PAGE TO 1
     setShopPage(1);
+  }, []);
+  // HANDLE DATE PICKER SELECT — ACTIVATES THE DATE FILTER, CLEARS THE RANGE FILTER
+  const handleDateSelect = useCallback((date: string): void => {
+    // UPDATE SPECIFIC DATE
+    setSpecificDate(date);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
+    // SWITCH TO DATE FILTER
+    setFilter("date");
+  }, []);
+  // HANDLE DATE PICKER CLEAR — REVERT TO MONTH FILTER
+  const handleDateClear = useCallback((): void => {
+    // CLEAR SPECIFIC DATE
+    setSpecificDate(null);
+    // SWITCH BACK TO MONTH FILTER
+    setFilter("month");
+  }, []);
+  // HANDLE DATE RANGE PICKER SELECT — ACTIVATES THE RANGE FILTER, CLEARS THE DATE FILTER
+  const handleRangeSelect = useCallback((start: string, end: string): void => {
+    // UPDATE RANGE START
+    setRangeStart(start);
+    // UPDATE RANGE END
+    setRangeEnd(end);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // SWITCH TO RANGE FILTER
+    setFilter("range");
+  }, []);
+  // HANDLE DATE RANGE PICKER CLEAR — REVERT TO MONTH FILTER
+  const handleRangeClear = useCallback((): void => {
+    // CLEAR RANGE START
+    setRangeStart(null);
+    // CLEAR RANGE END
+    setRangeEnd(null);
+    // SWITCH BACK TO MONTH FILTER
+    setFilter("month");
   }, []);
   // HANDLE MONTH NAVIGATION — DECREMENT MONTH
   const handlePrevMonth = useCallback((): void => {
@@ -599,6 +684,8 @@ const Sales = memo(() => {
     setSelectedMonth(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1),
     );
+    // SELECTING A MONTH IMPLICITLY MEANS THE USER WANTS THE MONTH FILTER ACTIVE
+    setFilter("month");
   }, []);
   // HANDLE MONTH NAVIGATION — INCREMENT MONTH (BLOCKED FOR FUTURE MONTHS)
   const handleNextMonth = useCallback((): void => {
@@ -606,6 +693,8 @@ const Sales = memo(() => {
     setSelectedMonth(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1),
     );
+    // SELECTING A MONTH IMPLICITLY MEANS THE USER WANTS THE MONTH FILTER ACTIVE
+    setFilter("month");
   }, []);
   // SET AND PERSIST CUSTOMER VIEW MODE TO LOCAL STORAGE
   const handleCustomerSetView = useCallback((mode: ViewMode): void => {
@@ -820,7 +909,7 @@ const Sales = memo(() => {
               onClick={() => handleFilterChange(value)}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap",
-                filter === value
+                filter === value && filter !== "date" && filter !== "range"
                   ? "bg-primary text-primary-foreground border-primary shadow-sm"
                   : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
               )}
@@ -828,6 +917,19 @@ const Sales = memo(() => {
               {label}
             </button>
           ))}
+          {/* CUSTOM DATE PICKER */}
+          <DatePicker
+            selectedDate={specificDate}
+            onDateSelect={handleDateSelect}
+            onClear={handleDateClear}
+          />
+          {/* CUSTOM DATE RANGE PICKER */}
+          <DateRangePicker
+            startDate={rangeStart}
+            endDate={rangeEnd}
+            onRangeSelect={handleRangeSelect}
+            onClear={handleRangeClear}
+          />
           {/* MONTH NAVIGATION — ONLY SHOWN WHEN MONTH FILTER IS ACTIVE */}
           {filter === "month" && (
             <div className="flex items-center gap-1 ml-1">

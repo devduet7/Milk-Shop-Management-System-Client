@@ -7,15 +7,16 @@ import {
   SelectContent,
 } from "@/components/ui/select";
 import type {
+  DashboardFilterType,
   DashboardCategoryFilter,
   DashboardExpendituresStats,
 } from "@/types/dashboard-types";
 import { cn } from "@/lib/utils";
 import { Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { memo, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import DashboardSectionCard from "./DashboardSectionCard";
+import { memo, useState, useEffect, useCallback } from "react";
 import { useDashboardExpenditures } from "@/hooks/useDashboard";
 import PaginationControls from "@/components/common/PaginationControls";
 
@@ -35,13 +36,28 @@ const CATEGORY_COLORS: Record<string, string> = {
 interface ExpendituresSectionProps {
   // <== STATS ==>
   stats: DashboardExpendituresStats | undefined;
+  // <== ACTIVE FILTER TYPE ==>
+  filterType: DashboardFilterType;
   // <== MONTH ==>
   month: string;
+  // <== DATE (ONLY WHEN FILTER TYPE IS DATE) ==>
+  date: string;
+  // <== RANGE START (ONLY WHEN FILTER TYPE IS RANGE) ==>
+  rangeStart: string;
+  // <== RANGE END (ONLY WHEN FILTER TYPE IS RANGE) ==>
+  rangeEnd: string;
 }
 
 // <== EXPENDITURES SECTION COMPONENT ==>
 const ExpendituresSection = memo(
-  ({ stats, month }: ExpendituresSectionProps) => {
+  ({
+    stats,
+    filterType,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+  }: ExpendituresSectionProps) => {
     // CATEGORY STATE
     const [category, setCategory] = useState<DashboardCategoryFilter>("all");
     // PAGE NUMBER STATE
@@ -50,11 +66,20 @@ const ExpendituresSection = memo(
     const limit = 5;
     // FETCH PAGINATED EXPENDITURES
     const { data, isLoading } = useDashboardExpenditures(
+      filterType,
       month,
+      date,
+      rangeStart,
+      rangeEnd,
       category,
       page,
       limit,
     );
+    // RESET TO PAGE 1 WHENEVER THE ACTIVE DATE FILTER CHANGES
+    useEffect(() => {
+      // RESET TO FIRST PAGE
+      setPage(1);
+    }, [filterType, month, date, rangeStart, rangeEnd]);
     // HANDLE CATEGORY CHANGE
     const handleCategoryChange = useCallback((val: string): void => {
       // SET CATEGORY
@@ -182,7 +207,7 @@ const ExpendituresSection = memo(
                     colSpan={4}
                     className="px-3 py-8 text-center text-muted-foreground text-xs"
                   >
-                    No expenditures recorded this month
+                    No expenditures recorded for this period
                   </td>
                 </tr>
               )}

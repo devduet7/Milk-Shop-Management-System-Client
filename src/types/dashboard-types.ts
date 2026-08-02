@@ -1,6 +1,9 @@
 // <== SALE TYPE UNION ==>
 export type SaleType = "customer" | "shop" | "all";
 
+// <== DASHBOARD FILTER TYPE ==>
+export type DashboardFilterType = "today" | "week" | "month" | "date" | "range";
+
 // <== DASHBOARD PRODUCT FILTER TYPE ==>
 export type DashboardProductFilter = "all" | "milk" | "yoghurt";
 
@@ -204,13 +207,17 @@ export type DashboardSummary = {
   staff: DashboardStaffStats;
   // <== RECOVERY STATS FOR ALL-TIME ==>
   recovery: DashboardRecoveryStats;
-  // <== SALES RECORDS FOR THE MONTH ==>
+  // <== APPLIED FILTER DETAILS ==>
   appliedFilter: {
-    // <== SALES RECORDS FOR THE MONTH ==>
+    // <== ACTIVE FILTER TYPE ==>
+    filterType: DashboardFilterType;
+    // <== SELECTED MONTH (ONLY WHEN FILTER TYPE IS MONTH) ==>
     month: string;
-    // <== SALES RECORDS FOR THE MONTH ==>
+    // <== SELECTED DATE (ONLY WHEN FILTER TYPE IS DATE) ==>
+    date: string | null;
+    // <== RANGE START DATE ==>
     startDate: string;
-    // <== SALES RECORDS FOR THE MONTH ==>
+    // <== RANGE END DATE ==>
     endDate: string;
   };
 };

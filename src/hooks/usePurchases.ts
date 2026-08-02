@@ -28,6 +28,9 @@ export const purchaseKeys = {
   list: (filters: {
     filter: PurchaseFilter;
     month: string;
+    date: string;
+    rangeStart: string;
+    rangeEnd: string;
     search: string;
     page: number;
     limit: number;
@@ -47,6 +50,9 @@ export const purchaseKeys = {
 const fetchPurchases = async (
   filter: PurchaseFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   search: string,
   page: number,
   limit: number,
@@ -59,6 +65,15 @@ const fetchPurchases = async (
   };
   // ONLY INCLUDE MONTH WHEN FILTER IS MONTH
   if (filter === "month" && month) params.month = month;
+  // ONLY INCLUDE DATE WHEN FILTER IS DATE
+  if (filter === "date" && date) params.date = date;
+  // ONLY INCLUDE RANGE BOUNDS WHEN FILTER IS RANGE
+  if (filter === "range") {
+    // INCLUDING RANGE START IF PRESENT
+    if (rangeStart) params.rangeStart = rangeStart;
+    // INCLUDING RANGE END IF PRESENT
+    if (rangeEnd) params.rangeEnd = rangeEnd;
+  }
   // ONLY INCLUDE SEARCH IF NOT EMPTY
   if (search.trim()) params.search = search.trim();
   // MAKE API REQUEST
@@ -88,6 +103,7 @@ const fetchPurchases = async (
       appliedFilter: {
         type: filter,
         month: filter === "month" ? month : null,
+        date: filter === "date" ? date : null,
         startDate: "",
         endDate: "",
       },
@@ -109,6 +125,9 @@ const fetchPurchases = async (
 export const usePurchases = (
   filter: PurchaseFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   search: string,
   page: number,
   limit: number,
@@ -120,9 +139,28 @@ export const usePurchases = (
   // FETCH CURRENT PAGE
   const query = useQuery<PurchasesListData, AxiosError<ApiErrorResponse>>({
     // <== QUERY KEY (ALL FILTERS + PAGE + LIMIT FOR ISOLATED CACHE ENTRIES) ==>
-    queryKey: purchaseKeys.list({ filter, month, search, page, limit }),
+    queryKey: purchaseKeys.list({
+      filter,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      search,
+      page,
+      limit,
+    }),
     // <== QUERY FUNCTION ==>
-    queryFn: () => fetchPurchases(filter, month, search, page, limit),
+    queryFn: () =>
+      fetchPurchases(
+        filter,
+        month,
+        date,
+        rangeStart,
+        rangeEnd,
+        search,
+        page,
+        limit,
+      ),
     // <== ONLY FETCH WHEN AUTHENTICATED AND NOT LOGGING OUT ==>
     enabled: isAuthenticated && !isLoggingOut,
     // <== STALE TIME: 2 MINUTES ==>
@@ -153,17 +191,41 @@ export const usePurchases = (
         queryKey: purchaseKeys.list({
           filter,
           month,
+          date,
+          rangeStart,
+          rangeEnd,
           search,
           page: page + 1,
           limit,
         }),
         // NEXT PAGE QUERY FUNCTION
-        queryFn: () => fetchPurchases(filter, month, search, page + 1, limit),
+        queryFn: () =>
+          fetchPurchases(
+            filter,
+            month,
+            date,
+            rangeStart,
+            rangeEnd,
+            search,
+            page + 1,
+            limit,
+          ),
         // SAME STALE TIME AS MAIN QUERY
         staleTime: 2 * 60 * 1000,
       });
     }
-  }, [query.data, filter, month, search, page, limit, queryClient]);
+  }, [
+    query.data,
+    filter,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    search,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };

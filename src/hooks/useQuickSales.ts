@@ -29,6 +29,8 @@ export const quickSaleKeys = {
     filterType: QuickSaleFilterType;
     date: string;
     month: string;
+    rangeStart: string;
+    rangeEnd: string;
     productType: QuickSaleProductFilter;
     page: number;
     limit: number;
@@ -40,6 +42,8 @@ const fetchQuickSales = async (
   filterType: QuickSaleFilterType,
   date: string,
   month: string,
+  rangeStart: string,
+  rangeEnd: string,
   productType: QuickSaleProductFilter,
   page: number,
   limit: number,
@@ -55,6 +59,13 @@ const fetchQuickSales = async (
   if (filterType === "month" && month) params.month = month;
   // ONLY INCLUDE DATE WHEN FILTER TYPE IS DATE
   if (filterType === "date" && date) params.date = date;
+  // ONLY INCLUDE RANGE BOUNDS WHEN FILTER TYPE IS RANGE
+  if (filterType === "range") {
+    // INCLUDING RANGE START IF PRESENT
+    if (rangeStart) params.rangeStart = rangeStart;
+    // INCLUDING RANGE END IF PRESENT
+    if (rangeEnd) params.rangeEnd = rangeEnd;
+  }
   // MAKE API REQUEST
   const response = await apiClient.get<ApiResponse<QuickSaleListData>>(
     "/quick-sales",
@@ -101,6 +112,8 @@ export const useQuickSales = (
   filterType: QuickSaleFilterType,
   date: string,
   month: string,
+  rangeStart: string,
+  rangeEnd: string,
   productType: QuickSaleProductFilter,
   page: number,
   limit: number,
@@ -116,13 +129,24 @@ export const useQuickSales = (
       filterType,
       date,
       month,
+      rangeStart,
+      rangeEnd,
       productType,
       page,
       limit,
     }),
     // <== QUERY FUNCTION ==>
     queryFn: () =>
-      fetchQuickSales(filterType, date, month, productType, page, limit),
+      fetchQuickSales(
+        filterType,
+        date,
+        month,
+        rangeStart,
+        rangeEnd,
+        productType,
+        page,
+        limit,
+      ),
     // <== ONLY FETCH WHEN AUTHENTICATED ==>
     enabled: isAuthenticated && !isLoggingOut,
     // <== STALE TIME: 1 MINUTE (QUICK SALES CHANGE FREQUENTLY) ==>
@@ -154,6 +178,8 @@ export const useQuickSales = (
           filterType,
           date,
           month,
+          rangeStart,
+          rangeEnd,
           productType,
           page: page + 1,
           limit,
@@ -165,6 +191,8 @@ export const useQuickSales = (
             filterType,
             date,
             month,
+            rangeStart,
+            rangeEnd,
             productType,
             page + 1,
             limit,
@@ -178,6 +206,8 @@ export const useQuickSales = (
     filterType,
     date,
     month,
+    rangeStart,
+    rangeEnd,
     productType,
     page,
     limit,

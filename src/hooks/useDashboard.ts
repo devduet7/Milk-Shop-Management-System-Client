@@ -4,6 +4,7 @@ import type {
   ApiResponse,
   ApiErrorResponse,
   DashboardSummary,
+  DashboardFilterType,
   DashboardSaleRecord,
   DashboardStaffRecord,
   DashboardMilkLogRecord,
@@ -25,14 +26,53 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 export const dashboardKeys = {
   // <== ROOT KEY FOR ALL DASHBOARD QUERIES ==>
   all: ["dashboard"] as const,
-  // <== SUMMARY KEY ==>
-  summary: (month: string) => [...dashboardKeys.all, "summary", month] as const,
+  // <== SUMMARY KEY — INCLUDES THE FULL DATE FILTER SHAPE ==>
+  summary: (
+    filterType: DashboardFilterType,
+    month: string,
+    date: string,
+    rangeStart: string,
+    rangeEnd: string,
+  ) =>
+    [
+      ...dashboardKeys.all,
+      "summary",
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+    ] as const,
   // <== SALES KEY ==>
-  sales: (month: string, saleType: SaleType, page: number, limit: number) =>
-    [...dashboardKeys.all, "sales", month, saleType, page, limit] as const,
+  sales: (
+    filterType: DashboardFilterType,
+    month: string,
+    date: string,
+    rangeStart: string,
+    rangeEnd: string,
+    saleType: SaleType,
+    page: number,
+    limit: number,
+  ) =>
+    [
+      ...dashboardKeys.all,
+      "sales",
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      saleType,
+      page,
+      limit,
+    ] as const,
   // <== QUICK SALES KEY ==>
   quickSales: (
+    filterType: DashboardFilterType,
     month: string,
+    date: string,
+    rangeStart: string,
+    rangeEnd: string,
     productType: DashboardProductFilter,
     page: number,
     limit: number,
@@ -40,17 +80,43 @@ export const dashboardKeys = {
     [
       ...dashboardKeys.all,
       "quickSales",
+      filterType,
       month,
+      date,
+      rangeStart,
+      rangeEnd,
       productType,
       page,
       limit,
     ] as const,
   // <== PURCHASES KEY ==>
-  purchases: (month: string, page: number, limit: number) =>
-    [...dashboardKeys.all, "purchases", month, page, limit] as const,
+  purchases: (
+    filterType: DashboardFilterType,
+    month: string,
+    date: string,
+    rangeStart: string,
+    rangeEnd: string,
+    page: number,
+    limit: number,
+  ) =>
+    [
+      ...dashboardKeys.all,
+      "purchases",
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      page,
+      limit,
+    ] as const,
   // <== EXPENDITURES KEY ==>
   expenditures: (
+    filterType: DashboardFilterType,
     month: string,
+    date: string,
+    rangeStart: string,
+    rangeEnd: string,
     category: DashboardCategoryFilter,
     page: number,
     limit: number,
@@ -58,20 +124,42 @@ export const dashboardKeys = {
     [
       ...dashboardKeys.all,
       "expenditures",
+      filterType,
       month,
+      date,
+      rangeStart,
+      rangeEnd,
       category,
       page,
       limit,
     ] as const,
-  // <== STAFF KEY ==>
+  // <== STAFF KEY — MONTH-ONLY, NO DAILY GRANULARITY IN STAFF MONTH RECORD ==>
   staff: (month: string, page: number, limit: number) =>
     [...dashboardKeys.all, "staff", month, page, limit] as const,
-  // <== CUSTOMERS KEY ==>
+  // <== CUSTOMERS KEY — MONTH-ONLY, BILLING STATS ARE KEYED TO A BILLING MONTH ==>
   customers: (month: string, page: number, limit: number) =>
     [...dashboardKeys.all, "customers", month, page, limit] as const,
   // <== MILK LOGS KEY ==>
-  milkLogs: (month: string, page: number, limit: number) =>
-    [...dashboardKeys.all, "milkLogs", month, page, limit] as const,
+  milkLogs: (
+    filterType: DashboardFilterType,
+    month: string,
+    date: string,
+    rangeStart: string,
+    rangeEnd: string,
+    page: number,
+    limit: number,
+  ) =>
+    [
+      ...dashboardKeys.all,
+      "milkLogs",
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      page,
+      limit,
+    ] as const,
 };
 
 // <== SHARED QUERY CONFIG ==>
@@ -95,23 +183,65 @@ const SHARED_CONFIG = {
   },
 };
 
+// <== HELPER: BUILD SHARED DATE FILTER REQUEST PARAMS ==>
+const buildDateFilterParams = (
+  filterType: DashboardFilterType,
+  month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
+): Record<string, string> => {
+  // BASE PARAMS OBJECT
+  const params: Record<string, string> = { filterType };
+  // ONLY INCLUDE MONTH WHEN FILTER TYPE IS MONTH
+  if (filterType === "month" && month) params.month = month;
+  // ONLY INCLUDE DATE WHEN FILTER TYPE IS DATE
+  if (filterType === "date" && date) params.date = date;
+  // ONLY INCLUDE RANGE BOUNDS WHEN FILTER TYPE IS RANGE
+  if (filterType === "range") {
+    // INCLUDING RANGE START IF PRESENT
+    if (rangeStart) params.rangeStart = rangeStart;
+    // INCLUDING RANGE END IF PRESENT
+    if (rangeEnd) params.rangeEnd = rangeEnd;
+  }
+  // RETURNING BUILT PARAMS
+  return params;
+};
+
 /**
- * FETCH AND CACHE COMPREHENSIVE DASHBOARD SUMMARY FOR THE SELECTED MONTH
+ * FETCH AND CACHE COMPREHENSIVE DASHBOARD SUMMARY FOR THE SELECTED FILTER
  */
 // <== USE DASHBOARD SUMMARY HOOK ==>
-export const useDashboardSummary = (month: string) => {
+export const useDashboardSummary = (
+  filterType: DashboardFilterType,
+  month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
+) => {
   // GET AUTH STATE FROM STORE
   const { isAuthenticated, isLoggingOut } = useAuthStore();
   // RETURN QUERY
   return useQuery<DashboardSummary, AxiosError<ApiErrorResponse>>({
     // <== QUERY KEY ==>
-    queryKey: dashboardKeys.summary(month),
+    queryKey: dashboardKeys.summary(
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+    ),
     // <== QUERY FUNCTION ==>
     queryFn: async () => {
+      // BUILDING REQUEST PARAMS — MONTH IS ALWAYS SENT, SHARED PARAMS COVER THE REST
+      const params: Record<string, string> = {
+        ...buildDateFilterParams(filterType, month, date, rangeStart, rangeEnd),
+        month,
+      };
       // MAKE REQUEST TO GET DASHBOARD SUMMARY
       const response = await apiClient.get<ApiResponse<DashboardSummary>>(
         "/dashboard",
-        { params: { month } },
+        { params },
       );
       // RETURN DATA
       return response.data.data;
@@ -124,12 +254,16 @@ export const useDashboardSummary = (month: string) => {
 };
 
 /**
- * FETCH AND CACHE PAGINATED SALES RECORDS FOR THE SELECTED MONTH
+ * FETCH AND CACHE PAGINATED SALES RECORDS FOR THE SELECTED FILTER
  * NEXT PAGE SILENTLY PREFETCHED AFTER CURRENT PAGE LOADS
  */
 // <== USE DASHBOARD SALES HOOK ==>
 export const useDashboardSales = (
+  filterType: DashboardFilterType,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   saleType: SaleType,
   page: number,
   limit: number,
@@ -144,12 +278,21 @@ export const useDashboardSales = (
     AxiosError<ApiErrorResponse>
   >({
     // <== QUERY KEY ==>
-    queryKey: dashboardKeys.sales(month, saleType, page, limit),
+    queryKey: dashboardKeys.sales(
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      saleType,
+      page,
+      limit,
+    ),
     // <== QUERY FUNCTION ==>
     queryFn: async () => {
       // BUILDING PARAMS TO GET DASHBOARD SALES
       const params: Record<string, string> = {
-        month,
+        ...buildDateFilterParams(filterType, month, date, rangeStart, rangeEnd),
         saleType,
         page: String(page),
         limit: String(limit),
@@ -173,7 +316,16 @@ export const useDashboardSales = (
       // SILENTLY PREFETCH NEXT PAGE
       queryClient.prefetchQuery({
         // <== QUERY KEY ==>
-        queryKey: dashboardKeys.sales(month, saleType, page + 1, limit),
+        queryKey: dashboardKeys.sales(
+          filterType,
+          month,
+          date,
+          rangeStart,
+          rangeEnd,
+          saleType,
+          page + 1,
+          limit,
+        ),
         // <== QUERY FUNCTION ==>
         queryFn: async () => {
           // MAKING REQUEST TO GET DASHBOARD SALES
@@ -181,7 +333,13 @@ export const useDashboardSales = (
             ApiResponse<DashboardPagedResponse<DashboardSaleRecord>>
           >("/dashboard/sales", {
             params: {
-              month,
+              ...buildDateFilterParams(
+                filterType,
+                month,
+                date,
+                rangeStart,
+                rangeEnd,
+              ),
               saleType,
               page: String(page + 1),
               limit: String(limit),
@@ -194,17 +352,32 @@ export const useDashboardSales = (
         staleTime: SHARED_CONFIG.staleTime,
       });
     }
-  }, [query.data, month, saleType, page, limit, queryClient]);
+  }, [
+    query.data,
+    filterType,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    saleType,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };
 
 /**
- * FETCH AND CACHE PAGINATED QUICK SALE RECORDS FOR THE SELECTED MONTH
+ * FETCH AND CACHE PAGINATED QUICK SALE RECORDS FOR THE SELECTED FILTER
  */
 // <== USE DASHBOARD QUICK SALES HOOK ==>
 export const useDashboardQuickSales = (
+  filterType: DashboardFilterType,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   productType: DashboardProductFilter,
   page: number,
   limit: number,
@@ -219,7 +392,16 @@ export const useDashboardQuickSales = (
     AxiosError<ApiErrorResponse>
   >({
     // <== QUERY KEY ==>
-    queryKey: dashboardKeys.quickSales(month, productType, page, limit),
+    queryKey: dashboardKeys.quickSales(
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      productType,
+      page,
+      limit,
+    ),
     // <== QUERY FUNCTION ==>
     queryFn: async () => {
       // MAKING REQUEST TO GET DASHBOARD QUICK SALES
@@ -227,7 +409,13 @@ export const useDashboardQuickSales = (
         ApiResponse<DashboardPagedResponse<DashboardQuickSaleRecord>>
       >("/dashboard/quick-sales", {
         params: {
-          month,
+          ...buildDateFilterParams(
+            filterType,
+            month,
+            date,
+            rangeStart,
+            rangeEnd,
+          ),
           productType,
           page: String(page),
           limit: String(limit),
@@ -248,7 +436,16 @@ export const useDashboardQuickSales = (
       // SILENTLY PREFETCH NEXT PAGE
       queryClient.prefetchQuery({
         // <== QUERY KEY ==>
-        queryKey: dashboardKeys.quickSales(month, productType, page + 1, limit),
+        queryKey: dashboardKeys.quickSales(
+          filterType,
+          month,
+          date,
+          rangeStart,
+          rangeEnd,
+          productType,
+          page + 1,
+          limit,
+        ),
         // <== QUERY FUNCTION ==>
         queryFn: async () => {
           // MAKING REQUEST TO GET DASHBOARD QUICK SALES
@@ -256,7 +453,13 @@ export const useDashboardQuickSales = (
             ApiResponse<DashboardPagedResponse<DashboardQuickSaleRecord>>
           >("/dashboard/quick-sales", {
             params: {
-              month,
+              ...buildDateFilterParams(
+                filterType,
+                month,
+                date,
+                rangeStart,
+                rangeEnd,
+              ),
               productType,
               page: String(page + 1),
               limit: String(limit),
@@ -269,17 +472,32 @@ export const useDashboardQuickSales = (
         staleTime: SHARED_CONFIG.staleTime,
       });
     }
-  }, [query.data, month, productType, page, limit, queryClient]);
+  }, [
+    query.data,
+    filterType,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    productType,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };
 
 /**
- * FETCH AND CACHE PAGINATED PURCHASE RECORDS FOR THE SELECTED MONTH
+ * FETCH AND CACHE PAGINATED PURCHASE RECORDS FOR THE SELECTED FILTER
  */
 // <== USE DASHBOARD PURCHASES HOOK ==>
 export const useDashboardPurchases = (
+  filterType: DashboardFilterType,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   page: number,
   limit: number,
 ) => {
@@ -293,14 +511,32 @@ export const useDashboardPurchases = (
     AxiosError<ApiErrorResponse>
   >({
     // <== QUERY KEY ==>
-    queryKey: dashboardKeys.purchases(month, page, limit),
+    queryKey: dashboardKeys.purchases(
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      page,
+      limit,
+    ),
     // <== QUERY FUNCTION ==>
     queryFn: async () => {
       // MAKING REQUEST TO GET DASHBOARD PURCHASES
       const response = await apiClient.get<
         ApiResponse<DashboardPagedResponse<DashboardPurchaseRecord>>
       >("/dashboard/purchases", {
-        params: { month, page: String(page), limit: String(limit) },
+        params: {
+          ...buildDateFilterParams(
+            filterType,
+            month,
+            date,
+            rangeStart,
+            rangeEnd,
+          ),
+          page: String(page),
+          limit: String(limit),
+        },
       });
       // RETURN DATA
       return response.data.data;
@@ -317,14 +553,32 @@ export const useDashboardPurchases = (
       // SILENTLY PREFETCH NEXT PAGE
       queryClient.prefetchQuery({
         // <== QUERY KEY ==>
-        queryKey: dashboardKeys.purchases(month, page + 1, limit),
+        queryKey: dashboardKeys.purchases(
+          filterType,
+          month,
+          date,
+          rangeStart,
+          rangeEnd,
+          page + 1,
+          limit,
+        ),
         // <== QUERY FUNCTION ==>
         queryFn: async () => {
           // MAKING REQUEST TO GET DASHBOARD PURCHASES
           const response = await apiClient.get<
             ApiResponse<DashboardPagedResponse<DashboardPurchaseRecord>>
           >("/dashboard/purchases", {
-            params: { month, page: String(page + 1), limit: String(limit) },
+            params: {
+              ...buildDateFilterParams(
+                filterType,
+                month,
+                date,
+                rangeStart,
+                rangeEnd,
+              ),
+              page: String(page + 1),
+              limit: String(limit),
+            },
           });
           // RETURN DATA
           return response.data.data;
@@ -333,17 +587,31 @@ export const useDashboardPurchases = (
         staleTime: SHARED_CONFIG.staleTime,
       });
     }
-  }, [query.data, month, page, limit, queryClient]);
+  }, [
+    query.data,
+    filterType,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };
 
 /**
- * FETCH AND CACHE PAGINATED EXPENDITURE RECORDS FOR THE SELECTED MONTH
+ * FETCH AND CACHE PAGINATED EXPENDITURE RECORDS FOR THE SELECTED FILTER
  */
 // <== USE DASHBOARD EXPENDITURES HOOK ==>
 export const useDashboardExpenditures = (
+  filterType: DashboardFilterType,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   category: DashboardCategoryFilter,
   page: number,
   limit: number,
@@ -358,14 +626,34 @@ export const useDashboardExpenditures = (
     AxiosError<ApiErrorResponse>
   >({
     // <== QUERY KEY ==>
-    queryKey: dashboardKeys.expenditures(month, category, page, limit),
+    queryKey: dashboardKeys.expenditures(
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      category,
+      page,
+      limit,
+    ),
     // <== QUERY FUNCTION ==>
     queryFn: async () => {
       // MAKING REQUEST TO GET DASHBOARD EXPENDITURES
       const response = await apiClient.get<
         ApiResponse<DashboardPagedResponse<DashboardExpenditureRecord>>
       >("/dashboard/expenditures", {
-        params: { month, category, page: String(page), limit: String(limit) },
+        params: {
+          ...buildDateFilterParams(
+            filterType,
+            month,
+            date,
+            rangeStart,
+            rangeEnd,
+          ),
+          category,
+          page: String(page),
+          limit: String(limit),
+        },
       });
       // RETURN DATA
       return response.data.data;
@@ -382,7 +670,16 @@ export const useDashboardExpenditures = (
       // SILENTLY PREFETCH NEXT PAGE
       queryClient.prefetchQuery({
         // <== QUERY KEY ==>
-        queryKey: dashboardKeys.expenditures(month, category, page + 1, limit),
+        queryKey: dashboardKeys.expenditures(
+          filterType,
+          month,
+          date,
+          rangeStart,
+          rangeEnd,
+          category,
+          page + 1,
+          limit,
+        ),
         // <== QUERY FUNCTION ==>
         queryFn: async () => {
           // MAKING REQUEST TO GET DASHBOARD EXPENDITURES
@@ -390,7 +687,13 @@ export const useDashboardExpenditures = (
             ApiResponse<DashboardPagedResponse<DashboardExpenditureRecord>>
           >("/dashboard/expenditures", {
             params: {
-              month,
+              ...buildDateFilterParams(
+                filterType,
+                month,
+                date,
+                rangeStart,
+                rangeEnd,
+              ),
               category,
               page: String(page + 1),
               limit: String(limit),
@@ -403,7 +706,18 @@ export const useDashboardExpenditures = (
         staleTime: SHARED_CONFIG.staleTime,
       });
     }
-  }, [query.data, month, category, page, limit, queryClient]);
+  }, [
+    query.data,
+    filterType,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    category,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };
@@ -537,11 +851,15 @@ export const useDashboardCustomers = (
 };
 
 /**
- * FETCH AND CACHE PAGINATED MILK LOG ENTRIES FOR THE SELECTED MONTH
+ * FETCH AND CACHE PAGINATED MILK LOG ENTRIES FOR THE SELECTED FILTER
  */
 // <== USE DASHBOARD MILK LOGS HOOK ==>
 export const useDashboardMilkLogs = (
+  filterType: DashboardFilterType,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   page: number,
   limit: number,
 ) => {
@@ -555,14 +873,32 @@ export const useDashboardMilkLogs = (
     AxiosError<ApiErrorResponse>
   >({
     // <== QUERY KEY ==>
-    queryKey: dashboardKeys.milkLogs(month, page, limit),
+    queryKey: dashboardKeys.milkLogs(
+      filterType,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      page,
+      limit,
+    ),
     // <== QUERY FUNCTION ==>
     queryFn: async () => {
       // MAKING REQUEST TO GET DASHBOARD MILK LOGS
       const response = await apiClient.get<
         ApiResponse<DashboardPagedResponse<DashboardMilkLogRecord>>
       >("/dashboard/milk-logs", {
-        params: { month, page: String(page), limit: String(limit) },
+        params: {
+          ...buildDateFilterParams(
+            filterType,
+            month,
+            date,
+            rangeStart,
+            rangeEnd,
+          ),
+          page: String(page),
+          limit: String(limit),
+        },
       });
       // RETURN DATA
       return response.data.data;
@@ -579,14 +915,32 @@ export const useDashboardMilkLogs = (
       // SILENTLY PREFETCH NEXT PAGE
       queryClient.prefetchQuery({
         // <== QUERY KEY ==>
-        queryKey: dashboardKeys.milkLogs(month, page + 1, limit),
+        queryKey: dashboardKeys.milkLogs(
+          filterType,
+          month,
+          date,
+          rangeStart,
+          rangeEnd,
+          page + 1,
+          limit,
+        ),
         // <== QUERY FUNCTION ==>
         queryFn: async () => {
           // MAKING REQUEST TO GET DASHBOARD MILK LOGS
           const response = await apiClient.get<
             ApiResponse<DashboardPagedResponse<DashboardMilkLogRecord>>
           >("/dashboard/milk-logs", {
-            params: { month, page: String(page + 1), limit: String(limit) },
+            params: {
+              ...buildDateFilterParams(
+                filterType,
+                month,
+                date,
+                rangeStart,
+                rangeEnd,
+              ),
+              page: String(page + 1),
+              limit: String(limit),
+            },
           });
           // RETURN DATA
           return response.data.data;
@@ -595,7 +949,17 @@ export const useDashboardMilkLogs = (
         staleTime: SHARED_CONFIG.staleTime,
       });
     }
-  }, [query.data, month, page, limit, queryClient]);
+  }, [
+    query.data,
+    filterType,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };

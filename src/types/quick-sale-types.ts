@@ -2,7 +2,7 @@
 export type QuickSaleType = "milk" | "yoghurt";
 
 // <== QUICK SALE FILTER TYPE ==>
-export type QuickSaleFilterType = "today" | "week" | "month" | "date";
+export type QuickSaleFilterType = "today" | "week" | "month" | "date" | "range";
 
 // <== QUICK SALE PRODUCT FILTER TYPE ==>
 export type QuickSaleProductFilter = "all" | "milk" | "yoghurt";
