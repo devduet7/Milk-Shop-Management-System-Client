@@ -1,5 +1,5 @@
 // <== PURCHASE FILTER TYPE ==>
-export type PurchaseFilter = "today" | "week" | "month";
+export type PurchaseFilter = "today" | "week" | "month" | "date" | "range";
 
 // <== VIEW MODE TYPE ==>
 export type ViewMode = "table" | "list" | "grid";
@@ -76,6 +76,8 @@ export type AppliedFilter = {
   type: PurchaseFilter;
   // <== BILLING MONTH ==>
   month: string | null;
+  // <== SELECTED DATE (ONLY WHEN FILTER IS DATE) ==>
+  date: string | null;
   // <== FILTER RANGE START DATE ==>
   startDate: string;
   // <== FILTER RANGE END DATE ==>
