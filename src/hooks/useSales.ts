@@ -29,6 +29,9 @@ export const saleKeys = {
   customerList: (filters: {
     filter: SaleFilter;
     month: string;
+    date: string;
+    rangeStart: string;
+    rangeEnd: string;
     search: string;
     pendingOnly: boolean;
     page: number;
@@ -38,10 +41,38 @@ export const saleKeys = {
   shopList: (filters: {
     filter: SaleFilter;
     month: string;
+    date: string;
+    rangeStart: string;
+    rangeEnd: string;
     productType: string;
     page: number;
     limit: number;
   }) => [...saleKeys.lists(), "shop", filters] as const,
+};
+
+// <== HELPER: BUILD SHARED DATE FILTER REQUEST PARAMS ==>
+const buildDateFilterParams = (
+  filter: SaleFilter,
+  month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
+): Record<string, string> => {
+  // BASE PARAMS OBJECT
+  const params: Record<string, string> = { filter };
+  // ONLY INCLUDE MONTH WHEN FILTER IS MONTH
+  if (filter === "month" && month) params.month = month;
+  // ONLY INCLUDE DATE WHEN FILTER IS DATE
+  if (filter === "date" && date) params.date = date;
+  // ONLY INCLUDE RANGE BOUNDS WHEN FILTER IS RANGE
+  if (filter === "range") {
+    // INCLUDING RANGE START IF PRESENT
+    if (rangeStart) params.rangeStart = rangeStart;
+    // INCLUDING RANGE END IF PRESENT
+    if (rangeEnd) params.rangeEnd = rangeEnd;
+  }
+  // RETURNING BUILT PARAMS
+  return params;
 };
 
 /**
@@ -58,6 +89,9 @@ export const saleKeys = {
 const fetchCustomerSales = async (
   filter: SaleFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   search: string,
   pendingOnly: boolean,
   page: number,
@@ -65,13 +99,11 @@ const fetchCustomerSales = async (
 ): Promise<SalesListData> => {
   // BUILD REQUEST PARAMS
   const params: Record<string, string> = {
+    ...buildDateFilterParams(filter, month, date, rangeStart, rangeEnd),
     saleType: "customer",
-    filter,
     page: String(page),
     limit: String(limit),
   };
-  // ONLY INCLUDE MONTH WHEN FILTER IS MONTH
-  if (filter === "month" && month) params.month = month;
   // ONLY INCLUDE SEARCH IF NOT EMPTY
   if (search.trim()) params.search = search.trim();
   // INCLUDE PENDING ONLY FLAG IF TRUE
@@ -102,6 +134,7 @@ const fetchCustomerSales = async (
       appliedFilter: {
         type: filter,
         month: filter === "month" ? month : null,
+        date: filter === "date" ? date : null,
         startDate: "",
         endDate: "",
       },
@@ -122,19 +155,20 @@ const fetchCustomerSales = async (
 const fetchShopSales = async (
   filter: SaleFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   productType: string,
   page: number,
   limit: number,
 ): Promise<SalesListData> => {
   // BUILD REQUEST PARAMS
   const params: Record<string, string> = {
+    ...buildDateFilterParams(filter, month, date, rangeStart, rangeEnd),
     saleType: "shop",
-    filter,
     page: String(page),
     limit: String(limit),
   };
-  // ONLY INCLUDE MONTH WHEN FILTER IS MONTH
-  if (filter === "month" && month) params.month = month;
   // ONLY INCLUDE PRODUCT TYPE IF NOT EMPTY
   if (productType) params.productType = productType;
   // MAKE API REQUEST
@@ -163,6 +197,7 @@ const fetchShopSales = async (
       appliedFilter: {
         type: filter,
         month: filter === "month" ? month : null,
+        date: filter === "date" ? date : null,
         startDate: "",
         endDate: "",
       },
@@ -184,6 +219,9 @@ const fetchShopSales = async (
 export const useCustomerSales = (
   filter: SaleFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   search: string,
   pendingOnly: boolean,
   page: number,
@@ -199,6 +237,9 @@ export const useCustomerSales = (
     queryKey: saleKeys.customerList({
       filter,
       month,
+      date,
+      rangeStart,
+      rangeEnd,
       search,
       pendingOnly,
       page,
@@ -206,7 +247,17 @@ export const useCustomerSales = (
     }),
     // <== QUERY FUNCTION ==>
     queryFn: () =>
-      fetchCustomerSales(filter, month, search, pendingOnly, page, limit),
+      fetchCustomerSales(
+        filter,
+        month,
+        date,
+        rangeStart,
+        rangeEnd,
+        search,
+        pendingOnly,
+        page,
+        limit,
+      ),
     // <== ONLY FETCH WHEN AUTHENTICATED AND NOT LOGGING OUT ==>
     enabled: isAuthenticated && !isLoggingOut,
     // <== STALE TIME: 2 MINUTES ==>
@@ -237,6 +288,9 @@ export const useCustomerSales = (
         queryKey: saleKeys.customerList({
           filter,
           month,
+          date,
+          rangeStart,
+          rangeEnd,
           search,
           pendingOnly,
           page: page + 1,
@@ -247,6 +301,9 @@ export const useCustomerSales = (
           fetchCustomerSales(
             filter,
             month,
+            date,
+            rangeStart,
+            rangeEnd,
             search,
             pendingOnly,
             page + 1,
@@ -260,6 +317,9 @@ export const useCustomerSales = (
     query.data,
     filter,
     month,
+    date,
+    rangeStart,
+    rangeEnd,
     search,
     pendingOnly,
     page,
@@ -283,6 +343,9 @@ export const useCustomerSales = (
 export const useShopSales = (
   filter: SaleFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   productType: string,
   page: number,
   limit: number,
@@ -294,10 +357,28 @@ export const useShopSales = (
   // FETCH CURRENT PAGE
   const query = useQuery<SalesListData, AxiosError<ApiErrorResponse>>({
     // <== QUERY KEY (ALL FILTERS + PAGE + LIMIT FOR ISOLATED CACHE ENTRIES) ==>
-    queryKey: saleKeys.shopList({ filter, month, productType, page, limit }),
+    queryKey: saleKeys.shopList({
+      filter,
+      month,
+      date,
+      rangeStart,
+      rangeEnd,
+      productType,
+      page,
+      limit,
+    }),
     // <== QUERY FUNCTION ==>
-    queryFn: () => fetchShopSales(filter, month, productType, page, limit),
-    // <== ONLY FETCH WHEN AUTHENTICATED AND NOT LOGGING OUT ==>
+    queryFn: () =>
+      fetchShopSales(
+        filter,
+        month,
+        date,
+        rangeStart,
+        rangeEnd,
+        productType,
+        page,
+        limit,
+      ), // <== ONLY FETCH WHEN AUTHENTICATED AND NOT LOGGING OUT ==>
     enabled: isAuthenticated && !isLoggingOut,
     // <== STALE TIME: 2 MINUTES ==>
     staleTime: 2 * 60 * 1000,
@@ -327,18 +408,41 @@ export const useShopSales = (
         queryKey: saleKeys.shopList({
           filter,
           month,
+          date,
+          rangeStart,
+          rangeEnd,
           productType,
           page: page + 1,
           limit,
         }),
         // NEXT PAGE QUERY FUNCTION
         queryFn: () =>
-          fetchShopSales(filter, month, productType, page + 1, limit),
+          fetchShopSales(
+            filter,
+            month,
+            date,
+            rangeStart,
+            rangeEnd,
+            productType,
+            page + 1,
+            limit,
+          ),
         // SAME STALE TIME AS MAIN QUERY
         staleTime: 2 * 60 * 1000,
       });
     }
-  }, [query.data, filter, month, productType, page, limit, queryClient]);
+  }, [
+    query.data,
+    filter,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    productType,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };
