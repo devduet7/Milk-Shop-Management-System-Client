@@ -33,6 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
 import { useDeletionMode } from "@/hooks/useSettings";
 import DatePicker from "@/components/common/DatePicker";
+import DateRangePicker from "@/components/common/DateRangePicker";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuickSales, useDeleteQuickSale } from "@/hooks/useQuickSales";
@@ -336,6 +337,10 @@ const QuickSales = memo(() => {
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   // SELECTED SPECIFIC DATE FOR DATE PICKER FILTER (YYYY-MM-DD | NULL)
   const [specificDate, setSpecificDate] = useState<string | null>(null);
+  // SELECTED RANGE START FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL)
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  // SELECTED RANGE END FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL)
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   // PRODUCT TYPE FILTER STATE
   const [productType, setProductType] = useState<QuickSaleProductFilter>("all");
   // VIEW MODE STATE — INITIALISED FROM LOCAL STORAGE
@@ -360,6 +365,10 @@ const QuickSales = memo(() => {
   const monthStr = format(selectedMonth, "yyyy-MM");
   // DERIVED DATE STRING FOR DATE FILTER
   const dateStr = specificDate ?? "";
+  // DERIVED RANGE START STRING FOR RANGE FILTER
+  const rangeStartStr = rangeStart ?? "";
+  // DERIVED RANGE END STRING FOR RANGE FILTER
+  const rangeEndStr = rangeEnd ?? "";
   // DERIVING PERMISSION FLAGS FOR THE QUICK SALES MODULE
   const { canCreate, canEdit, canDelete } = usePermission("quickSales");
   // DERIVING DELETION MODE FOR USER ACCOUNT
@@ -373,6 +382,8 @@ const QuickSales = memo(() => {
     filterType,
     dateStr,
     monthStr,
+    rangeStartStr,
+    rangeEndStr,
     productType,
     currentPage,
     rowsPerPage,
@@ -381,7 +392,7 @@ const QuickSales = memo(() => {
   useEffect(() => {
     // RESET CURRENT PAGE
     setCurrentPage(1);
-  }, [filterType, specificDate, monthStr, productType]);
+  }, [filterType, specificDate, monthStr, rangeStart, rangeEnd, productType]);
   // COMPUTED RECORDS WITH SAFE FALLBACK
   const records = useMemo(() => data?.records ?? [], [data?.records]);
   // COMPUTED TOTAL COUNT WITH SAFE FALLBACK
@@ -394,13 +405,21 @@ const QuickSales = memo(() => {
   const handleFilterChange = useCallback((type: QuickSaleFilterType): void => {
     // UPDATE FILTER TYPE
     setFilterType(type);
-    // CLEAR SPECIFIC DATE WHEN SWITCHING TO NON-DATE FILTERS
-    if (type !== "date") setSpecificDate(null);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
   }, []);
   // HANDLE DATE PICKER SELECT — AUTOMATICALLY ACTIVATES DATE FILTER
   const handleDateSelect = useCallback((date: string): void => {
     // UPDATE SPECIFIC DATE
     setSpecificDate(date);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
     // SWITCH TO DATE FILTER
     setFilterType("date");
   }, []);
@@ -408,6 +427,26 @@ const QuickSales = memo(() => {
   const handleDateClear = useCallback((): void => {
     // CLEAR SPECIFIC DATE
     setSpecificDate(null);
+    // SWITCH BACK TO TODAY FILTER
+    setFilterType("today");
+  }, []);
+  // HANDLE DATE RANGE PICKER SELECT — ACTIVATES THE RANGE FILTER, CLEARS THE DATE FILTER
+  const handleRangeSelect = useCallback((start: string, end: string): void => {
+    // UPDATE RANGE START
+    setRangeStart(start);
+    // UPDATE RANGE END
+    setRangeEnd(end);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // SWITCH TO RANGE FILTER
+    setFilterType("range");
+  }, []);
+  // HANDLE DATE RANGE PICKER CLEAR — REVERT TO TODAY FILTER
+  const handleRangeClear = useCallback((): void => {
+    // CLEAR RANGE START
+    setRangeStart(null);
+    // CLEAR RANGE END
+    setRangeEnd(null);
     // SWITCH BACK TO TODAY FILTER
     setFilterType("today");
   }, []);
@@ -517,9 +556,13 @@ const QuickSales = memo(() => {
       return `${format(selectedMonth, "MMMM yyyy")} Sales`;
     // IF FILTER TYPE IS DATE, SHOW SPECIFIC DATE
     if (filterType === "date" && specificDate) return `Sales — ${specificDate}`;
+    // IF FILTER TYPE IS RANGE, SHOW START AND END RANGE
+    if (filterType === "range" && rangeStart && rangeEnd)
+      // RETURN RANGE HEADING
+      return `Sales — ${rangeStart} to ${rangeEnd}`;
     // DEFAULT HEADING
     return "Sales";
-  }, [filterType, selectedMonth, specificDate]);
+  }, [filterType, selectedMonth, specificDate, rangeStart, rangeEnd]);
   // SHARED VIEW PROPS OBJECT — SPREAD INTO ALL THREE VIEW COMPONENTS
   const viewProps = {
     records,
@@ -570,7 +613,9 @@ const QuickSales = memo(() => {
               onClick={() => handleFilterChange(value)}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap",
-                filterType === value && filterType !== "date"
+                filterType === value &&
+                  filterType !== "date" &&
+                  filterType !== "range"
                   ? "bg-primary text-primary-foreground border-primary shadow-sm"
                   : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
               )}
@@ -583,6 +628,13 @@ const QuickSales = memo(() => {
             selectedDate={specificDate}
             onDateSelect={handleDateSelect}
             onClear={handleDateClear}
+          />
+          {/* CUSTOM DATE RANGE PICKER */}
+          <DateRangePicker
+            startDate={rangeStart}
+            endDate={rangeEnd}
+            onRangeSelect={handleRangeSelect}
+            onClear={handleRangeClear}
           />
           {/* MONTH NAVIGATION — ONLY RENDERED WHEN MONTH FILTER IS ACTIVE */}
           {filterType === "month" && (
