@@ -262,10 +262,14 @@ const PurchasesPageSkeleton = ({ view }: { view: ViewMode }) => (
       </div>
       {/* RIGHT: CONTROLS — TWO ROWS MIRRORING REAL CONTROLS */}
       <div className="flex flex-col gap-2 sm:items-end">
-        {/* ROW 1: FILTER PILLS SKELETON */}
-        <div className="flex items-center gap-1.5">
+        {/* ROW 1: FILTER PILLS + PICKERS SKELETON */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           <Skeleton className="h-8 w-16 rounded-full" />
           <Skeleton className="h-8 w-24 rounded-full" />
+          <Skeleton className="h-8 w-28 rounded-full" />
+          {/* DATE PICKER SKELETON */}
+          <Skeleton className="h-8 w-24 rounded-full" />
+          {/* DATE RANGE PICKER SKELETON */}
           <Skeleton className="h-8 w-28 rounded-full" />
         </div>
         {/* ROW 2: SEARCH + VIEW TOGGLES + ADD */}
