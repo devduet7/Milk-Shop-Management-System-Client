@@ -321,9 +321,13 @@ const RecoveriesPageSkeleton = ({
           <Skeleton className="h-3 w-48 sm:w-60 hidden sm:block" />
         </div>
       </div>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <Skeleton className="h-8 w-16 rounded-full" />
         <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="h-8 w-28 rounded-full" />
+        {/* DATE PICKER SKELETON */}
+        <Skeleton className="h-8 w-24 rounded-full" />
+        {/* DATE RANGE PICKER SKELETON */}
         <Skeleton className="h-8 w-28 rounded-full" />
         <Skeleton className="h-8 w-8 rounded-md ml-2" />
         <Skeleton className="h-5 w-20" />
