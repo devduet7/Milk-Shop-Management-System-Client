@@ -33,11 +33,21 @@ const DashboardPageSkeleton = () => (
           <Skeleton className="h-3 w-52 hidden sm:block" />
         </div>
       </div>
-      {/* MONTH NAV SKELETON */}
-      <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1">
-        <Skeleton className="h-7 w-7 rounded-lg" />
-        <Skeleton className="h-4 w-28 mx-1" />
-        <Skeleton className="h-7 w-7 rounded-lg" />
+      {/* FILTER CONTROLS SKELETON — PILLS + PICKERS + MONTH NAV */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {/* FILTER TYPE PILLS SKELETON (TODAY / THIS WEEK) */}
+        <Skeleton className="h-8 w-16 rounded-full" />
+        <Skeleton className="h-8 w-24 rounded-full" />
+        {/* DATE PICKER SKELETON */}
+        <Skeleton className="h-8 w-24 rounded-full" />
+        {/* DATE RANGE PICKER SKELETON */}
+        <Skeleton className="h-8 w-28 rounded-full" />
+        {/* MONTH NAV SKELETON */}
+        <div className="flex items-center gap-1 bg-muted/50 rounded-xl border border-border/50 px-1 py-1">
+          <Skeleton className="h-7 w-7 rounded-lg" />
+          <Skeleton className="h-4 w-28 mx-1" />
+          <Skeleton className="h-7 w-7 rounded-lg" />
+        </div>
       </div>
     </div>
     {/* OVERVIEW CARDS SKELETON — 2 COLS MOBILE, 3 COLS SM AND ABOVE */}
