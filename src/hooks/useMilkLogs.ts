@@ -15,6 +15,7 @@ import { AxiosError } from "axios";
 import { trashKeys } from "./useTrash";
 import apiClient from "../lib/apiClient";
 import { dashboardKeys } from "./useDashboard";
+import { analyticsKeys } from "./useAnalytics";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -249,6 +250,8 @@ export const useAddMilkLog = () => {
       queryClient.invalidateQueries({ queryKey: milkLogKeys.lists() });
       // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — SUMMARY AND MILK LOG SECTION BOTH CHANGE)
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — MILK LOG TREND CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Milk log entry added successfully!");
     },
@@ -296,6 +299,8 @@ export const useUpdateMilkLog = () => {
       queryClient.invalidateQueries({ queryKey: milkLogKeys.lists() });
       // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — SUMMARY AND MILK LOG SECTION BOTH CHANGE)
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — MILK LOG TREND CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST
       toast.success("Milk log entry updated successfully!");
     },
@@ -335,6 +340,8 @@ export const useDeleteMilkLog = () => {
       queryClient.invalidateQueries({ queryKey: milkLogKeys.lists() });
       // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — SUMMARY AND MILK LOG SECTION BOTH CHANGE)
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — MILK LOG TREND CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // INVALIDATE TRASH QUERIES (RECORD MAY HAVE BEEN MOVED TO TRASH)
       queryClient.invalidateQueries({ queryKey: trashKeys.all });
       // SHOW SUCCESS TOAST
