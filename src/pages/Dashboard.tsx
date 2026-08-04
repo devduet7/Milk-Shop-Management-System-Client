@@ -356,7 +356,11 @@ const Dashboard = memo(() => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <DeliverySection stats={summary?.deliveries} month={monthStr} />
+          <DeliverySection
+            stats={summary?.deliveries}
+            filterType={filterType}
+            month={monthStr}
+          />
         </motion.div>
         {/* STAFF PAYROLL SECTION */}
         <motion.div
