@@ -30,6 +30,9 @@ export const recoveryKeys = {
   deliveryList: (filters: {
     filter: RecoveryFilter;
     month: string;
+    date: string;
+    rangeStart: string;
+    rangeEnd: string;
     status: RecoveryStatus;
     search: string;
     page: number;
@@ -39,11 +42,39 @@ export const recoveryKeys = {
   saleList: (filters: {
     filter: RecoveryFilter;
     month: string;
+    date: string;
+    rangeStart: string;
+    rangeEnd: string;
     status: RecoveryStatus;
     search: string;
     page: number;
     limit: number;
   }) => [...recoveryKeys.lists(), "sales", filters] as const,
+};
+
+// <== HELPER: BUILD SHARED DATE FILTER REQUEST PARAMS ==>
+const buildDateFilterParams = (
+  filter: RecoveryFilter,
+  month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
+): Record<string, string> => {
+  // BASE PARAMS OBJECT
+  const params: Record<string, string> = { filter };
+  // ONLY INCLUDE MONTH WHEN FILTER IS MONTH
+  if (filter === "month" && month) params.month = month;
+  // ONLY INCLUDE DATE WHEN FILTER IS DATE
+  if (filter === "date" && date) params.date = date;
+  // ONLY INCLUDE RANGE BOUNDS WHEN FILTER IS RANGE
+  if (filter === "range") {
+    // INCLUDING RANGE START IF PRESENT
+    if (rangeStart) params.rangeStart = rangeStart;
+    // INCLUDING RANGE END IF PRESENT
+    if (rangeEnd) params.rangeEnd = rangeEnd;
+  }
+  // RETURNING BUILT PARAMS
+  return params;
 };
 
 /**
@@ -60,6 +91,9 @@ export const recoveryKeys = {
 const fetchDeliveryRecoveries = async (
   filter: RecoveryFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   status: RecoveryStatus,
   search: string,
   page: number,
@@ -67,14 +101,12 @@ const fetchDeliveryRecoveries = async (
 ): Promise<RecoveriesListData> => {
   // BUILD REQUEST PARAMS
   const params: Record<string, string> = {
+    ...buildDateFilterParams(filter, month, date, rangeStart, rangeEnd),
     tab: "deliveries",
-    filter,
     status,
     page: String(page),
     limit: String(limit),
   };
-  // ONLY INCLUDE MONTH WHEN FILTER IS MONTH
-  if (filter === "month" && month) params.month = month;
   // ONLY INCLUDE SEARCH IF NOT EMPTY
   if (search.trim()) params.search = search.trim();
   // MAKE API REQUEST
@@ -105,6 +137,7 @@ const fetchDeliveryRecoveries = async (
         type: filter,
         billingMonth: "",
         month: filter === "month" ? month : null,
+        date: filter === "date" ? date : null,
         startDate: "",
         endDate: "",
       },
@@ -126,6 +159,9 @@ const fetchDeliveryRecoveries = async (
 const fetchSaleRecoveries = async (
   filter: RecoveryFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   status: RecoveryStatus,
   search: string,
   page: number,
@@ -133,14 +169,12 @@ const fetchSaleRecoveries = async (
 ): Promise<RecoveriesListData> => {
   // BUILD REQUEST PARAMS
   const params: Record<string, string> = {
+    ...buildDateFilterParams(filter, month, date, rangeStart, rangeEnd),
     tab: "sales",
-    filter,
     status,
     page: String(page),
     limit: String(limit),
   };
-  // ONLY INCLUDE MONTH WHEN FILTER IS MONTH
-  if (filter === "month" && month) params.month = month;
   // ONLY INCLUDE SEARCH IF NOT EMPTY
   if (search.trim()) params.search = search.trim();
   // MAKE API REQUEST
@@ -171,6 +205,7 @@ const fetchSaleRecoveries = async (
         type: filter,
         billingMonth: "",
         month: filter === "month" ? month : null,
+        date: filter === "date" ? date : null,
         startDate: "",
         endDate: "",
       },
@@ -186,6 +221,9 @@ const fetchSaleRecoveries = async (
 export const useDeliveryRecoveries = (
   filter: RecoveryFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   status: RecoveryStatus,
   search: string,
   page: number,
@@ -201,6 +239,9 @@ export const useDeliveryRecoveries = (
     queryKey: recoveryKeys.deliveryList({
       filter,
       month,
+      date,
+      rangeStart,
+      rangeEnd,
       status,
       search,
       page,
@@ -208,7 +249,17 @@ export const useDeliveryRecoveries = (
     }),
     // <== QUERY FUNCTION ==>
     queryFn: () =>
-      fetchDeliveryRecoveries(filter, month, status, search, page, limit),
+      fetchDeliveryRecoveries(
+        filter,
+        month,
+        date,
+        rangeStart,
+        rangeEnd,
+        status,
+        search,
+        page,
+        limit,
+      ),
     // <== ONLY FETCH WHEN AUTHENTICATED ==>
     enabled: isAuthenticated && !isLoggingOut,
     // <== STALE TIME: 2 MINUTES ==>
@@ -239,6 +290,9 @@ export const useDeliveryRecoveries = (
         queryKey: recoveryKeys.deliveryList({
           filter,
           month,
+          date,
+          rangeStart,
+          rangeEnd,
           status,
           search,
           page: page + 1,
@@ -249,6 +303,9 @@ export const useDeliveryRecoveries = (
           fetchDeliveryRecoveries(
             filter,
             month,
+            date,
+            rangeStart,
+            rangeEnd,
             status,
             search,
             page + 1,
@@ -258,7 +315,19 @@ export const useDeliveryRecoveries = (
         staleTime: 2 * 60 * 1000,
       });
     }
-  }, [query.data, filter, month, status, search, page, limit, queryClient]);
+  }, [
+    query.data,
+    filter,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    status,
+    search,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };
@@ -271,6 +340,9 @@ export const useDeliveryRecoveries = (
 export const useSaleRecoveries = (
   filter: RecoveryFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   status: RecoveryStatus,
   search: string,
   page: number,
@@ -286,6 +358,9 @@ export const useSaleRecoveries = (
     queryKey: recoveryKeys.saleList({
       filter,
       month,
+      date,
+      rangeStart,
+      rangeEnd,
       status,
       search,
       page,
@@ -293,7 +368,17 @@ export const useSaleRecoveries = (
     }),
     // <== QUERY FUNCTION ==>
     queryFn: () =>
-      fetchSaleRecoveries(filter, month, status, search, page, limit),
+      fetchSaleRecoveries(
+        filter,
+        month,
+        date,
+        rangeStart,
+        rangeEnd,
+        status,
+        search,
+        page,
+        limit,
+      ),
     // <== ONLY FETCH WHEN AUTHENTICATED ==>
     enabled: isAuthenticated && !isLoggingOut,
     // <== STALE TIME: 2 MINUTES ==>
@@ -324,6 +409,9 @@ export const useSaleRecoveries = (
         queryKey: recoveryKeys.saleList({
           filter,
           month,
+          date,
+          rangeStart,
+          rangeEnd,
           status,
           search,
           page: page + 1,
@@ -331,12 +419,34 @@ export const useSaleRecoveries = (
         }),
         // <== QUERY FUNCTION ==>
         queryFn: () =>
-          fetchSaleRecoveries(filter, month, status, search, page + 1, limit),
+          fetchSaleRecoveries(
+            filter,
+            month,
+            date,
+            rangeStart,
+            rangeEnd,
+            status,
+            search,
+            page + 1,
+            limit,
+          ),
         // <== STALE TIME: 2 MINUTES ==>
         staleTime: 2 * 60 * 1000,
       });
     }
-  }, [query.data, filter, month, status, search, page, limit, queryClient]);
+  }, [
+    query.data,
+    filter,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    status,
+    search,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };

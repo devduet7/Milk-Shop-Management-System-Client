@@ -28,6 +28,9 @@ export const expenditureKeys = {
   list: (filters: {
     filter: ExpenditureFilter;
     month: string;
+    date: string;
+    rangeStart: string;
+    rangeEnd: string;
     category: string;
     search: string;
     page: number;
@@ -49,6 +52,9 @@ export const expenditureKeys = {
 const fetchExpenditures = async (
   filter: ExpenditureFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   category: string,
   search: string,
   page: number,
@@ -62,6 +68,15 @@ const fetchExpenditures = async (
   };
   // ONLY INCLUDE MONTH WHEN FILTER IS MONTH
   if (filter === "month" && month) params.month = month;
+  // ONLY INCLUDE DATE WHEN FILTER IS DATE
+  if (filter === "date" && date) params.date = date;
+  // ONLY INCLUDE RANGE BOUNDS WHEN FILTER IS RANGE
+  if (filter === "range") {
+    // INCLUDING RANGE START IF PRESENT
+    if (rangeStart) params.rangeStart = rangeStart;
+    // INCLUDING RANGE END IF PRESENT
+    if (rangeEnd) params.rangeEnd = rangeEnd;
+  }
   // ONLY INCLUDE CATEGORY IF NOT EMPTY
   if (category) params.category = category;
   // ONLY INCLUDE SEARCH IF NOT EMPTY
@@ -93,6 +108,7 @@ const fetchExpenditures = async (
       appliedFilter: {
         type: filter,
         month: filter === "month" ? month : null,
+        date: filter === "date" ? date : null,
         startDate: "",
         endDate: "",
       },
@@ -115,6 +131,9 @@ const fetchExpenditures = async (
 export const useExpenditures = (
   filter: ExpenditureFilter,
   month: string,
+  date: string,
+  rangeStart: string,
+  rangeEnd: string,
   category: string,
   search: string,
   page: number,
@@ -130,6 +149,9 @@ export const useExpenditures = (
     queryKey: expenditureKeys.list({
       filter,
       month,
+      date,
+      rangeStart,
+      rangeEnd,
       category,
       search,
       page,
@@ -137,7 +159,17 @@ export const useExpenditures = (
     }),
     // <== QUERY FUNCTION ==>
     queryFn: () =>
-      fetchExpenditures(filter, month, category, search, page, limit),
+      fetchExpenditures(
+        filter,
+        month,
+        date,
+        rangeStart,
+        rangeEnd,
+        category,
+        search,
+        page,
+        limit,
+      ),
     // <== ONLY FETCH WHEN AUTHENTICATED AND NOT LOGGING OUT ==>
     enabled: isAuthenticated && !isLoggingOut,
     // <== STALE TIME: 2 MINUTES ==>
@@ -168,6 +200,9 @@ export const useExpenditures = (
         queryKey: expenditureKeys.list({
           filter,
           month,
+          date,
+          rangeStart,
+          rangeEnd,
           category,
           search,
           page: page + 1,
@@ -175,12 +210,34 @@ export const useExpenditures = (
         }),
         // NEXT PAGE QUERY FUNCTION
         queryFn: () =>
-          fetchExpenditures(filter, month, category, search, page + 1, limit),
+          fetchExpenditures(
+            filter,
+            month,
+            date,
+            rangeStart,
+            rangeEnd,
+            category,
+            search,
+            page + 1,
+            limit,
+          ),
         // SAME STALE TIME AS MAIN QUERY
         staleTime: 2 * 60 * 1000,
       });
     }
-  }, [query.data, filter, month, category, search, page, limit, queryClient]);
+  }, [
+    query.data,
+    filter,
+    month,
+    date,
+    rangeStart,
+    rangeEnd,
+    category,
+    search,
+    page,
+    limit,
+    queryClient,
+  ]);
   // RETURN QUERY
   return query;
 };

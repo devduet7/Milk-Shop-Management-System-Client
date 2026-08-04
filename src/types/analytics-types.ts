@@ -48,6 +48,16 @@ export type DailyDeliveries = {
   milkQty: number;
 };
 
+// <== DAILY MILK LOG DATA POINT ==>
+export type DailyMilkLog = {
+  // <== DAY DATE STRING ==>
+  day: string;
+  // <== TOTAL LEFTOVER QUANTITY FOR THE DAY ==>
+  totalLeftover: number;
+  // <== TOTAL YOGHURT QUANTITY FOR THE DAY ==>
+  totalYoghurt: number;
+};
+
 // <== SALE BREAKDOWN BUCKET ==>
 export type SaleBreakdownBucket = {
   // <== TOTAL AMOUNT ==>
@@ -168,6 +178,8 @@ export type AnalyticsData = {
   dailyPurchases: DailyPurchases[];
   // <== DAILY DELIVERIES ARRAY ==>
   dailyDeliveries: DailyDeliveries[];
+  // <== DAILY MILK LOG ARRAY ==>
+  dailyMilkLog: DailyMilkLog[];
   // <== SALES BREAKDOWN BY CHANNEL ==>
   salesBreakdown: SalesBreakdown;
   // <== QUICK SALES BREAKDOWN ==>

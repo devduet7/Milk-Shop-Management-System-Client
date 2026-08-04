@@ -17,6 +17,7 @@ import { memo, useState, useCallback } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { PageTransition } from "@/components/layout/PageTransition";
 import StaffPayrollChart from "@/components/analytics/StaffPayrollChart";
+import MilkLogTrendChart from "@/components/analytics/MilkLogTrendChart";
 import SalesBreakdownChart from "@/components/analytics/SalesBreakdownChart";
 import PurchasesTrendChart from "@/components/analytics/PurchasesTrendChart";
 import QuickSalesDailyChart from "@/components/analytics/QuickSalesDailyChart";
@@ -345,7 +346,12 @@ const Analytics = memo(() => {
           data={data?.dailyDeliveries ?? []}
           isLoading={isLoading}
         />
-        {/* ROW 5: STAFF PAYROLL + RECOVERY */}
+        {/* ROW 4B: MILK LOG TREND — FULL WIDTH */}
+        <MilkLogTrendChart
+          data={data?.dailyMilkLog ?? []}
+          isLoading={isLoading}
+        />
+        {/* ROW 5: STAFF PAYROLL + RECOVERY */}{" "}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
           <StaffPayrollChart
             data={data?.staffPayroll ?? []}
