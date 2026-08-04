@@ -42,6 +42,8 @@ import { Button } from "@/components/ui/button";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePermission } from "@/hooks/usePermission";
+import DatePicker from "@/components/common/DatePicker";
+import DateRangePicker from "@/components/common/DateRangePicker";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import RecoveryStatsCards from "@/components/recoveries/RecoveryStatsCards";
@@ -390,6 +392,12 @@ const Recoveries = memo(() => {
   const [filter, setFilter] = useState<RecoveryFilter>("month");
   // SELECTED MONTH STATE
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  // SELECTED SPECIFIC DATE FOR THE DATE PICKER FILTER (YYYY-MM-DD | NULL) — SHARED ACROSS BOTH TABS
+  const [specificDate, setSpecificDate] = useState<string | null>(null);
+  // SELECTED RANGE START FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL) — SHARED ACROSS BOTH TABS
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  // SELECTED RANGE END FOR THE DATE RANGE PICKER FILTER (YYYY-MM-DD | NULL) — SHARED ACROSS BOTH TABS
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
   // DELIVERY VIEW MODE
   const [deliveryView, setDeliveryView] = useState<ViewMode>(
     getInitialDeliveryView,
@@ -431,6 +439,12 @@ const Recoveries = memo(() => {
   const monthStr = format(selectedMonth, "yyyy-MM");
   // MONTH PARAM — ONLY PASS WHEN FILTER IS MONTH
   const activeMonth = filter === "month" ? monthStr : "";
+  // DATE PARAM — ONLY PASS WHEN FILTER IS DATE
+  const activeDate = filter === "date" ? (specificDate ?? "") : "";
+  // RANGE START PARAM — ONLY PASS WHEN FILTER IS RANGE
+  const activeRangeStart = filter === "range" ? (rangeStart ?? "") : "";
+  // RANGE END PARAM — ONLY PASS WHEN FILTER IS RANGE
+  const activeRangeEnd = filter === "range" ? (rangeEnd ?? "") : "";
   // THERE IS NO "ADD" ACTION ANYWHERE ON THIS PAGE
   const { canEdit, canDelete } = usePermission("recoveries");
   // FETCH DELIVERY RECOVERIES
@@ -441,6 +455,9 @@ const Recoveries = memo(() => {
   } = useDeliveryRecoveries(
     filter,
     activeMonth,
+    activeDate,
+    activeRangeStart,
+    activeRangeEnd,
     deliveryStatus,
     debouncedDeliverySearch,
     deliveryPage,
@@ -454,6 +471,9 @@ const Recoveries = memo(() => {
   } = useSaleRecoveries(
     filter,
     activeMonth,
+    activeDate,
+    activeRangeStart,
+    activeRangeEnd,
     saleStatus,
     debouncedSaleSearch,
     salePage,
@@ -463,12 +483,28 @@ const Recoveries = memo(() => {
   useEffect(() => {
     // SET DELIVERY PAGE TO 1 WHEN ANY DELIVERY FILTER CHANGES
     setDeliveryPage(1);
-  }, [filter, activeMonth, deliveryStatus, debouncedDeliverySearch]);
+  }, [
+    filter,
+    activeMonth,
+    activeDate,
+    activeRangeStart,
+    activeRangeEnd,
+    deliveryStatus,
+    debouncedDeliverySearch,
+  ]);
   // RESET SALE PAGE WHEN SALE FILTERS CHANGE
   useEffect(() => {
     // SET SALE PAGE TO 1 WHEN ANY SALE FILTER CHANGES
     setSalePage(1);
-  }, [filter, activeMonth, saleStatus, debouncedSaleSearch]);
+  }, [
+    filter,
+    activeMonth,
+    activeDate,
+    activeRangeStart,
+    activeRangeEnd,
+    saleStatus,
+    debouncedSaleSearch,
+  ]);
   // COMBINED STATS — DELIVERY QUERY IS THE PRIMARY SOURCE (FIRST TAB)
   const stats = deliveryData?.stats ?? saleData?.stats;
   // COMBINED LOADING STATE FOR STATS CARDS
@@ -512,10 +548,54 @@ const Recoveries = memo(() => {
   const handleFilterChange = useCallback((newFilter: RecoveryFilter): void => {
     // UPDATE FILTER STATE
     setFilter(newFilter);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
     // RESETS TO FIRST PAGE WHEN FILTER CHANGES
     setDeliveryPage(1);
     // RESETS TO FIRST PAGE WHEN FILTER CHANGES
     setSalePage(1);
+  }, []);
+  // HANDLE DATE PICKER SELECT — ACTIVATES THE DATE FILTER, CLEARS THE RANGE FILTER
+  const handleDateSelect = useCallback((date: string): void => {
+    // UPDATE SPECIFIC DATE
+    setSpecificDate(date);
+    // CLEARING THE DATE RANGE PICKER SELECTION
+    setRangeStart(null);
+    // CLEARING THE DATE RANGE PICKER END
+    setRangeEnd(null);
+    // SWITCH TO DATE FILTER
+    setFilter("date");
+  }, []);
+  // HANDLE DATE PICKER CLEAR — REVERT TO MONTH FILTER
+  const handleDateClear = useCallback((): void => {
+    // CLEAR SPECIFIC DATE
+    setSpecificDate(null);
+    // SWITCH BACK TO MONTH FILTER
+    setFilter("month");
+  }, []);
+  // HANDLE DATE RANGE PICKER SELECT — ACTIVATES THE RANGE FILTER, CLEARS THE DATE FILTER
+  const handleRangeSelect = useCallback((start: string, end: string): void => {
+    // UPDATE RANGE START
+    setRangeStart(start);
+    // UPDATE RANGE END
+    setRangeEnd(end);
+    // CLEARING THE DATE PICKER SELECTION
+    setSpecificDate(null);
+    // SWITCH TO RANGE FILTER
+    setFilter("range");
+  }, []);
+  // HANDLE DATE RANGE PICKER CLEAR — REVERT TO MONTH FILTER
+  const handleRangeClear = useCallback((): void => {
+    // CLEAR RANGE START
+    setRangeStart(null);
+    // CLEAR RANGE END
+    setRangeEnd(null);
+    // SWITCH BACK TO MONTH FILTER
+    setFilter("month");
   }, []);
   // HANDLE PREV MONTH
   const handlePrevMonth = useCallback((): void => {
@@ -523,6 +603,8 @@ const Recoveries = memo(() => {
     setSelectedMonth(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1),
     );
+    // SELECTING A MONTH IMPLICITLY MEANS THE USER WANTS THE MONTH FILTER ACTIVE
+    setFilter("month");
   }, []);
   // HANDLE NEXT MONTH
   const handleNextMonth = useCallback((): void => {
@@ -530,6 +612,8 @@ const Recoveries = memo(() => {
     setSelectedMonth(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1),
     );
+    // SELECTING A MONTH IMPLICITLY MEANS THE USER WANTS THE MONTH FILTER ACTIVE
+    setFilter("month");
   }, []);
   // SET AND PERSIST DELIVERY VIEW MODE
   const handleDeliverySetView = useCallback((mode: ViewMode): void => {
@@ -677,7 +761,7 @@ const Recoveries = memo(() => {
               onClick={() => handleFilterChange(value)}
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border whitespace-nowrap",
-                filter === value
+                filter === value && filter !== "date" && filter !== "range"
                   ? "bg-primary text-primary-foreground border-primary shadow-sm"
                   : "bg-muted text-muted-foreground border-border hover:text-foreground hover:border-border/80",
               )}
@@ -685,6 +769,19 @@ const Recoveries = memo(() => {
               {label}
             </button>
           ))}
+          {/* CUSTOM DATE PICKER */}
+          <DatePicker
+            selectedDate={specificDate}
+            onDateSelect={handleDateSelect}
+            onClear={handleDateClear}
+          />
+          {/* CUSTOM DATE RANGE PICKER */}
+          <DateRangePicker
+            startDate={rangeStart}
+            endDate={rangeEnd}
+            onRangeSelect={handleRangeSelect}
+            onClear={handleRangeClear}
+          />
           {/* MONTH NAVIGATION — ONLY WHEN MONTH FILTER IS ACTIVE */}
           {filter === "month" && (
             <div className="flex items-center gap-1 ml-1">
