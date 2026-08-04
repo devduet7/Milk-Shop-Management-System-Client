@@ -5,7 +5,7 @@ export type RecoveryTab = "deliveries" | "sales";
 export type RecoveryStatus = "all" | "pending" | "cleared";
 
 // <== RECOVERY FILTER TYPE ==>
-export type RecoveryFilter = "today" | "week" | "month";
+export type RecoveryFilter = "today" | "week" | "month" | "date" | "range";
 
 // <== VIEW MODE TYPE ==>
 export type ViewMode = "table" | "list" | "grid";
@@ -128,6 +128,8 @@ export type RecoveryAppliedFilter = {
   billingMonth: string;
   // <== SELECTED MONTH (ONLY WHEN FILTER IS MONTH) ==>
   month: string | null;
+  // <== SELECTED DATE (ONLY WHEN FILTER IS DATE) ==>
+  date: string | null;
   // <== FILTER RANGE START DATE ==>
   startDate: string;
   // <== FILTER RANGE END DATE ==>
