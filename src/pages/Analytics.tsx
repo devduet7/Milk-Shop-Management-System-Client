@@ -157,6 +157,34 @@ const AnalyticsPageSkeleton = () => (
           ))}
         </div>
       ))}
+      {/* DELIVERY PERFORMANCE CHART SKELETON — FULL WIDTH */}
+      <div className="glass-card p-4 sm:p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <Skeleton className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shrink-0" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <Skeleton className="w-full h-[240px] rounded-xl" />
+      </div>
+      {/* MILK LOG TREND CHART SKELETON — FULL WIDTH */}
+      <div className="glass-card p-4 sm:p-5">
+        <div className="flex items-center gap-3 mb-3">
+          <Skeleton className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shrink-0" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <Skeleton className="w-full h-[240px] rounded-xl" />
+      </div>
+      {/* STAFF PAYROLL + RECOVERY SKELETON ROW */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {[0, 1].map((col) => (
+          <div key={col} className="glass-card p-4 sm:p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <Skeleton className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shrink-0" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <Skeleton className="w-full h-[240px] rounded-xl" />
+          </div>
+        ))}
+      </div>
     </div>
   </div>
 );
