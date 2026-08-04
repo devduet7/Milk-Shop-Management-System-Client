@@ -278,7 +278,10 @@ const QuickSalesPageSkeleton = ({ view }: { view: QuickSaleViewMode }) => (
         <Skeleton className="h-8 w-16 rounded-full" />
         <Skeleton className="h-8 w-24 rounded-full" />
         <Skeleton className="h-8 w-28 rounded-full" />
+        {/* DATE PICKER SKELETON */}
         <Skeleton className="h-8 w-24 rounded-full" />
+        {/* DATE RANGE PICKER SKELETON */}
+        <Skeleton className="h-8 w-28 rounded-full" />
       </div>
     </div>
     {/* STATS SKELETON */}
