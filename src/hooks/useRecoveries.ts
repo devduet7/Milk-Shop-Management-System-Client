@@ -6,8 +6,10 @@ import type {
   RecoveryStatus,
   ApiErrorResponse,
   RecoveriesListData,
+  BulkDeliveryPaymentResult,
   UpdateSalePaymentVariables,
   AddDeliveryPaymentVariables,
+  AddBulkDeliveryPaymentVariables,
 } from "../types/recovery-types";
 import { toast } from "sonner";
 import { useEffect } from "react";
@@ -476,6 +478,62 @@ export const useAddDeliveryPayment = () => {
       const response = await apiClient.post<
         ApiResponse<{ payment: unknown; monthlyStats: unknown }>
       >(`/recoveries/delivery/${customerId}`, data);
+      // RETURN RESPONSE DATA
+      return response.data;
+    },
+    // <== ON SUCCESS — INVALIDATE RECOVERY AND CUSTOMER MODULE CACHES ==>
+    onSuccess: (data): void => {
+      // INVALIDATE ALL RECOVERY LIST QUERIES
+      queryClient.invalidateQueries({ queryKey: recoveryKeys.lists() });
+      // INVALIDATE CUSTOMER LIST QUERIES (CROSS-MODULE SYNC)
+      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      // INVALIDATE CUSTOMER DETAIL QUERIES (CROSS-MODULE SYNC)
+      queryClient.invalidateQueries({ queryKey: customerKeys.details() });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — OUTSTANDING RECOVERY SECTION CHANGES)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — RECOVERY OVERVIEW CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
+      // SHOW SUCCESS TOAST WITH SERVER MESSAGE
+      toast.success(data.message || "Payment recorded successfully!");
+    },
+    // <== ON ERROR ==>
+    onError: (error: AxiosError<ApiErrorResponse>): void => {
+      // SHOW ERROR TOAST WITH SERVER MESSAGE OR FALLBACK
+      toast.error(error.response?.data?.message || "Failed to record payment.");
+    },
+  });
+};
+
+/**
+ * ADD A BULK DELIVERY PAYMENT FOR A CUSTOMER'S OUTSTANDING MONTHS
+ */
+// <== USE ADD BULK DELIVERY PAYMENT MUTATION HOOK ==>
+export const useAddBulkDeliveryPayment = () => {
+  // QUERY CLIENT FOR CACHE INVALIDATION
+  const queryClient = useQueryClient();
+  // RETURN MUTATION
+  return useMutation<
+    ApiResponse<BulkDeliveryPaymentResult>,
+    AxiosError<ApiErrorResponse>,
+    AddBulkDeliveryPaymentVariables
+  >({
+    // <== MUTATION FUNCTION ==>
+    mutationFn: async ({
+      customerId,
+      amount,
+      paymentDate,
+      note,
+    }: AddBulkDeliveryPaymentVariables): Promise<
+      ApiResponse<BulkDeliveryPaymentResult>
+    > => {
+      // CALL ADD BULK DELIVERY PAYMENT API
+      const response = await apiClient.post<
+        ApiResponse<BulkDeliveryPaymentResult>
+      >(`/recoveries/delivery/${customerId}/bulk`, {
+        amount,
+        paymentDate,
+        note,
+      });
       // RETURN RESPONSE DATA
       return response.data;
     },
