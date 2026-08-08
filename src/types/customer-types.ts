@@ -209,6 +209,8 @@ export type MarkDeliveryVariables = {
   date: string;
   // <== TARGET DELIVERY STATUS ==>
   status: DeliveryStatus;
+  // <== OPTIONAL MILK QUANTITY OVERRIDE ==>
+  milkQuantity?: number;
 };
 
 // <== ADD PAYMENT MUTATION VARIABLES TYPE ==>
@@ -219,6 +221,44 @@ export type AddPaymentVariables = {
   amount: number;
   // <== BILLING MONTH (YYYY-MM) ==>
   billingMonth: string;
+  // <== OPTIONAL PAYMENT DATE ==>
+  paymentDate?: string;
+  // <== OPTIONAL NOTE ==>
+  note?: string;
+};
+
+// <== BULK PAYMENT ALLOCATION ENTRY TYPE ==>
+export type BulkPaymentAllocation = {
+  // <== BILLING MONTH THIS SLICE OF THE PAYMENT WAS APPLIED TO ==>
+  billingMonth: string;
+  // <== PENDING BALANCE FOR THIS MONTH BEFORE THE PAYMENT ==>
+  pendingBefore: number;
+  // <== AMOUNT APPLIED TO THIS MONTH ==>
+  amountApplied: number;
+  // <== PENDING BALANCE FOR THIS MONTH AFTER THE PAYMENT ==>
+  pendingAfter: number;
+};
+
+// <== BULK PAYMENT RESULT TYPE ==>
+export type BulkPaymentResult = {
+  // <== PER-MONTH ALLOCATION BREAKDOWN, OLDEST MONTH FIRST ==>
+  allocations: BulkPaymentAllocation[];
+  // <== TOTAL AMOUNT APPLIED ACROSS ALL MONTHS ==>
+  totalApplied: number;
+  // <== TOTAL OUTSTANDING ACROSS ALL MONTHS BEFORE THIS PAYMENT ==>
+  totalOutstandingBefore: number;
+  // <== REFRESHED MONTHLY BREAKDOWN AFTER THE PAYMENT ==>
+  monthlyBreakdown: MonthlyBreakdownEntry[];
+  // <== REFRESHED ALL-TIME OUTSTANDING BALANCE AFTER THE PAYMENT ==>
+  allTimeOutstanding: number;
+};
+
+// <== ADD BULK PAYMENT MUTATION VARIABLES TYPE ==>
+export type AddBulkPaymentVariables = {
+  // <== CUSTOMER ID ==>
+  customerId: string;
+  // <== TOTAL AMOUNT TO ALLOCATE ACROSS OUTSTANDING MONTHS, OLDEST FIRST ==>
+  amount: number;
   // <== OPTIONAL PAYMENT DATE ==>
   paymentDate?: string;
   // <== OPTIONAL NOTE ==>
