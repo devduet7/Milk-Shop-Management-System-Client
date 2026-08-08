@@ -6,11 +6,13 @@ import type {
   DeliveryRecord,
   ApiErrorResponse,
   CustomersListData,
+  BulkPaymentResult,
   CustomerDetailData,
   AddPaymentVariables,
   MarkDeliveryVariables,
   AddCustomerFormValues,
   UpdateCustomerVariables,
+  AddBulkPaymentVariables,
 } from "../types/customer-types";
 import { toast } from "sonner";
 import { useEffect } from "react";
@@ -373,6 +375,7 @@ export const useMarkDelivery = () => {
       customerId,
       date,
       status,
+      milkQuantity,
     }: MarkDeliveryVariables): Promise<
       ApiResponse<{
         deliveryRecord: DeliveryRecord;
@@ -385,7 +388,11 @@ export const useMarkDelivery = () => {
           deliveryRecord: DeliveryRecord;
           monthlyStats: MonthlyStats;
         }>
-      >(`/customers/${customerId}/delivery`, { date, status });
+      >(`/customers/${customerId}/delivery`, {
+        date,
+        status,
+        ...(milkQuantity !== undefined ? { milkQuantity } : {}),
+      });
       // RETURN RESPONSE DATA
       return response.data;
     },
@@ -458,6 +465,58 @@ export const useAddPayment = () => {
       // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC — BILLING PAID AMOUNTS AND SECTION CHANGE)
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC — RECOVERY CHART CHANGES)
+      queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
+      // SHOW SUCCESS TOAST WITH SERVER MESSAGE
+      toast.success(data.message || "Payment recorded successfully!");
+    },
+    // <== ON ERROR ==>
+    onError: (error: AxiosError<ApiErrorResponse>): void => {
+      // SHOW ERROR TOAST WITH SERVER MESSAGE OR FALLBACK
+      toast.error(error.response?.data?.message || "Failed to record payment.");
+    },
+  });
+};
+
+/**
+ * ADD A LUMP-SUM PAYMENT AUTO-ALLOCATED ACROSS A CUSTOMER'S OUTSTANDING BILLING MONTHS
+ * OLDEST MONTH FIRST — REQUIRES NO billingMonth, THE SERVER DETERMINES THE SPLIT
+ */
+// <== USE ADD BULK PAYMENT MUTATION HOOK ==>
+export const useAddBulkPayment = () => {
+  // QUERY CLIENT FOR CACHE INVALIDATION
+  const queryClient = useQueryClient();
+  // RETURN MUTATION
+  return useMutation<
+    ApiResponse<BulkPaymentResult>,
+    AxiosError<ApiErrorResponse>,
+    AddBulkPaymentVariables
+  >({
+    // <== MUTATION FUNCTION ==>
+    mutationFn: async ({
+      customerId,
+      amount,
+      paymentDate,
+      note,
+    }: AddBulkPaymentVariables): Promise<ApiResponse<BulkPaymentResult>> => {
+      // CALL ADD BULK PAYMENT API
+      const response = await apiClient.post<ApiResponse<BulkPaymentResult>>(
+        `/customers/${customerId}/payment/bulk`,
+        { amount, paymentDate, note },
+      );
+      // RETURN RESPONSE DATA
+      return response.data;
+    },
+    // <== ON SUCCESS ==>
+    onSuccess: (data): void => {
+      // INVALIDATE ALL CUSTOMER LIST QUERIES
+      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      // INVALIDATE CUSTOMER DETAIL QUERIES
+      queryClient.invalidateQueries({ queryKey: customerKeys.details() });
+      // INVALIDATE RECOVERY LIST QUERIES (CROSS-MODULE SYNC)
+      queryClient.invalidateQueries({ queryKey: ["recoveries", "list"] });
+      // INVALIDATE DASHBOARD QUERIES (CROSS-MODULE SYNC)
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      // INVALIDATE ANALYTICS QUERIES (CROSS-MODULE SYNC)
       queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
       // SHOW SUCCESS TOAST WITH SERVER MESSAGE
       toast.success(data.message || "Payment recorded successfully!");

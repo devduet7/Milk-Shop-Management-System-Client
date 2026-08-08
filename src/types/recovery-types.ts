@@ -174,6 +174,64 @@ export type AddDeliveryPaymentVariables = {
   data: AddDeliveryPaymentFormValues;
 };
 
+// <== BULK DELIVERY PAYMENT ALLOCATION ENTRY TYPE ==>
+export type BulkDeliveryPaymentAllocation = {
+  // <== BILLING MONTH THIS SLICE OF THE PAYMENT WAS APPLIED TO ==>
+  billingMonth: string;
+  // <== PENDING BALANCE FOR THIS MONTH BEFORE THE PAYMENT ==>
+  pendingBefore: number;
+  // <== AMOUNT APPLIED TO THIS MONTH ==>
+  amountApplied: number;
+  // <== PENDING BALANCE FOR THIS MONTH AFTER THE PAYMENT ==>
+  pendingAfter: number;
+};
+
+// <== MONTHLY BREAKDOWN ENTRY SHAPE TYPE ==>
+export type BulkDeliveryPaymentMonthlyEntry = {
+  // <== BILLING MONTH (YYYY-MM) ==>
+  month: string;
+  // <== DELIVERED DAYS COUNT ==>
+  deliveredDays: number;
+  // <== MISSED DAYS COUNT ==>
+  missedDays: number;
+  // <== TOTAL MILK DELIVERED (LITERS) ==>
+  totalMilkDelivered: number;
+  // <== MONTHLY TOTAL DUE ==>
+  monthlyTotal: number;
+  // <== TOTAL PAID THIS MONTH ==>
+  totalPaid: number;
+  // <== PENDING AMOUNT ==>
+  pending: number;
+  // <== PAYMENT STATUS FOR THIS MONTH ==>
+  paymentStatus: "cleared" | "partial" | "unpaid";
+};
+
+// <== BULK DELIVERY PAYMENT RESULT TYPE ==>
+export type BulkDeliveryPaymentResult = {
+  // <== PER-MONTH ALLOCATION BREAKDOWN, OLDEST MONTH FIRST ==>
+  allocations: BulkDeliveryPaymentAllocation[];
+  // <== TOTAL AMOUNT APPLIED ACROSS ALL MONTHS ==>
+  totalApplied: number;
+  // <== TOTAL OUTSTANDING ACROSS ALL MONTHS BEFORE THIS PAYMENT ==>
+  totalOutstandingBefore: number;
+  // <== REFRESHED MONTHLY BREAKDOWN AFTER THE PAYMENT ==>
+  monthlyBreakdown: BulkDeliveryPaymentMonthlyEntry[];
+  // <== REFRESHED ALL-TIME OUTSTANDING BALANCE AFTER THE PAYMENT ==>
+  allTimeOutstanding: number;
+};
+
+// <== ADD BULK DELIVERY PAYMENT MUTATION VARIABLES TYPE ==>
+export type AddBulkDeliveryPaymentVariables = {
+  // <== CUSTOMER ID ==>
+  customerId: string;
+  // <== TOTAL AMOUNT TO ALLOCATE ACROSS OUTSTANDING MONTHS, OLDEST FIRST ==>
+  amount: number;
+  // <== OPTIONAL PAYMENT DATE ==>
+  paymentDate?: string;
+  // <== OPTIONAL NOTE ==>
+  note?: string;
+};
+
 // <== UPDATE SALE PAYMENT MUTATION VARIABLES TYPE ==>
 export type UpdateSalePaymentVariables = {
   // <== SALE ID ==>

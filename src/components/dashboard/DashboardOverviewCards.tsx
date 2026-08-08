@@ -47,7 +47,7 @@ const DashboardOverviewCards = memo(
       {
         label: "Total Revenue",
         value: `₨${(summary?.overview?.totalRevenue ?? 0).toLocaleString()}`,
-        subValue: "Sales + Quick Sales",
+        subValue: "Sales + Quick Sales + Deliveries",
         icon: TrendingUp,
         iconClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
         topBar: "bg-emerald-500",
@@ -92,7 +92,7 @@ const DashboardOverviewCards = memo(
       },
       // STAFF PAYROLL
       {
-        label: "Staff Payroll",
+        label: "Staff Payroll (Month)",
         value: `₨${(summary?.staff?.totalMonthlyOutgo ?? 0).toLocaleString()}`,
         subValue: `${summary?.staff?.clearedCount ?? 0} / ${summary?.staff?.totalStaff ?? 0} cleared`,
         icon: Wallet,
