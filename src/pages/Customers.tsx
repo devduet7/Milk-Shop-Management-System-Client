@@ -560,6 +560,7 @@ const Customers = memo(() => {
       />
       {/* CUSTOMER DETAIL DIALOG */}
       <CustomerDetailDialog
+        open={Boolean(detailCustomer)}
         customer={detailCustomer}
         onClose={handleDetailClose}
       />
